@@ -1,9 +1,9 @@
 {
   "build": {
-    "builder": "NIXPACKS"
+    "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "cd backend && npm run start:prod",
+    "startCommand": "node dist/main.js",
     "healthcheckPath": "/api",
     "restartPolicyType": "ON_FAILURE"
   }
