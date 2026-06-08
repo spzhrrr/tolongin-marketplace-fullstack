@@ -1,28 +1,27 @@
-# Stage 1: Build
-FROM node:20-alpine AS builder
+FROM node:20-slim
 
 WORKDIR /app
 
+# Install OpenSSL untuk Prisma
+RUN apt-get update -y && apt-get install -y openssl
+
+# Copy package files
 COPY package*.json ./
 COPY prisma ./prisma/
 
+# Install dependencies
 RUN npm install --legacy-peer-deps
+
+# Generate Prisma client
 RUN npx prisma generate
 
+# Copy source code
 COPY . .
 
+# Build TypeScript
 RUN npm run build
-
-# Stage 2: Production
-FROM node:20-alpine
-
-WORKDIR /app
-
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/package*.json ./
 
 EXPOSE 8001
 
+# Run migrations, seed, then start
 CMD npx prisma migrate deploy && npx prisma db seed && node dist/main.js
