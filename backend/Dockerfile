@@ -1,15 +1,22 @@
-FROM node:20-alpine AS build
-WORKDIR /app
-COPY package.json yarn.lock* package-lock.json* ./
-RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; else npm install --legacy-peer-deps; fi
-COPY . .
-RUN npx prisma generate && npx nest build
+FROM node:20-alpine
 
-FROM node:20-alpine AS prod
 WORKDIR /app
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/package.json ./package.json
+
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install dependencies
+RUN npm ci --only=production || npm install --legacy-peer-deps
+RUN npx prisma generate
+
+# Copy source code
+COPY . .
+
+# Build
+RUN npm run build || true
+
 EXPOSE 8001
-CMD ["node", "dist/main"]
+
+# Run migrations, seed, then start
+CMD npx prisma migrate deploy && npx prisma db seed && node dist/main.js
