@@ -10,8 +10,8 @@ export function renderLayout(root) {
     <header class="navbar" data-testid="navbar">
       <div class="container navbar-inner">
         <a class="brand" href="#/" data-testid="brand-logo">
-  <img src="/logotolongin.png" alt="Tolongin" class="brand-logo-img" height="36">
-</a>
+          <img src="/logotolongin.png" alt="Tolongin" class="brand-logo-img" height="36">
+        </a>
         <button class="menu-toggle" id="menu-toggle" data-testid="mobile-menu-btn" aria-label="menu"><i class="fa-solid fa-bars"></i></button>
         <nav class="nav-links" id="nav-links"></nav>
         <div class="nav-right" id="nav-right"></div>
@@ -21,6 +21,7 @@ export function renderLayout(root) {
     <main id="page-mount" class="app-fade-in"></main>
     <footer class="footer" id="site-footer"></footer>
   `;
+
   renderNav();
   renderBanner();
   renderFooter();
@@ -30,33 +31,50 @@ export function renderLayout(root) {
   });
   window.addEventListener("route-change", () => renderNav());
 
-  // Mobile hamburger menutup saat klik di luar
+  // ========== MOBILE MENU - PERBAIKAN UNTUK HP ==========
   const menuToggle = document.getElementById("menu-toggle");
   const navLinks = document.getElementById("nav-links");
+
+  // Buat overlay element
+  let overlay = document.querySelector(".nav-overlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.className = "nav-overlay";
+    document.body.appendChild(overlay);
+  }
 
   if (menuToggle && navLinks) {
     // Toggle menu saat tombol diklik
     menuToggle.addEventListener("click", (e) => {
+      e.preventDefault();
       e.stopPropagation();
       navLinks.classList.toggle("open");
+      overlay.classList.toggle("active");
     });
 
-    // Tutup menu saat klik di luar area menu
-    document.addEventListener("click", (e) => {
-      if (navLinks.classList.contains("open")) {
-        if (!navLinks.contains(e.target) && !menuToggle.contains(e.target)) {
-          navLinks.classList.remove("open");
-        }
-      }
+    // Tutup menu saat klik link di dalam menu
+    navLinks.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => {
+        navLinks.classList.remove("open");
+        overlay.classList.remove("active");
+      });
     });
 
-    // Opsional: tutup menu saat window di-resize
+    // Tutup menu saat klik overlay
+    overlay.addEventListener("click", () => {
+      navLinks.classList.remove("open");
+      overlay.classList.remove("active");
+    });
+
+    // Tutup menu saat window di-resize ke desktop
     window.addEventListener("resize", () => {
       if (window.innerWidth > 768 && navLinks.classList.contains("open")) {
         navLinks.classList.remove("open");
+        overlay.classList.remove("active");
       }
     });
   }
+  // ========== END MOBILE MENU ==========
 
   return document.getElementById("page-mount");
 }
@@ -135,7 +153,6 @@ function renderNav() {
 
   const isAdmin = user && user.role === "ADMIN";
 
-  // For ADMIN: only show Home + Admin Dashboard. Hide marketplace/jobs/orders/chat/dashboard.
   const baseLinks = isAdmin
     ? `<a class="nav-link ${isActive("/")}" href="#/" data-testid="nav-home">${t("nav.home")}</a>`
     : `
@@ -143,6 +160,7 @@ function renderNav() {
     <a class="nav-link ${isActive("/marketplace")}" href="#/marketplace" data-testid="nav-marketplace"><i class="fa-solid fa-magnifying-glass"></i> Cari Jasa</a>
     <a class="nav-link ${isActive("/jobs")}" href="#/jobs" data-testid="nav-jobs"><i class="fa-solid fa-briefcase"></i> Cari Kerja</a>
   `;
+
   const authedLinks = user
     ? isAdmin
       ? `<a class="nav-link ${isActive("/admin")}" href="#/admin" data-testid="nav-admin"><i class="fa-solid fa-shield-halved"></i> Admin Dashboard</a>`
@@ -150,8 +168,9 @@ function renderNav() {
     <a class="nav-link ${isActive("/orders")}" href="#/orders" data-testid="nav-orders">${t("nav.orders")}</a>
     <a class="nav-link ${isActive("/chat")}" href="#/chat" data-testid="nav-chat">${t("nav.chat")}</a>
     <a class="nav-link ${isActive("/dashboard")}" href="#/dashboard" data-testid="nav-dashboard">${t("nav.dashboard")}</a>
-  `
+    `
     : "";
+
   nav.innerHTML = baseLinks + authedLinks;
 
   const langToggle = `
@@ -198,6 +217,7 @@ function renderNav() {
       <a class="btn btn-primary btn-sm" href="#/register" data-testid="register-link">${t("nav.register")}</a>
     `;
   }
+
   // lang switcher
   right.querySelectorAll("[data-lang]").forEach((b) => {
     b.addEventListener("click", () => {
