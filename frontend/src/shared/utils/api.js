@@ -1,7 +1,9 @@
 // API client - centralised fetch with auth + auto-refresh on 401 (cookie-based).
 // Supports JSON body AND FormData for file uploads.
 import { store } from "../../app/store.js";
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8001";
+
+// ✅ Perbaikan: Gunakan relative path jika production (biar satu domain)
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 export const API = BACKEND_URL ? `${BACKEND_URL}/api` : "/api";
 
 let refreshPromise = null;
@@ -37,22 +39,22 @@ async function rawRequest(
   const headers = {};
   const isFormData =
     typeof FormData !== "undefined" && body instanceof FormData;
-  // Do NOT set Content-Type for FormData (browser sets multipart boundary)
+
   if (!isFormData && body !== undefined) {
     headers["Content-Type"] = "application/json";
   }
   if (auth) {
     const t = token || store.getState().token;
-    if (t) headers.Authorization = `Bearer ${t}`;
+    if (t) headers["Authorization"] = `Bearer ${t}`;
   }
 
   const url = `${API}${path}`;
-  console.log("📡 API Request:", method, url); // ✅ Debug log
+  console.log("📡 API Request:", method, url);
 
   const res = await fetch(url, {
     method,
     headers,
-    credentials: "include",
+    credentials: "include", // ✅ PENTING untuk cookie
     body: isFormData
       ? body
       : body !== undefined
@@ -73,6 +75,7 @@ async function request(path, opts = {}) {
     path.startsWith("/auth/register") ||
     path.startsWith("/auth/refresh") ||
     path.startsWith("/auth/logout");
+
   if (
     result.status === 401 &&
     opts.auth !== false &&
@@ -86,6 +89,7 @@ async function request(path, opts = {}) {
       store.setState({ token: null, refreshToken: null, user: null });
     }
   }
+
   if (!result.ok) {
     const d = result.data;
     let msg = "Terjadi kesalahan";
