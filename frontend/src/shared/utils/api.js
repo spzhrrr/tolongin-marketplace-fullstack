@@ -2,7 +2,6 @@
 // Supports JSON body AND FormData for file uploads.
 import { store } from "../../app/store.js";
 
-// ✅ Perbaikan: Gunakan relative path jika production (biar satu domain)
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 export const API = BACKEND_URL ? `${BACKEND_URL}/api` : "/api";
 
