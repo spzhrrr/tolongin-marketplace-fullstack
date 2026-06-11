@@ -1,6 +1,9 @@
 import "./styles/main.css";
 import { bootstrap } from "./app/App.js";
-import "./shared/utils/ws.js"; // auto-connect WebSocket when authenticated
+import "./shared/utils/ws.js";
 
-document.addEventListener("DOMContentLoaded", bootstrap);
-if (document.readyState !== "loading") bootstrap();
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootstrap);
+} else {
+  bootstrap();
+}
