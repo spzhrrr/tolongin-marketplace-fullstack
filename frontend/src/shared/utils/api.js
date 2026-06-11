@@ -1,6 +1,6 @@
 import { store } from "../../app/store.js";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8001";
 export const API = BACKEND_URL ? `${BACKEND_URL}/api` : "/api";
 
 let refreshPromise = null;
