@@ -1,0 +1,471 @@
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ============================================================
+// BANK ACCOUNT - DEFINISIKAN DULU SEBELUM USER
+// ============================================================
+model BankAccount {
+  id            String   @id @default(cuid())
+  userId        String
+  bankName      String
+  accountNumber String
+  accountName   String
+  bankProof     String?
+  isDefault     Boolean  @default(false)
+  isVerified    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("bank_accounts")
+}
+
+// ============================================================
+// CATEGORY
+// ============================================================
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  icon      String?
+  createdAt DateTime  @default(now())
+
+  services  Service[]
+  jobs      Job[]
+
+  @@map("categories")
+}
+
+// ============================================================
+// USER
+// ============================================================
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  password        String
+  name            String
+  phone           String?
+  avatar          String?
+
+  role            String    @default("USER")
+
+  // Verifikasi LEVEL 1
+  emailVerified     Boolean   @default(false)
+  emailVerifiedAt   DateTime?
+  phoneVerified     Boolean   @default(false)
+  phoneVerifiedAt   DateTime?
+  emailOtpHash      String?
+  emailOtpExpiresAt DateTime?
+  phoneOtpHash      String?
+  phoneOtpExpiresAt DateTime?
+
+  // Verifikasi LEVEL 2 — KTP
+  ktpNumber         String?
+  ktpPhoto          String?
+  ktpSelfie         String?
+  ktpVerified       Boolean   @default(false)
+  ktpVerifiedAt     DateTime?
+  ktpRejectedReason String?
+  ktpSubmittedAt    DateTime?
+
+  // Profil
+  bio              String?
+  city             String?
+  skills           String   @default("[]")
+  rating           Float    @default(0)
+  reviewCount      Int      @default(0)
+  totalOrders      Int      @default(0)
+  completedOrders  Int      @default(0)
+  balance          Float    @default(0)
+  verified         Boolean  @default(false)
+
+  // Status akun
+  isActive          Boolean  @default(true)
+  isBanned          Boolean  @default(false)
+  bannedReason      String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relasi - PASTIKAN NAMA RELASI SAMA DENGAN YANG DI MODEL LAIN
+  services        Service[]      @relation("UserServices")
+  jobs            Job[]          @relation("UserJobs")
+  buyerOrders     Order[]        @relation("BuyerOrders")
+  sellerOrders    Order[]        @relation("SellerOrders")
+  applications    Application[]
+  reviewsGiven    Review[]       @relation("ReviewsGiven")
+  reviewsReceived Review[]       @relation("ReviewsReceived")
+  payments        Payment[]
+  withdrawals     Withdrawal[]
+  bankAccounts    BankAccount[]
+  notifications   Notification[]
+  messages        Message[]
+  disputesRaised  Dispute[]      @relation("DisputeRaiser")
+  passwordResets  PasswordReset[]
+  favorites       Favorite[]
+
+  @@map("users")
+}
+
+// ============================================================
+// SERVICE
+// ============================================================
+model Service {
+  id            String    @id @default(cuid())
+  sellerId      String
+  categoryId    String
+  title         String
+  description   String
+  price         Float
+  priceType     String    @default("FIXED")
+  deliveryTime  Int
+  revisionCount Int       @default(1)
+  images        String    @default("[]")
+  isActive      Boolean   @default(true)
+  isFeatured    Boolean   @default(false)
+  viewCount     Int       @default(0)
+  orderCount    Int       @default(0)
+  rating        Float     @default(0)
+  reviewCount   Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  seller        User      @relation("UserServices", fields: [sellerId], references: [id], onDelete: Cascade)
+  category      Category  @relation(fields: [categoryId], references: [id])
+  orders        Order[]
+  reviews       Review[]
+  favorites     Favorite[]
+
+  @@index([sellerId])
+  @@index([categoryId])
+  @@map("services")
+}
+
+// ============================================================
+// JOB
+// ============================================================
+model Job {
+  id                String        @id @default(cuid())
+  buyerId           String
+  categoryId        String
+  title             String
+  description       String
+  budget            Float
+  budgetType        String        @default("FIXED")
+  deadline          DateTime?
+  location          String?
+  isOnline          Boolean       @default(false)
+  skills            String        @default("[]")
+  status            String        @default("OPEN")
+  viewCount         Int           @default(0)
+  applicationsCount Int           @default(0)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  buyer             User          @relation("UserJobs", fields: [buyerId], references: [id], onDelete: Cascade)
+  category          Category      @relation(fields: [categoryId], references: [id])
+  applications      Application[]
+
+  @@index([buyerId])
+  @@index([categoryId])
+  @@map("jobs")
+}
+
+// ============================================================
+// APPLICATION
+// ============================================================
+model Application {
+  id               String    @id @default(cuid())
+  jobId            String
+  sellerId         String
+  coverLetter      String
+  proposedPrice    Float
+  proposedDuration Int
+  portfolioIds     String    @default("[]")
+  status           String    @default("PENDING")
+  rejectionReason  String?
+  reviewedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  job              Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  seller           User      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  order            Order?
+
+  @@unique([jobId, sellerId])
+  @@map("applications")
+}
+
+// ============================================================
+// ORDER
+// ============================================================
+model Order {
+  id                  String    @id @default(cuid())
+  buyerId             String
+  sellerId            String
+  serviceId           String?
+  applicationId       String?   @unique
+  title               String
+  amount              Float
+  fee                 Float     @default(0)
+  totalAmount         Float
+  status              String    @default("WAITING_CONFIRMATION")
+  escrowStatus        String    @default("UNPAID")
+  notes               String?
+  deliveryType        String    @default("DIGITAL")
+  deliveryAddress     String?
+  workProof           String?
+  workNote            String?
+  workSubmittedAt     DateTime?
+  workApprovedAt      DateTime?
+  autoReleaseAt       DateTime?
+  deadline            DateTime?
+  completedAt         DateTime?
+  cancelledAt         DateTime?
+  cancellationReason  String?
+  workSubmission       String?
+  workRejectedAt       DateTime?
+  workRejectionReason  String?
+  fundsReleasedAt      DateTime?
+  timeline            String    @default("[]")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  buyer               User         @relation("BuyerOrders", fields: [buyerId], references: [id])
+  seller              User         @relation("SellerOrders", fields: [sellerId], references: [id])
+  service             Service?     @relation(fields: [serviceId], references: [id])
+  application         Application? @relation(fields: [applicationId], references: [id])
+  reviews             Review[]
+  payments            Payment[]
+  dispute             Dispute?
+  conversation        Conversation?
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@map("orders")
+}
+
+// ============================================================
+// REVIEW
+// ============================================================
+model Review {
+  id           String    @id @default(cuid())
+  orderId      String
+  reviewerId   String
+  revieweeId   String
+  serviceId    String?
+  rating       Int
+  comment      String
+  images       String    @default("[]")
+  reply        String?
+  replyAt      DateTime?
+  isAnonymous  Boolean   @default(false)
+  helpfulCount Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  order        Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  reviewer     User      @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  reviewee     User      @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  service      Service?  @relation(fields: [serviceId], references: [id])
+
+  @@map("reviews")
+}
+
+// ============================================================
+// PAYMENT
+// ============================================================
+model Payment {
+  id            String    @id @default(cuid())
+  orderId       String
+  userId        String
+  amount        Float
+  fee           Float     @default(0)
+  totalAmount   Float
+  method        String
+  status        String    @default("PENDING")
+  transactionId String?
+  paymentUrl    String?
+  paidAt        DateTime?
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id])
+
+  @@map("payments")
+}
+
+// ============================================================
+// WITHDRAWAL
+// ============================================================
+model Withdrawal {
+  id              String    @id @default(cuid())
+  sellerId        String
+  amount          Float
+  bankName        String
+  accountNumber   String
+  accountName     String
+  status          String    @default("PENDING")
+  processedAt     DateTime?
+  processedBy     String?
+  transactionId   String?
+  rejectionReason String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  seller          User      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@map("withdrawals")
+}
+
+// ============================================================
+// NOTIFICATION
+// ============================================================
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  data      String?
+  actionUrl String?
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// ============================================================
+// CONVERSATION
+// ============================================================
+model Conversation {
+  id            String    @id @default(cuid())
+  participants  String
+  orderId       String?   @unique
+  lastMessage   String?
+  lastMessageAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  order         Order?    @relation(fields: [orderId], references: [id])
+  messages      Message[]
+
+  @@map("conversations")
+}
+
+// ============================================================
+// MESSAGE
+// ============================================================
+model Message {
+  id             String    @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String
+  attachment     String?
+  isRead         Boolean   @default(false)
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId])
+  @@map("messages")
+}
+
+// ============================================================
+// DISPUTE
+// ============================================================
+model Dispute {
+  id          String    @id @default(cuid())
+  orderId     String    @unique
+  raisedBy    String
+  reason      String
+  description String
+  evidence    String?
+  status      String    @default("PENDING")
+  resolution  String?
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  messages    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  raiser      User      @relation("DisputeRaiser", fields: [raisedBy], references: [id])
+
+  @@map("disputes")
+}
+
+// ============================================================
+// PASSWORD RESET
+// ============================================================
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_resets")
+}
+
+// ============================================================
+// PLATFORM SETTING
+// ============================================================
+model PlatformSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("platform_settings")
+}
+
+// ============================================================
+// ACTIVITY LOG
+// ============================================================
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String?
+  entityId  String?
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("activity_logs")
+}
+
+// ============================================================
+// FAVORITE
+// ============================================================
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  serviceId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, serviceId])
+  @@map("favorites")
+}
