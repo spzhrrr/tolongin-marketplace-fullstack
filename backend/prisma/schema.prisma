@@ -1,6 +1,5 @@
-
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -9,7 +8,7 @@ generator client {
 }
 
 // ============================================================
-// BANK ACCOUNT - DEFINISIKAN DULU SEBELUM USER
+// BANK ACCOUNT
 // ============================================================
 model BankAccount {
   id            String   @id @default(cuid())
@@ -56,7 +55,6 @@ model User {
 
   role            String    @default("USER")
 
-  // Verifikasi LEVEL 1
   emailVerified     Boolean   @default(false)
   emailVerifiedAt   DateTime?
   phoneVerified     Boolean   @default(false)
@@ -66,7 +64,6 @@ model User {
   phoneOtpHash      String?
   phoneOtpExpiresAt DateTime?
 
-  // Verifikasi LEVEL 2 — KTP
   ktpNumber         String?
   ktpPhoto          String?
   ktpSelfie         String?
@@ -75,7 +72,6 @@ model User {
   ktpRejectedReason String?
   ktpSubmittedAt    DateTime?
 
-  // Profil
   bio              String?
   city             String?
   skills           String   @default("[]")
@@ -86,7 +82,6 @@ model User {
   balance          Float    @default(0)
   verified         Boolean  @default(false)
 
-  // Status akun
   isActive          Boolean  @default(true)
   isBanned          Boolean  @default(false)
   bannedReason      String?
@@ -94,7 +89,6 @@ model User {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  // Relasi - PASTIKAN NAMA RELASI SAMA DENGAN YANG DI MODEL LAIN
   services        Service[]      @relation("UserServices")
   jobs            Job[]          @relation("UserJobs")
   buyerOrders     Order[]        @relation("BuyerOrders")

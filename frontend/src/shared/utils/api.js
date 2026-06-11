@@ -1,6 +1,6 @@
 import { store } from "../../app/store.js";
 
-const BACKEND_URL = "";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 export const API = BACKEND_URL ? `${BACKEND_URL}/api` : "/api";
 
 let refreshPromise = null;
@@ -51,7 +51,7 @@ async function rawRequest(
   const res = await fetch(url, {
     method,
     headers,
-    credentials: "include", // ✅ PENTING untuk cookie
+    credentials: "include",
     body: isFormData
       ? body
       : body !== undefined

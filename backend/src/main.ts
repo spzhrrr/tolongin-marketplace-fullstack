@@ -27,13 +27,15 @@ async function bootstrap() {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-  // ✅ CORS - Allow Vercel frontend domains (untuk monorepo atau terpisah)
+  // ✅ CORS - Allow Render and Vercel domains
   app.enableCors({
     origin: [
       'http://localhost:5173',
       'http://localhost:3000',
       'https://tolongin-marketplace-fullstack.vercel.app',
+      'https://tolongin.vercel.app',
       /\.vercel\.app$/,
+      /\.onrender\.com$/,
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
@@ -94,8 +96,8 @@ async function bootstrap() {
     swaggerOptions: { persistAuthorization: true },
   });
 
-  // ✅ Port untuk Vercel (gunakan PORT dari environment)
-  const port = process.env.PORT || 3000;
+  // ✅ Port untuk production (Render)
+  const port = process.env.PORT || 8001;
 
   await app.listen(port, '0.0.0.0');
 

@@ -2,14 +2,8 @@
   "name": "tolongin-backend",
   "version": "2.0.0",
   "private": true,
-  "exports": {
-    "./modules/*": "./src/modules/*",
-    "./common/*": "./src/common/*",
-    "./config/*": "./src/config/*"
-  },
   "scripts": {
     "build": "nest build",
-    "vercel-build": "npm run build",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
