@@ -54,17 +54,26 @@ const REFRESH_COOKIE = 'tolongin_rt';
 const REFRESH_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7d
 
 function setRefreshCookie(res: Response, token: string) {
+  const isProd = process.env.NODE_ENV === 'production';
   res.cookie(REFRESH_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: isProd,
+    // 'none' required for cross-origin (Railway API + Vercel frontend)
+    // 'lax' only works for same-site (same domain)
+    sameSite: isProd ? 'none' : 'lax',
     maxAge: REFRESH_COOKIE_MAX_AGE_MS,
     path: '/api/auth',
   });
 }
 
 function clearRefreshCookie(res: Response) {
-  res.clearCookie(REFRESH_COOKIE, { path: '/api/auth' });
+  const isProd = process.env.NODE_ENV === 'production';
+  res.clearCookie(REFRESH_COOKIE, {
+    path: '/api/auth',
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+  });
 }
 
 @ApiTags('Auth')
@@ -93,6 +102,11 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email & password' })
+  @ApiResponse({
+    status: 200,
+    description: 'Access token in body, refresh token in httpOnly cookie.',
+  })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -105,73 +119,75 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Exchange refresh token for new access+refresh pair',
-  })
+  @ApiOperation({ summary: 'Refresh access token using httpOnly cookie' })
   async refresh(
-    @Body() dto: RefreshDto,
+    @Body() body: RefreshDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponse> {
-    const cookieToken = (req as any).cookies?.[REFRESH_COOKIE];
-    const token = cookieToken || dto?.refreshToken;
-    const r = await this.authService.refresh(token);
+    // Accept token from: 1) httpOnly cookie, 2) body (fallback)
+    const tokenFromCookie = (req.cookies as any)?.[REFRESH_COOKIE];
+    const tokenFromBody = body?.refreshToken;
+    const refreshToken = tokenFromCookie || tokenFromBody;
+    if (!refreshToken) {
+      throw new BadRequestException('No refresh token provided');
+    }
+    const r = await this.authService.refresh(refreshToken);
     setRefreshCookie(res, r.refreshToken);
     return r;
   }
 
-  @ApiBearerAuth('jwt')
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Logout, blacklist tokens, clears refresh cookie' })
+  @ApiOperation({ summary: 'Logout (blacklist tokens & clear cookie)' })
   async logout(
-    @Headers('authorization') auth: string | undefined,
-    @Body() body: LogoutDto | undefined,
+    @Headers('authorization') auth: string,
+    @Body() body: LogoutDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const token = auth?.startsWith('Bearer ') ? auth.slice(7) : undefined;
-    const cookieToken = (req as any).cookies?.[REFRESH_COOKIE];
-    const refreshToken = cookieToken || body?.refreshToken;
-    const result = await this.authService.logout(token, refreshToken);
+    const accessToken = auth?.replace('Bearer ', '');
+    const tokenFromCookie = (req.cookies as any)?.[REFRESH_COOKIE];
+    const tokenFromBody = body?.refreshToken;
+    const refreshToken = tokenFromCookie || tokenFromBody;
     clearRefreshCookie(res);
-    return result;
+    return this.authService.logout(accessToken, refreshToken);
   }
 
   @ApiBearerAuth('jwt')
-  @Get('profile')
-  @ApiOperation({ summary: 'Get authenticated user profile' })
-  getProfile(@CurrentUser('id') userId: string) {
-    return this.authService.getProfile(userId);
+  @Get('me')
+  @ApiOperation({ summary: 'Get current user profile' })
+  async me(@CurrentUser('id') uid: string) {
+    return this.authService.getProfile(uid);
   }
 
   @ApiBearerAuth('jwt')
   @Put('profile')
-  @ApiOperation({ summary: 'Update profile' })
-  updateProfile(
-    @CurrentUser('id') userId: string,
+  @ApiOperation({ summary: 'Update current user profile' })
+  async updateProfile(
+    @CurrentUser('id') uid: string,
     @Body() dto: UpdateProfileDto,
   ) {
-    return this.authService.updateProfile(userId, dto);
+    return this.authService.updateProfile(uid, dto);
   }
 
   @ApiBearerAuth('jwt')
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Change password (requires old password)' })
+  @ApiOperation({ summary: 'Change password' })
   async changePassword(
-    @CurrentUser('id') userId: string,
+    @CurrentUser('id') uid: string,
     @Body() dto: ChangePasswordDto,
   ) {
-    await this.authService.changePassword(userId, dto);
+    await this.authService.changePassword(uid, dto);
     return { message: 'Password berhasil diubah' };
   }
 
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Request password reset' })
-  forgotPassword(@Body() dto: ForgotPasswordDto) {
+  @ApiOperation({ summary: 'Request password reset link' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
   }
 
@@ -185,19 +201,18 @@ export class AuthController {
   }
 
   @ApiBearerAuth('jwt')
-  @Post('send-verification')
+  @Post('send-verification-email')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Kirim ulang email verifikasi' })
-  async sendVerification(@CurrentUser('id') userId: string) {
-    return this.authService.sendVerificationEmail(userId);
+  @ApiOperation({ summary: 'Send email verification OTP' })
+  async sendVerificationEmail(@CurrentUser('id') uid: string) {
+    return this.authService.sendVerificationEmail(uid);
   }
 
   @Public()
   @Get('verify-email')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verifikasi email dengan token OTP' })
+  @ApiOperation({ summary: 'Verify email with OTP token' })
   async verifyEmail(@Query('token') token: string) {
-    const result = await this.authService.verifyEmail(token);
-    return result;
+    if (!token) throw new BadRequestException('Token diperlukan');
+    return this.authService.verifyEmail(token);
   }
 }
