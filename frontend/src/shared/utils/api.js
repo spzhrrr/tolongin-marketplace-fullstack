@@ -1,8 +1,6 @@
-// API client - centralised fetch with auth + auto-refresh on 401 (cookie-based).
-// Supports JSON body AND FormData for file uploads.
 import { store } from "../../app/store.js";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
+const BACKEND_URL = "";
 export const API = BACKEND_URL ? `${BACKEND_URL}/api` : "/api";
 
 let refreshPromise = null;
