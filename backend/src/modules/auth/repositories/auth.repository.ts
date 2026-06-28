@@ -20,6 +20,21 @@ export class AuthRepository {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
+<<<<<<< HEAD
+=======
+  /**
+   * Cek apakah user memiliki minimal satu rekening bank yang sudah diverifikasi.
+   * Dipakai untuk men-derive flag `bankVerified` (kolom ini sengaja tidak ada
+   * di model User — sumber kebenaran ada di tabel BankAccount).
+   */
+  async hasVerifiedBankAccount(userId: string): Promise<boolean> {
+    const count = await this.prisma.bankAccount.count({
+      where: { userId, isVerified: true },
+    });
+    return count > 0;
+  }
+
+>>>>>>> ec26484 (implementasi demo)
   createUser(data: Prisma.UserCreateInput): Promise<User> {
     return this.prisma.user.create({ data });
   }

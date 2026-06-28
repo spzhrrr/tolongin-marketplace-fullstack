@@ -141,7 +141,11 @@ export class AdminController {
     return this.adminService.updateSettings(dto, admin);
   }
 
+<<<<<<< HEAD
   // ==================== KYC MANAGEMENT ====================
+=======
+  //       ====== KYC MANAGEMENT       ======
+>>>>>>> ec26484 (implementasi demo)
   @Get('kyc')
   @ApiOperation({ summary: 'Get KYC submissions' })
   async getKycSubmissions(@Query('status') status: string) {

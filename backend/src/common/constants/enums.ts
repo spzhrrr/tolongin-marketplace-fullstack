@@ -122,11 +122,19 @@ export type DisputeStatus =
   (typeof DISPUTE_STATUS)[keyof typeof DISPUTE_STATUS];
 export const DISPUTE_STATUS_VALUES = Object.values(DISPUTE_STATUS);
 
+<<<<<<< HEAD
 // ============================================================
 // Order state machine — sekarang tidak lagi pakai role 'buyer'/'seller',
 // melainkan posisi user dalam order (apakah dia BUYER atau SELLER pada order itu).
 // Konsumen di service mengevaluasi `userId === order.buyerId` dst.
 // ============================================================
+=======
+//                         ====
+// Order state machine — sekarang tidak lagi pakai role 'buyer'/'seller',
+// melainkan posisi user dalam order (apakah dia BUYER atau SELLER pada order itu).
+// Konsumen di service mengevaluasi `userId === order.buyerId` dst.
+//                         ====
+>>>>>>> ec26484 (implementasi demo)
 export const ORDER_TRANSITIONS: Record<
   OrderStatus,
   Partial<Record<'buyer' | 'seller' | 'admin', OrderStatus[]>>

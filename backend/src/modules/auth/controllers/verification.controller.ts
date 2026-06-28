@@ -29,6 +29,10 @@ import { EMAIL_SERVICE } from '../../../integrations/email/email.interface';
 import type { IEmailService } from '../../../integrations/email/email.interface';
 import { SMS_SERVICE } from '../../../integrations/sms/sms.interface';
 import type { ISmsService } from '../../../integrations/sms/sms.interface';
+<<<<<<< HEAD
+=======
+import { NotificationsService } from '../../notifications/services/notifications.service';
+>>>>>>> ec26484 (implementasi demo)
 
 // Definisikan tipe untuk file
 interface MulterFile {
@@ -83,12 +87,20 @@ export class VerificationController {
     private readonly prisma: PrismaService,
     @Inject(EMAIL_SERVICE) private readonly email: IEmailService,
     @Inject(SMS_SERVICE) private readonly sms: ISmsService,
+<<<<<<< HEAD
+=======
+    private readonly notifications: NotificationsService,
+>>>>>>> ec26484 (implementasi demo)
   ) {}
 
   @Get('status')
   @ApiOperation({ summary: 'Get my verification status' })
   async status(@CurrentUser('id') uid: string) {
+<<<<<<< HEAD
     const user = await this.prisma.user.findUnique({
+=======
+    let user = await this.prisma.user.findUnique({
+>>>>>>> ec26484 (implementasi demo)
       where: { id: uid },
       include: {
         bankAccounts: {
@@ -102,7 +114,54 @@ export class VerificationController {
       throw new BadRequestException('User not found');
     }
 
+<<<<<<< HEAD
     const defaultBank = user.bankAccounts[0];
+=======
+    const readyForDemoApproval =
+      process.env.DEMO_MODE_ENABLED === 'true' &&
+      !user.ktpVerified &&
+      !user.ktpRejectedReason &&
+      user.ktpSubmittedAt &&
+      Date.now() - user.ktpSubmittedAt.getTime() >= 2000;
+    if (readyForDemoApproval) {
+      user = await this.prisma.user.update({
+        where: { id: uid },
+        data: { ktpVerified: true, ktpVerifiedAt: new Date(), verified: true },
+        include: {
+          bankAccounts: { where: { isDefault: true }, take: 1 },
+        },
+      });
+      await this.notifications.notify(
+        uid,
+        'KYC',
+        '🎉 Akun Anda telah terverifikasi!',
+        'Dokumen KTP sudah disetujui. Sekarang Anda dapat menawarkan jasa.',
+        { verification: 'KTP', status: 'VERIFIED' },
+        '/verification',
+      );
+    }
+
+    let defaultBank = user.bankAccounts[0];
+    const bankPendingAuto =
+      process.env.DEMO_MODE_ENABLED === 'true' &&
+      defaultBank &&
+      !defaultBank.isVerified &&
+      Date.now() - defaultBank.createdAt.getTime() >= 2000;
+    if (bankPendingAuto) {
+      defaultBank = await this.prisma.bankAccount.update({
+        where: { id: defaultBank.id },
+        data: { isVerified: true },
+      });
+      await this.notifications.notify(
+        uid,
+        'KYC',
+        '🎉 Rekening bank terverifikasi!',
+        'Rekening bank Anda sudah disetujui. Anda dapat posting jasa dan menarik dana.',
+        { verification: 'BANK', status: 'VERIFIED' },
+        '/verification',
+      );
+    }
+>>>>>>> ec26484 (implementasi demo)
 
     return {
       ktp: {
@@ -134,7 +193,11 @@ export class VerificationController {
     };
   }
 
+<<<<<<< HEAD
   // ==================== EMAIL OTP ====================
+=======
+  //       ====== EMAIL OTP       ======
+>>>>>>> ec26484 (implementasi demo)
   @Post('email/request')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Send OTP to email' })
@@ -195,6 +258,18 @@ export class VerificationController {
       },
     });
 
+<<<<<<< HEAD
+=======
+    await this.notifications.notify(
+      uid,
+      'KYC',
+      '✅ Email berhasil diverifikasi!',
+      'Alamat email Anda sudah terverifikasi.',
+      { verification: 'EMAIL', status: 'VERIFIED' },
+      '/verification',
+    );
+
+>>>>>>> ec26484 (implementasi demo)
     return { ok: true };
   }
 
@@ -209,7 +284,11 @@ export class VerificationController {
     return this.emailConfirm(uid, body);
   }
 
+<<<<<<< HEAD
   // ==================== PHONE OTP ====================
+=======
+  //       ====== PHONE OTP       ======
+>>>>>>> ec26484 (implementasi demo)
   @Post('phone/request')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Send OTP to phone' })
@@ -279,6 +358,18 @@ export class VerificationController {
       },
     });
 
+<<<<<<< HEAD
+=======
+    await this.notifications.notify(
+      uid,
+      'KYC',
+      '✅ Nomor telepon berhasil diverifikasi!',
+      'Nomor telepon Anda sudah terverifikasi.',
+      { verification: 'PHONE', status: 'VERIFIED' },
+      '/verification',
+    );
+
+>>>>>>> ec26484 (implementasi demo)
     return { ok: true };
   }
 
@@ -293,7 +384,11 @@ export class VerificationController {
     return this.phoneConfirm(uid, body);
   }
 
+<<<<<<< HEAD
   // ==================== KTP UPLOAD (FILE) ====================
+=======
+  //       ====== KTP UPLOAD (FILE)       ======
+>>>>>>> ec26484 (implementasi demo)
   @Post('ktp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Upload KTP file for verification' })
@@ -333,14 +428,27 @@ export class VerificationController {
     };
   }
 
+<<<<<<< HEAD
   // ==================== BANK ACCOUNT (TIDAK PAKAI FILE UPLOAD, LANGSUNG KE BankAccount) ====================
+=======
+  //       ====== BANK ACCOUNT (TIDAK PAKAI FILE UPLOAD, LANGSUNG KE BankAccount)       ======
+>>>>>>> ec26484 (implementasi demo)
   @Post('bank')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Submit bank account for verification' })
   async submitBank(
     @CurrentUser('id') uid: string,
     @Body()
+<<<<<<< HEAD
     body: { bankName: string; accountNumber: string; accountName: string },
+=======
+    body: {
+      bankName: string;
+      accountNumber: string;
+      accountName: string;
+      bankProof?: string;
+    },
+>>>>>>> ec26484 (implementasi demo)
   ) {
     if (!body.bankName || !body.accountNumber || !body.accountName) {
       throw new BadRequestException('Lengkapi data bank');
@@ -359,6 +467,10 @@ export class VerificationController {
           bankName: body.bankName,
           accountNumber: body.accountNumber,
           accountName: body.accountName,
+<<<<<<< HEAD
+=======
+          bankProof: body.bankProof || existingBank.bankProof,
+>>>>>>> ec26484 (implementasi demo)
           isVerified: false,
         },
       });
@@ -370,12 +482,17 @@ export class VerificationController {
           bankName: body.bankName,
           accountNumber: body.accountNumber,
           accountName: body.accountName,
+<<<<<<< HEAD
+=======
+          bankProof: body.bankProof,
+>>>>>>> ec26484 (implementasi demo)
           isDefault: true,
           isVerified: false,
         },
       });
     }
 
+<<<<<<< HEAD
     return {
       ok: true,
       message: 'Bank data submitted, waiting for admin verification',
@@ -383,6 +500,24 @@ export class VerificationController {
   }
 
   // ==================== LEGACY ENDPOINTS ====================
+=======
+    await this.notifications.notify(
+      uid,
+      'KYC',
+      '📤 Data rekening bank dikirim!',
+      'Data rekening sedang menunggu pemeriksaan. Refresh halaman ini dalam beberapa detik.',
+      { verification: 'BANK', status: 'PENDING' },
+      '/verification',
+    );
+
+    return {
+      ok: true,
+      message: 'Bank data submitted, waiting for verification',
+    };
+  }
+
+  //       ====== LEGACY ENDPOINTS       ======
+>>>>>>> ec26484 (implementasi demo)
   @Post('ktp/submit')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Submit KTP data (JSON) for verification' })
@@ -408,6 +543,18 @@ export class VerificationController {
       },
     });
 
+<<<<<<< HEAD
+=======
+    await this.notifications.notify(
+      uid,
+      'KYC',
+      '📤 Dokumen KTP berhasil dikirim!',
+      'Dokumen sedang menunggu pemeriksaan admin.',
+      { verification: 'KTP', status: 'PENDING' },
+      '/verification',
+    );
+
+>>>>>>> ec26484 (implementasi demo)
     return { ok: true, status: 'PENDING' };
   }
 
@@ -431,7 +578,11 @@ export class VerificationController {
     return { ok: true };
   }
 
+<<<<<<< HEAD
   // ==================== DEMO ENDPOINTS (FOR TESTING) ====================
+=======
+  //       ====== DEMO ENDPOINTS (FOR TESTING)       ======
+>>>>>>> ec26484 (implementasi demo)
   @Post('demo/ktp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'DEMO: Instant KTP verification' })

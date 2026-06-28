@@ -7,6 +7,10 @@ import {
   Post,
   Put,
   Query,
+<<<<<<< HEAD
+=======
+  UseGuards,
+>>>>>>> ec26484 (implementasi demo)
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JobsService } from '../services/jobs.service';
@@ -15,6 +19,10 @@ import { Public } from '../../../common/decorators/public.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { ROLE } from '../../../common/constants/enums';
+<<<<<<< HEAD
+=======
+import { VerifiedTransactionGuard } from '../../../common/guards/verification.guards';
+>>>>>>> ec26484 (implementasi demo)
 
 @ApiTags('Jobs')
 @Controller('jobs')
@@ -37,8 +45,14 @@ export class JobsController {
 
   @ApiBearerAuth('jwt')
   @Roles(ROLE.USER)
+<<<<<<< HEAD
   @Post()
   @ApiOperation({ summary: '[Buyer] Post a new job' })
+=======
+  @UseGuards(VerifiedTransactionGuard)
+  @Post()
+  @ApiOperation({ summary: '[Buyer] Post a new job (requires verification)' })
+>>>>>>> ec26484 (implementasi demo)
   create(@CurrentUser('id') buyerId: string, @Body() dto: CreateJobDto) {
     return this.jobsService.create(buyerId, dto);
   }

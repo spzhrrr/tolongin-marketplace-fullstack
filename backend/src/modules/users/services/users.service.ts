@@ -1,4 +1,12 @@
+<<<<<<< HEAD
 import { Injectable, NotFoundException } from '@nestjs/common';
+=======
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
+>>>>>>> ec26484 (implementasi demo)
 import { UsersRepository } from '../repositories/users.repository';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -11,7 +19,11 @@ export class UsersService {
     private readonly usersRepository: UsersRepository,
   ) {}
 
+<<<<<<< HEAD
   async getPublicProfile(id: string) {
+=======
+  async getPublicProfile(id: string, viewerId?: string) {
+>>>>>>> ec26484 (implementasi demo)
     const u = await this.repo.findById(id);
     if (!u) throw new NotFoundException('User not found');
 
@@ -27,16 +39,26 @@ export class UsersService {
     }
 
     const { password, emailOtpHash, phoneOtpHash, ...rest } = u as any;
+<<<<<<< HEAD
+=======
+    const isOwner = viewerId === id;
+>>>>>>> ec26484 (implementasi demo)
 
     return {
       ...rest,
       skills: skillsArray,
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
       email: isOwner ? rest.email : undefined,
       phone: isOwner ? rest.phone : undefined,
       balance: isOwner ? rest.balance : undefined,
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+      email: isOwner ? rest.email : undefined,
+      phone: isOwner ? rest.phone : undefined,
+      balance: isOwner ? rest.balance : undefined,
+>>>>>>> ec26484 (implementasi demo)
     };
   }
   async update(userId: string, dto: UpdateUserDto) {
@@ -90,6 +112,14 @@ export class UsersService {
         return {
           ...r,
           images: imagesArray,
+<<<<<<< HEAD
+=======
+          reviewer: {
+            id: r.reviewer?.id,
+            name: r.reviewer?.name,
+            avatar: r.reviewer?.avatar,
+          },
+>>>>>>> ec26484 (implementasi demo)
         };
       }),
       rating: avgRating,
@@ -101,6 +131,98 @@ export class UsersService {
     return this.repo.findJobsByUserId(userId);
   }
 
+<<<<<<< HEAD
+=======
+  async getWorkHistory(userId: string) {
+    const orders = await this.prisma.order.findMany({
+      where: { sellerId: userId },
+      include: {
+        buyer: { select: { id: true, name: true, avatar: true } },
+        service: { select: { id: true, title: true, category: true } },
+        application: {
+          include: {
+            job: {
+              include: {
+                category: true,
+                buyer: { select: { id: true, name: true, avatar: true } },
+              },
+            },
+          },
+        },
+        reviews: {
+          where: { revieweeId: userId },
+          take: 1,
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return orders.map((o) => ({
+      id: o.id,
+      type: o.serviceId ? 'SERVICE_ORDER' : 'JOB_APPLICATION',
+      label: o.serviceId ? 'Jasa Ditawarkan' : 'Job Cari Kerja',
+      title: o.service?.title || o.application?.job?.title || o.title,
+      status: o.status,
+      amount: o.amount,
+      completedAt: o.completedAt,
+      createdAt: o.createdAt,
+      category: o.service?.category || o.application?.job?.category || null,
+      client: o.buyer,
+      review: o.reviews[0] || null,
+    }));
+  }
+
+  async getPortfolio(userId: string) {
+    return this.repo.findPortfolio(userId);
+  }
+
+  async addPortfolio(
+    userId: string,
+    dto: {
+      title: string;
+      description?: string;
+      imageUrl?: string;
+      projectUrl?: string;
+    },
+  ) {
+    return this.repo.createPortfolio({
+      user: { connect: { id: userId } },
+      title: dto.title,
+      description: dto.description,
+      imageUrl: dto.imageUrl,
+      projectUrl: dto.projectUrl,
+    });
+  }
+
+  async deletePortfolio(id: string, userId: string) {
+    const item = await this.repo.findPortfolioById(id);
+    if (!item) throw new NotFoundException('Portofolio tidak ditemukan');
+    if (item.userId !== userId)
+      throw new ForbiddenException(
+        'Anda tidak berhak menghapus portofolio ini',
+      );
+    await this.repo.deletePortfolio(id);
+    return { message: 'Portofolio dihapus' };
+  }
+
+  async getStats(userId: string) {
+    const user = await this.repo.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const earnings = await this.repo.aggregateSellerStats(userId);
+    const totalOrders = await this.repo.countOrders(userId);
+    const ratingAgg = await this.repo.aggregateRating(userId);
+
+    return {
+      totalEarnings: earnings._sum.amount || 0,
+      completedOrders: earnings._count || 0,
+      totalOrders,
+      averageRating: ratingAgg._avg.rating || 0,
+      reviewCount: ratingAgg._count || 0,
+    };
+  }
+
+>>>>>>> ec26484 (implementasi demo)
   async getCompleteProfile(id: string) {
     const userData = await this.repo.findUserWithAllData(id);
     if (!userData) throw new NotFoundException('User not found');

@@ -58,7 +58,10 @@ export function LoginPage({ mount }) {
           </div>
           <button class="btn btn-primary btn-block btn-lg" type="submit" data-testid="login-submit-btn">Masuk</button>
           <div class="auth-divider">atau</div>
+<<<<<<< HEAD
           <p class="text-center text-sm text-muted">Demo: <strong>admin@tolongin.com</strong> / <strong>Admin@123</strong></p>
+=======
+>>>>>>> ec26484 (implementasi demo)
         </form>
       </div>
     </div>`;

@@ -84,7 +84,13 @@ export function RegisterPage({ mount }) {
     e.preventDefault();
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
+<<<<<<< HEAD
     const phone = document.getElementById("phone").value.trim();
+=======
+
+    const phone = document.getElementById("phone").value.trim();
+
+>>>>>>> ec26484 (implementasi demo)
     const password = document.getElementById("password").value;
     const confirm = document.getElementById("confirm").value;
     if (name.length < 3) return toast("Nama minimal 3 karakter", "error");
@@ -106,8 +112,13 @@ export function RegisterPage({ mount }) {
       if (phone) body.phone = phone;
       const { token, user } = await api.post("/auth/register", body);
       store.setState({ token, user });
+<<<<<<< HEAD
       toast("Akun berhasil dibuat! Selamat datang 🎉", "success");
       router.navigate("/dashboard");
+=======
+      toast("📩 Selamat datang! Silakan verifikasi email Anda.", "success");
+      router.navigate("/verification");
+>>>>>>> ec26484 (implementasi demo)
     } catch (err) {
       toast(err.message, "error");
       btn.disabled = false;
@@ -149,7 +160,11 @@ export function ForgotPasswordPage({ mount }) {
     <div class="container-sm" style="padding:4rem 1rem">
       <div class="card card-pad-lg">
         <h1>Lupa Password</h1>
+<<<<<<< HEAD
         <p class="text-muted">Masukkan email Anda, kami akan kirim token reset (demo akan tampil langsung).</p>
+=======
+        <p class="text-muted">Masukkan email Anda, kami akan kirim link reset password.</p>
+>>>>>>> ec26484 (implementasi demo)
         <form id="forgot-form">
           <div class="form-group">
             <label class="label">Email</label>

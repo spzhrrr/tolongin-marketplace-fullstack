@@ -8,6 +8,10 @@ import {
   Post,
   Query,
   BadRequestException,
+<<<<<<< HEAD
+=======
+  UseGuards,
+>>>>>>> ec26484 (implementasi demo)
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OrdersService } from '../services/orders.service';
@@ -15,10 +19,24 @@ import {
   CancelOrderDto,
   CreateOrderFromServiceDto,
   RevisionRequestDto,
+<<<<<<< HEAD
 } from '../dto/order.dto';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { ROLE, ORDER_STATUS, OrderStatus } from '../../../common/constants/enums';
+=======
+  SubmitWorkDto,
+  OpenDisputeDto,
+} from '../dto/order.dto';
+import { Roles } from '../../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import {
+  ROLE,
+  ORDER_STATUS,
+  OrderStatus,
+} from '../../../common/constants/enums';
+import { VerifiedTransactionGuard } from '../../../common/guards/verification.guards';
+>>>>>>> ec26484 (implementasi demo)
 
 @ApiTags('Orders')
 @ApiBearerAuth('jwt')
@@ -27,6 +45,10 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Roles(ROLE.USER)
+<<<<<<< HEAD
+=======
+  @UseGuards(VerifiedTransactionGuard)
+>>>>>>> ec26484 (implementasi demo)
   @Post('service/:serviceId')
   @ApiOperation({ summary: '[Buyer] Create order from a service' })
   fromService(
@@ -44,6 +66,10 @@ export class OrdersController {
   }
 
   @Roles(ROLE.USER)
+<<<<<<< HEAD
+=======
+  @UseGuards(VerifiedTransactionGuard)
+>>>>>>> ec26484 (implementasi demo)
   @Post('application/:applicationId')
   @ApiOperation({
     summary: '[Buyer] Create order from an accepted application',
@@ -146,6 +172,86 @@ export class OrdersController {
   }
 
   @Roles(ROLE.USER)
+<<<<<<< HEAD
+=======
+  @Post(':id/work-submission')
+  @ApiOperation({ summary: '[Seller] Submit work proof for buyer approval' })
+  submitWork(
+    @Param('id') id: string,
+    @CurrentUser('id') uid: string,
+    @CurrentUser('role') role: string,
+    @Body() dto: SubmitWorkDto,
+  ) {
+    return this.ordersService.submitWork(id, uid, role, dto);
+  }
+
+  @Roles(ROLE.USER)
+  @Post(':id/work-revision')
+  @ApiOperation({
+    summary: '[Buyer] Reject submitted work and request revision',
+  })
+  rejectWork(
+    @Param('id') id: string,
+    @CurrentUser('id') uid: string,
+    @CurrentUser('role') role: string,
+    @Body() dto: RevisionRequestDto,
+  ) {
+    return this.ordersService.rejectWork(id, uid, role, dto);
+  }
+
+  // ====== Alias endpoint sesuai spesifikasi fitur work submission ======
+
+  @Roles(ROLE.USER)
+  @Post(':id/submit-work')
+  @ApiOperation({
+    summary: '[Seller] Kumpulkan bukti hasil kerja (note + file URLs)',
+  })
+  submitWorkAlias(
+    @Param('id') id: string,
+    @CurrentUser('id') uid: string,
+    @CurrentUser('role') role: string,
+    @Body() dto: SubmitWorkDto,
+  ) {
+    return this.ordersService.submitWork(id, uid, role, dto);
+  }
+
+  @Roles(ROLE.USER)
+  @Post(':id/approve-work')
+  @ApiOperation({ summary: '[Buyer] Setujui hasil kerja (order selesai)' })
+  approveWork(
+    @Param('id') id: string,
+    @CurrentUser('id') uid: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.ordersService.approveWork(id, uid, role);
+  }
+
+  @Roles(ROLE.USER)
+  @Post(':id/request-revision')
+  @ApiOperation({ summary: '[Buyer] Minta revisi hasil kerja dengan alasan' })
+  requestRevisionAlias(
+    @Param('id') id: string,
+    @CurrentUser('id') uid: string,
+    @CurrentUser('role') role: string,
+    @Body() dto: RevisionRequestDto,
+  ) {
+    return this.ordersService.rejectWork(id, uid, role, dto);
+  }
+
+  @Roles(ROLE.USER)
+  @Post(':id/dispute')
+  @ApiOperation({ summary: '[Buyer/Seller] Buka sengketa pada order' })
+  openDispute(
+    @Param('id') id: string,
+    @CurrentUser('id') uid: string,
+    @CurrentUser('role') role: string,
+    @Body() dto: OpenDisputeDto,
+  ) {
+    return this.ordersService.openDispute(id, uid, role, dto);
+  }
+
+  @Roles(ROLE.USER)
+>>>>>>> ec26484 (implementasi demo)
   @Post(':id/revision')
   @ApiOperation({ summary: '[Buyer] Request revision' })
   revision(
@@ -236,7 +342,10 @@ export class OrdersController {
     return this.ordersService.getInvoice(id, uid, role);
   }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
 
   @Roles(ROLE.USER)
   @Post(':id/demo-auto')
@@ -296,5 +405,8 @@ export class OrdersController {
   ) {
     return this.ordersService.complete(id, uid, role);
   }
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
 }

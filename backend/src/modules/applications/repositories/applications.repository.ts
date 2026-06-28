@@ -10,6 +10,16 @@ export class ApplicationsRepository {
     return this.prisma.application.create({ data });
   }
 
+<<<<<<< HEAD
+=======
+  async getUserById(userId: string) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, avatar: true },
+    });
+  }
+
+>>>>>>> ec26484 (implementasi demo)
   findById(id: string) {
     return this.prisma.application.findUnique({
       where: { id },

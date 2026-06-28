@@ -158,6 +158,24 @@ export class ServiceQueryDto {
   @IsNumber()
   maxPrice?: number;
 
+<<<<<<< HEAD
+=======
+  @ApiProperty({ required: false, description: 'Rating minimum (0-5)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  minRating?: number;
+
+  @ApiProperty({
+    required: false,
+    description: 'Maksimum waktu pengerjaan (hari)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  maxDeliveryDays?: number;
+
+>>>>>>> ec26484 (implementasi demo)
   @ApiProperty({ required: false, default: 1 })
   @IsOptional()
   @Type(() => Number)
@@ -170,7 +188,15 @@ export class ServiceQueryDto {
   @IsInt()
   limit?: number;
 
+<<<<<<< HEAD
   @ApiProperty({ required: false, enum: ['createdAt', 'price', 'rating'] })
+=======
+  @ApiProperty({
+    required: false,
+    description:
+      'Pengurutan: createdAt|price|rating ATAU alias newest|price_asc|price_desc|rating_desc',
+  })
+>>>>>>> ec26484 (implementasi demo)
   @IsOptional()
   @IsString()
   sortBy?: string;

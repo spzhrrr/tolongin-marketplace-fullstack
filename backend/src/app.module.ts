@@ -1,5 +1,12 @@
+<<<<<<< HEAD
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+=======
+// backend/src/app.module.ts
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+>>>>>>> ec26484 (implementasi demo)
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import appConfig from './config/app.config';
@@ -22,24 +29,35 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { DisputesModule } from './modules/disputes/disputes.module';
 import { AdminModule } from './modules/admin/admin.module';
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { SimulationModule } from './modules/simulation/simulation.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+import { SimulationModule } from './modules/simulation/simulation.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
+>>>>>>> ec26484 (implementasi demo)
 import { CompatModule } from './compat/compat.module';
 
 @Module({
   imports: [
 <<<<<<< HEAD
+<<<<<<< HEAD
     ConfigModule.forRoot({ isGlobal: true, load: [appConfig] }),
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
     ConfigModule.forRoot({
       isGlobal: true,
       load: [appConfig],
       validate: validateEnvironment,
     }),
     ScheduleModule.forRoot(),
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
     ThrottlerModule.forRoot([
       { name: 'short', ttl: 1000, limit: 5 },
       { name: 'medium', ttl: 10_000, limit: 30 },
@@ -63,10 +81,15 @@ import { CompatModule } from './compat/compat.module';
     DisputesModule,
     AdminModule,
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     SimulationModule,
     UploadsModule,
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+    SimulationModule,
+    UploadsModule,
+>>>>>>> ec26484 (implementasi demo)
     CompatModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

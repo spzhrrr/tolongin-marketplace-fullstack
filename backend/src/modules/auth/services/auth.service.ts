@@ -34,6 +34,10 @@ import { EMAIL_SERVICE } from '../../../integrations/email/email.interface';
 import type { IEmailService } from '../../../integrations/email/email.interface';
 import { SMS_SERVICE } from '../../../integrations/sms/sms.interface';
 import type { ISmsService } from '../../../integrations/sms/sms.interface';
+<<<<<<< HEAD
+=======
+import { NotificationsService } from '../../notifications/services/notifications.service';
+>>>>>>> ec26484 (implementasi demo)
 
 const BCRYPT_ROUNDS = 12;
 
@@ -49,10 +53,18 @@ export class AuthService {
     private readonly audit: AuditLogService,
     @Inject(EMAIL_SERVICE) private readonly email: IEmailService,
     @Inject(SMS_SERVICE) private readonly sms: ISmsService,
+<<<<<<< HEAD
   ) {}
 
   // ---------- Helpers ----------
   toPublic(u: User): PublicUser {
+=======
+    private readonly notifications: NotificationsService,
+  ) {}
+
+  // ---------- Helpers ----------
+  toPublic(u: User, bankVerified = false): PublicUser {
+>>>>>>> ec26484 (implementasi demo)
     return {
       id: u.id,
       email: u.email,
@@ -67,7 +79,11 @@ export class AuthService {
       emailVerified: (u as any).emailVerified ?? false,
       phoneVerified: (u as any).phoneVerified ?? false,
       ktpVerified: (u as any).ktpVerified ?? false,
+<<<<<<< HEAD
       bankVerified: (u as any).bankVerified ?? false,
+=======
+      bankVerified,
+>>>>>>> ec26484 (implementasi demo)
       ktpRejectedReason: (u as any).ktpRejectedReason,
       ktpSubmittedAt: (u as any).ktpSubmittedAt,
       rating: (u as any).rating ?? 0,
@@ -111,11 +127,20 @@ export class AuthService {
     });
   }
 
+<<<<<<< HEAD
   private buildTokens(u: User): AuthResponse {
     return {
       token: this.signAccess(u),
       refreshToken: this.signRefresh(u),
       user: this.toPublic(u),
+=======
+  private async buildTokens(u: User): Promise<AuthResponse> {
+    const bankVerified = await this.repo.hasVerifiedBankAccount(u.id);
+    return {
+      token: this.signAccess(u),
+      refreshToken: this.signRefresh(u),
+      user: this.toPublic(u, bankVerified),
+>>>>>>> ec26484 (implementasi demo)
     };
   }
 
@@ -146,6 +171,17 @@ export class AuthService {
       email: user.email,
       role: user.role,
     });
+<<<<<<< HEAD
+=======
+    await this.notifications.notify(
+      user.id,
+      'KYC',
+      '📩 Selamat datang di Tolongin!',
+      `Kode verifikasi telah dikirim ke ${user.email}.`,
+      { verification: 'EMAIL', status: 'PENDING' },
+      '/verification',
+    );
+>>>>>>> ec26484 (implementasi demo)
     return this.buildTokens(user);
   }
 
@@ -196,7 +232,12 @@ export class AuthService {
   async getProfile(userId: string): Promise<PublicUser> {
     const u = await this.repo.findById(userId);
     if (!u) throw new NotFoundException('User not found');
+<<<<<<< HEAD
     return this.toPublic(u);
+=======
+    const bankVerified = await this.repo.hasVerifiedBankAccount(userId);
+    return this.toPublic(u, bankVerified);
+>>>>>>> ec26484 (implementasi demo)
   }
 
   async updateProfile(
@@ -205,7 +246,12 @@ export class AuthService {
   ): Promise<PublicUser> {
     const updated = await this.repo.updateUser(userId, { ...dto });
     await this.audit.log(userId, 'PROFILE_UPDATED', 'User', userId, dto as any);
+<<<<<<< HEAD
     return this.toPublic(updated);
+=======
+    const bankVerified = await this.repo.hasVerifiedBankAccount(userId);
+    return this.toPublic(updated, bankVerified);
+>>>>>>> ec26484 (implementasi demo)
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
@@ -271,12 +317,23 @@ export class AuthService {
       link: mockLink,
     };
   }
+<<<<<<< HEAD
   async validateUser(payload: JwtPayload): Promise<User | null> {
+=======
+  async validateUser(
+    payload: JwtPayload,
+  ): Promise<(User & { bankVerified: boolean }) | null> {
+>>>>>>> ec26484 (implementasi demo)
     if (payload.type && payload.type !== 'access') return null;
     if (payload.jti && this.blacklist.has(payload.jti)) return null;
     const u = await this.repo.findById(payload.sub);
     if (!u || !u.isActive) return null;
+<<<<<<< HEAD
     return u;
+=======
+    const bankVerified = await this.repo.hasVerifiedBankAccount(u.id);
+    return Object.assign(u, { bankVerified });
+>>>>>>> ec26484 (implementasi demo)
   }
   async verifyEmail(token: string): Promise<{ message: string }> {
     const user = await this.repo.findByEmailOtp(token);

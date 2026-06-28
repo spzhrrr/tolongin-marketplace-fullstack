@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+// frontend/src/features/jobs/JobsPages.js
+
+>>>>>>> ec26484 (implementasi demo)
 import { api } from "../../shared/utils/api.js";
 import {
   escape,
@@ -22,7 +27,10 @@ import { router } from "../../app/router.js";
  * - Self-job blocking (caller already does this)
  */
 function openBidDialog(j) {
+<<<<<<< HEAD
   // Defensive check: pastikan j ada
+=======
+>>>>>>> ec26484 (implementasi demo)
   if (!j) return;
 
   const minP = Math.round((j.budget || 0) * 0.5);
@@ -83,7 +91,10 @@ function openBidDialog(j) {
     }).format(parseFloat(src.value || 0));
   };
 
+<<<<<<< HEAD
   // Event listeners untuk price sync
+=======
+>>>>>>> ec26484 (implementasi demo)
   const priceInput = $("#bid-price");
   const rangeInput = $("#bid-range");
   if (priceInput && rangeInput) {
@@ -91,7 +102,10 @@ function openBidDialog(j) {
     rangeInput.addEventListener("input", (e) => sync(e.target, priceInput));
   }
 
+<<<<<<< HEAD
   // Event listener untuk cover letter counter
+=======
+>>>>>>> ec26484 (implementasi demo)
   const coverInput = $("#bid-cover");
   if (coverInput) {
     coverInput.addEventListener("input", (e) => {
@@ -101,7 +115,10 @@ function openBidDialog(j) {
     });
   }
 
+<<<<<<< HEAD
   // Preview button
+=======
+>>>>>>> ec26484 (implementasi demo)
   const previewBtn = $("#bid-preview");
   if (previewBtn) {
     previewBtn.addEventListener("click", () => {
@@ -123,7 +140,10 @@ function openBidDialog(j) {
     });
   }
 
+<<<<<<< HEAD
   // Form submit
+=======
+>>>>>>> ec26484 (implementasi demo)
   const form = $("#bid-form");
   if (form) {
     form.addEventListener("submit", async (e) => {
@@ -190,9 +210,39 @@ export async function JobsPage({ mount, query }) {
         <div><h1 class="page-title">Pekerjaan</h1><p class="page-subtitle">Telusuri lowongan dari klien</p></div>
         ${u && u.role !== "ADMIN" ? '<a class="btn btn-primary" href="#/post-job" data-testid="post-job-btn"><i class="fa-solid fa-plus"></i> Posting Pekerjaan</a>' : ""}
       </div>
+<<<<<<< HEAD
       <div class="filters">
         <div class="input-icon" style="flex:1;min-width:240px"><i class="fa-solid fa-magnifying-glass"></i><input id="q" class="input" placeholder="Cari pekerjaan..." data-testid="jobs-search"></div>
         <select id="cat" class="select" data-testid="jobs-cat" style="max-width:200px"></select>
+=======
+      <div class="filters" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+        <div class="input-icon" style="flex:1;min-width:240px"><i class="fa-solid fa-magnifying-glass"></i><input id="q" class="input" placeholder="Cari pekerjaan..." data-testid="jobs-search"></div>
+        <select id="cat" class="select" data-testid="jobs-cat" style="max-width:200px"></select>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input id="min-budget" class="input" type="number" placeholder="Budget min" data-testid="jobs-min-budget" style="width:120px">
+          <span class="text-muted">—</span>
+          <input id="max-budget" class="input" type="number" placeholder="Budget max" data-testid="jobs-max-budget" style="width:120px">
+        </div>
+        <select id="loc" class="select" data-testid="jobs-location" style="max-width:170px">
+          <option value="">Semua Lokasi</option>
+          <option value="Remote">Remote</option>
+          <option value="Jakarta">Jakarta</option>
+          <option value="Bandung">Bandung</option>
+          <option value="Surabaya">Surabaya</option>
+          <option value="Yogyakarta">Yogyakarta</option>
+          <option value="Medan">Medan</option>
+          <option value="Bali">Bali</option>
+        </select>
+        <select id="sort-by" class="select" data-testid="jobs-sort" style="max-width:160px">
+          <option value="newest">Terbaru</option>
+          <option value="budget_desc">Budget Tertinggi</option>
+          <option value="budget_asc">Budget Terendah</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap;font-size:.9rem">
+          <input id="urgent-only" type="checkbox" data-testid="jobs-urgent"> <i class="fa-solid fa-fire" style="color:var(--danger)"></i> Mendesak
+        </label>
+        <button class="btn btn-secondary btn-sm" id="reset-jobs" style="white-space:nowrap"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+>>>>>>> ec26484 (implementasi demo)
       </div>
       <div id="jobs-list" class="flex-col" data-testid="jobs-list"></div>
     </div>`;
@@ -214,6 +264,19 @@ export async function JobsPage({ mount, query }) {
       const cat = cats.find((x) => x.slug === c);
       if (cat) params.set("categoryId", cat.id);
     }
+<<<<<<< HEAD
+=======
+    const minBudget = document.getElementById("min-budget")?.value || "";
+    const maxBudget = document.getElementById("max-budget")?.value || "";
+    const loc = document.getElementById("loc")?.value || "";
+    const sortBy = document.getElementById("sort-by")?.value || "";
+    const urgentOnly = document.getElementById("urgent-only")?.checked;
+    if (minBudget) params.set("minBudget", minBudget);
+    if (maxBudget) params.set("maxBudget", maxBudget);
+    if (loc) params.set("location", loc);
+    if (sortBy) params.set("sortBy", sortBy);
+    if (urgentOnly) params.set("urgency", "URGENT");
+>>>>>>> ec26484 (implementasi demo)
     params.set("status", "OPEN");
     const list = document.getElementById("jobs-list");
     if (list) list.innerHTML = '<div class="spinner"></div>';
@@ -240,13 +303,19 @@ export async function JobsPage({ mount, query }) {
           .map((j) => {
             const isMine = u && j.buyerId === u.id;
             const hasApplied = appliedJobIds.has(j.id);
+<<<<<<< HEAD
             // Compute urgency from deadline
+=======
+>>>>>>> ec26484 (implementasi demo)
             const deadlineDate = j.deadline ? new Date(j.deadline) : null;
             const daysLeft = deadlineDate
               ? Math.ceil((deadlineDate.getTime() - now) / (24 * 3600 * 1000))
               : null;
             const isUrgent = daysLeft !== null && daysLeft >= 0 && daysLeft < 3;
+<<<<<<< HEAD
             // Strip leading [URGENT] from title for cleaner UI
+=======
+>>>>>>> ec26484 (implementasi demo)
             const cleanTitle = String(j.title || "").replace(
               /^\s*\[URGENT\]\s*/i,
               "",
@@ -264,6 +333,7 @@ export async function JobsPage({ mount, query }) {
                 ? '<span class="badge badge-success"><i class="fa-solid fa-check"></i> Sudah Melamar</span>'
                 : "";
             return `
+<<<<<<< HEAD
           <a href="#/jobs/${j.id}" class="card card-pad card-hover" data-testid="job-card-${j.id}" data-buyer-id="${j.buyerId}">
             <div class="flex-between" style="align-items:flex-start">
               <div>
@@ -294,6 +364,38 @@ export async function JobsPage({ mount, query }) {
               </div>
             </div>
           </a>`;
+=======
+            <a href="#/jobs/${j.id}" class="card card-pad card-hover" data-testid="job-card-${j.id}" data-buyer-id="${j.buyerId}">
+              <div class="flex-between" style="align-items:flex-start">
+                <div>
+                  <div class="flex gap-sm mb-1">
+                    <span class="badge">${escape(catName)}</span>
+                    ${statusPill(j.status)}
+                    ${urgentBadge}
+                    ${badge}
+                  </div>
+                  <div class="buyer-info flex gap-sm mb-1" style="align-items:center">
+                    ${avatar(j.buyer, "sm")}
+                    <span class="buyer-name" data-profile-id="${j.buyerId}" style="cursor:pointer;color:var(--primary);font-weight:500">
+                      ${escape(j.buyer?.name || "Pengguna")}
+                    </span>
+                  </div>
+                  <h3 style="margin:.25rem 0">${escape(cleanTitle)}</h3>
+                  <p class="text-muted text-sm" style="max-width:680px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${escape(j.description || "")}</p>
+                  <div class="flex gap-md mt-2 text-sm text-muted">
+                    <span><i class="fa-solid fa-location-dot"></i> ${escape(j.location || j.city || "Remote")}</span>
+                    <span><i class="fa-solid fa-clock"></i> ${timeAgo(j.createdAt)}</span>
+                    <span><i class="fa-solid fa-users"></i> ${j.applicationsCount || j.applicationCount || 0} pelamar</span>
+                    ${daysLeft !== null && daysLeft >= 0 ? `<span><i class="fa-solid fa-hourglass-half"></i> ${daysLeft} hari lagi</span>` : ""}
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs text-muted">Budget</div>
+                  <div style="font-family:var(--font-head);font-weight:700;color:var(--primary-dark);font-size:1.15rem">${fmtIDR(j.budget)}</div>
+                </div>
+              </div>
+            </a>`;
+>>>>>>> ec26484 (implementasi demo)
           })
           .join("");
       }
@@ -311,18 +413,83 @@ export async function JobsPage({ mount, query }) {
     );
   }
 
+<<<<<<< HEAD
   const catSelectChange = document.getElementById("cat");
   if (catSelectChange) catSelectChange.addEventListener("change", load);
+=======
+  ["min-budget", "max-budget"].forEach((id) => {
+    document
+      .getElementById(id)
+      ?.addEventListener(
+        "input",
+        () => clearTimeout(window._jt) || (window._jt = setTimeout(load, 400)),
+      );
+  });
+
+  ["cat", "loc", "sort-by", "urgent-only"].forEach((id) => {
+    document.getElementById(id)?.addEventListener("change", load);
+  });
+
+  document.getElementById("reset-jobs")?.addEventListener("click", () => {
+    const q = document.getElementById("q");
+    if (q) q.value = "";
+    const cat = document.getElementById("cat");
+    if (cat) cat.value = "all";
+    ["min-budget", "max-budget"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+    const loc = document.getElementById("loc");
+    if (loc) loc.value = "";
+    const sortBy = document.getElementById("sort-by");
+    if (sortBy) sortBy.value = "newest";
+    const urgent = document.getElementById("urgent-only");
+    if (urgent) urgent.checked = false;
+    load();
+  });
+>>>>>>> ec26484 (implementasi demo)
 
   load();
 }
 
 export async function PostJobPage({ mount }) {
+<<<<<<< HEAD
   const cats = await api.get("/categories");
 
   mount.innerHTML = `
     <div class="container-sm page">
       <a href="#/jobs"><i class="fa-solid fa-arrow-left"></i> Kembali</a>
+=======
+  const u = store.getState().user;
+  if (!u) {
+    toast("Silakan login dulu", "warning");
+    router.navigate("/login");
+    return;
+  }
+  try {
+    const me = await api.get("/auth/me");
+    if (!me.emailVerified || !me.phoneVerified || !me.ktpVerified) {
+      toast(
+        "Verifikasi email, telepon, dan KTP dulu sebelum posting pekerjaan",
+        "warning",
+        7000,
+      );
+      router.navigate("/verification");
+      return;
+    }
+  } catch (_) {
+    router.navigate("/verification");
+    return;
+  }
+
+  const cats = await api.get("/categories");
+
+  const returnTo = sessionStorage.getItem("return_to_dashboard");
+
+  mount.innerHTML = `
+    <div class="container-sm page">
+      <a href="#" id="back-link" class="back-link"><i class="fa-solid fa-arrow-left"></i> Kembali</a>
+>>>>>>> ec26484 (implementasi demo)
       <div class="card card-pad-lg mt-2">
         <h1>Posting Pekerjaan Baru</h1>
         <p class="text-muted">Jelaskan kebutuhan Anda agar freelancer terbaik melamar.</p>
@@ -349,11 +516,30 @@ export async function PostJobPage({ mount }) {
       </div>
     </div>`;
 
+<<<<<<< HEAD
   // Set min date ke hari ini untuk field deadline
+=======
+>>>>>>> ec26484 (implementasi demo)
   const today = new Date().toISOString().split("T")[0];
   const deadlineInput = document.getElementById("deadline");
   if (deadlineInput) deadlineInput.setAttribute("min", today);
 
+<<<<<<< HEAD
+=======
+  const backLink = document.getElementById("back-link");
+  if (backLink) {
+    backLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (returnTo) {
+        sessionStorage.removeItem("return_to_dashboard");
+        router.navigate(returnTo);
+      } else {
+        router.navigate("/jobs");
+      }
+    });
+  }
+
+>>>>>>> ec26484 (implementasi demo)
   const form = document.getElementById("job-form");
   if (form) {
     form.addEventListener("submit", async (e) => {
@@ -366,7 +552,10 @@ export async function PostJobPage({ mount }) {
       const city = document.getElementById("city")?.value.trim();
       const deadline = document.getElementById("deadline")?.value || null;
 
+<<<<<<< HEAD
       // Validasi client-side
+=======
+>>>>>>> ec26484 (implementasi demo)
       if (!title || title.length < 5) {
         toast("Judul minimal 5 karakter", "error");
         return;
@@ -400,11 +589,24 @@ export async function PostJobPage({ mount }) {
           deadline: deadline || null,
         };
 
+<<<<<<< HEAD
         console.log("Submitting job:", body);
 
         const j = await api.post("/jobs", body);
         toast("Pekerjaan diposting! 🎉", "success");
         router.navigate("/jobs/" + j.id);
+=======
+        await api.post("/jobs", body);
+        toast("Pekerjaan diposting! 🎉", "success");
+
+        // ✅ PERBAIKAN: Kembali ke dashboard jika dari dashboard
+        if (returnTo) {
+          sessionStorage.removeItem("return_to_dashboard");
+          router.navigate(returnTo);
+        } else {
+          router.navigate("/jobs");
+        }
+>>>>>>> ec26484 (implementasi demo)
       } catch (err) {
         console.error("Post job error:", err);
         toast(err.message || "Gagal memposting pekerjaan", "error");
@@ -427,7 +629,10 @@ export async function JobDetailPage({ mount, params }) {
     const isOpen = String(j.status || "").toUpperCase() === "OPEN";
     const canApply = u && !isOwner && !alreadyApplied && isOpen;
 
+<<<<<<< HEAD
     // PERBAIKAN: Default values untuk field yang mungkin undefined
+=======
+>>>>>>> ec26484 (implementasi demo)
     const jobDescription = j.description || "Tidak ada deskripsi";
     const jobCity = j.city || j.location || "Remote";
     const jobCategory =
@@ -443,6 +648,7 @@ export async function JobDetailPage({ mount, params }) {
     const applicationsCount = j.applications?.length || 0;
 
     mount.innerHTML = `
+<<<<<<< HEAD
       <div class="container page">
         <a href="#/jobs"><i class="fa-solid fa-arrow-left"></i> Kembali</a>
         <div class="card card-pad-lg mt-2">
@@ -477,6 +683,114 @@ export async function JobDetailPage({ mount, params }) {
           ${alreadyApplied && !isOwner ? `<button class="btn btn-secondary mt-3" disabled data-testid="already-applied-btn"><i class="fa-solid fa-check"></i> Sudah Melamar (status: ${escape(myApp?.status || "unknown")})</button>` : ""}
           ${isOwner ? '<div class="badge badge-info mt-3"><i class="fa-solid fa-user-tie"></i> Ini job Anda — tidak bisa melamar</div>' : ""}
           ${isOwner ? `<button class="btn btn-danger mt-3" id="del-job" data-testid="delete-job-btn"><i class="fa-solid fa-trash"></i> Hapus Job</button>` : ""}
+=======
+      <div class="container page job-detail-page">
+        <a href="#/jobs" class="back-link"><i class="fa-solid fa-arrow-left"></i> Kembali ke Cari Kerja</a>
+
+        <div class="grid mt-2 job-detail-grid">
+
+          <div class="card card-pad-lg" style="background:#fff">
+            <div class="flex gap-sm mb-2">
+              <span class="badge">${escape(jobCategory)}</span>
+              ${statusPill(j.status)}
+              ${j.isOnline ? '<span class="badge badge-info"><i class="fa-solid fa-globe"></i> Remote</span>' : ""}
+            </div>
+
+            <h1 class="job-detail-title">${escape(cleanTitle)}</h1>
+
+            <div class="flex gap-md text-sm text-muted mb-3">
+              <span><i class="fa-solid fa-location-dot"></i> ${escape(jobCity)}</span>
+              <span><i class="fa-solid fa-clock"></i> ${timeAgo(j.createdAt)}</span>
+              <span><i class="fa-solid fa-users"></i> ${applicationsCount} pelamar</span>
+              ${j.deadline ? `<span><i class="fa-solid fa-hourglass-half"></i> Deadline: ${new Date(j.deadline).toLocaleDateString("id-ID")}</span>` : ""}
+            </div>
+
+            <h3 style="margin-top:1.5rem"><i class="fa-solid fa-circle-info"></i> Deskripsi Pekerjaan</h3>
+            <p style="white-space:pre-wrap; line-height:1.6">${escape(jobDescription)}</p>
+
+            ${(() => {
+              let skills = [];
+              try { skills = typeof j.skills === "string" ? JSON.parse(j.skills) : (j.skills || []); } catch (_) { skills = []; }
+              if (!Array.isArray(skills) || skills.length === 0) return "";
+              return `
+              <h3 style="margin-top:1.5rem"><i class="fa-solid fa-tags"></i> Skill yang Dibutuhkan</h3>
+              <div class="flex gap-sm" style="flex-wrap:wrap">
+                ${skills.map((s) => `<span class="badge">${escape(String(s))}</span>`).join("")}
+              </div>`;
+            })()}
+
+            <h3 style="margin-top:1.5rem"><i class="fa-solid fa-user-pen"></i> Diposting oleh</h3>
+            <div class="flex gap-md" style="align-items:center; padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2)">
+              <div class="buyer-avatar" data-profile-id="${j.buyerId}" style="cursor:pointer">
+                ${avatar(j.buyer, "lg")}
+              </div>
+              <div style="flex:1">
+                <div class="buyer-name" data-profile-id="${j.buyerId}" style="cursor:pointer;color:var(--primary);font-weight:700;font-size:1.05rem">${escape(buyerName)}</div>
+                <div class="text-sm text-muted">${escape(buyerCity || "TOLONGIN Member")} · Bergabung ${j.buyer?.createdAt ? timeAgo(j.buyer.createdAt) : "—"}</div>
+                ${typeof j.buyer?.rating === "number" && j.buyer.rating > 0 ? `<div class="text-sm" style="color:#f5b042"><i class="fa-solid fa-star"></i> ${j.buyer.rating.toFixed(1)} dari ulasan</div>` : ""}
+              </div>
+              <a class="btn btn-ghost btn-sm" href="#/profile/${j.buyerId}" data-testid="view-poster-profile"><i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat Profil</a>
+            </div>
+
+            ${
+              canApply
+                ? `
+              <div class="flex gap-sm mt-3" style="flex-wrap:wrap">
+                <button class="btn btn-primary btn-lg" id="apply-btn" data-testid="apply-job-btn">
+                  <i class="fa-solid fa-paper-plane"></i> Lamar Pekerjaan Ini
+                </button>
+                <button class="btn btn-secondary" id="chat-before-apply-btn" data-testid="chat-before-apply-btn">
+                  <i class="fa-solid fa-comment"></i> Chat dengan Pemilik Lowongan
+                </button>
+              </div>`
+                : ""
+            }
+            ${alreadyApplied && !isOwner ? (() => {
+              const st = String(myApp?.status || "PENDING").toUpperCase();
+              if (st === "ACCEPTED") {
+                return `
+                  <div class="alert alert-success mt-3" data-testid="application-accepted-alert" style="margin-bottom:0">
+                    <strong><i class="fa-solid fa-circle-check"></i> Lamaran Anda diterima!</strong>
+                    <div class="text-sm mt-1">Silakan koordinasikan progress pekerjaan dengan pemilik lowongan.</div>
+                  </div>
+                  <div class="flex gap-sm mt-3" style="flex-wrap:wrap">
+                    <button class="btn btn-primary" id="chat-after-apply-btn" data-testid="chat-after-apply-btn"><i class="fa-solid fa-comment"></i> Chat Pemilik Lowongan</button>
+                    <a class="btn btn-secondary" href="#/dashboard/my-applications" data-testid="goto-applications-btn"><i class="fa-solid fa-list-check"></i> Buka Lamaran Saya</a>
+                  </div>`;
+              } else if (st === "REJECTED") {
+                return `<div class="alert alert-danger mt-3" style="margin-bottom:0"><i class="fa-solid fa-circle-xmark"></i> Lamaran Anda ditolak oleh pemilik lowongan.</div>`;
+              } else {
+                return `
+                  <div class="alert alert-info mt-3" style="margin-bottom:0"><i class="fa-solid fa-hourglass-half"></i> Lamaran Anda sedang menunggu keputusan pemilik lowongan.</div>
+                  <div class="flex gap-sm mt-3">
+                    <a class="btn btn-secondary" href="#/dashboard/my-applications"><i class="fa-solid fa-list-check"></i> Buka Lamaran Saya</a>
+                  </div>`;
+              }
+            })() : ""}
+            ${isOwner ? '<div class="alert alert-info mt-3" style="margin-bottom:0"><i class="fa-solid fa-user-tie"></i> Ini lowongan Anda — tidak bisa melamar pekerjaan sendiri.</div>' : ""}
+            ${isOwner ? `<div class="flex gap-sm mt-3"><a class="btn btn-secondary" href="#/dashboard/manage-jobs/edit/${j.id}" data-testid="edit-job-btn"><i class="fa-solid fa-pen"></i> Edit Lowongan</a><button class="btn btn-danger" id="del-job" data-testid="delete-job-btn"><i class="fa-solid fa-trash"></i> Hapus Lowongan</button></div>` : ""}
+          </div>
+
+          <!-- Right side: summary panel -->
+          <aside class="card card-pad" style="background:#fff; position:sticky; top:90px">
+            <div class="text-xs text-muted">Budget Proyek</div>
+            <div style="font-family:var(--font-head);font-weight:700;color:var(--primary-dark);font-size:2rem;line-height:1.1;margin-bottom:.75rem">${fmtIDR(j.budget)}</div>
+
+            <div class="divider"></div>
+
+            <div class="flex-col" style="gap:8px; font-size:0.9rem">
+              <div class="flex-between"><span class="text-muted"><i class="fa-solid fa-tag"></i> Kategori</span><span style="font-weight:600">${escape(jobCategory)}</span></div>
+              <div class="flex-between"><span class="text-muted"><i class="fa-solid fa-location-dot"></i> Lokasi</span><span style="font-weight:600">${escape(jobCity)}</span></div>
+              <div class="flex-between"><span class="text-muted"><i class="fa-solid fa-globe"></i> Tipe</span><span style="font-weight:600">${j.isOnline ? "Remote" : "Onsite"}</span></div>
+              <div class="flex-between"><span class="text-muted"><i class="fa-solid fa-hourglass-half"></i> Deadline</span><span style="font-weight:600">${j.deadline ? new Date(j.deadline).toLocaleDateString("id-ID") : "Fleksibel"}</span></div>
+              <div class="flex-between"><span class="text-muted"><i class="fa-solid fa-users"></i> Pelamar</span><span style="font-weight:600">${applicationsCount} orang</span></div>
+              <div class="flex-between"><span class="text-muted"><i class="fa-solid fa-calendar-plus"></i> Diposting</span><span style="font-weight:600">${timeAgo(j.createdAt)}</span></div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="text-xs text-muted text-center"><i class="fa-solid fa-shield-halved"></i> Lamaran aman & terverifikasi</div>
+          </aside>
+>>>>>>> ec26484 (implementasi demo)
         </div>
         ${
           isOwner
@@ -487,7 +801,10 @@ export async function JobDetailPage({ mount, params }) {
             j.applications?.length
               ? j.applications
                   .map((a) => {
+<<<<<<< HEAD
                     // PERBAIKAN: Handle proposedDuration dengan aman
+=======
+>>>>>>> ec26484 (implementasi demo)
                     const durationText = a.proposedDuration
                       ? `${a.proposedDuration} hari`
                       : "";
@@ -497,8 +814,14 @@ export async function JobDetailPage({ mount, params }) {
                     const coverText =
                       a.coverLetter || a.message || "Tidak ada surat lamaran";
                     const sellerName = a.seller?.name || "Pengguna";
+<<<<<<< HEAD
                     const appStatus = a.status || "pending";
 
+=======
+                    const appStatus = String(
+                      a.status || "PENDING",
+                    ).toUpperCase();
+>>>>>>> ec26484 (implementasi demo)
                     return `
             <div class="flex-between" style="padding:1rem 0;border-bottom:1px dashed var(--border);align-items:flex-start">
               <div style="flex:1">
@@ -514,7 +837,11 @@ export async function JobDetailPage({ mount, params }) {
                 ${durationText ? `<div class="text-sm">Durasi: <strong>${durationText}</strong></div>` : ""}
               </div>
               ${
+<<<<<<< HEAD
                 appStatus === "pending"
+=======
+                appStatus === "PENDING"
+>>>>>>> ec26484 (implementasi demo)
                   ? `
                 <div class="flex gap-sm">
                   <button class="btn btn-success btn-sm" data-decide="accepted" data-app="${a.id}" data-testid="accept-app-${a.id}">Terima</button>
@@ -537,12 +864,62 @@ export async function JobDetailPage({ mount, params }) {
       applyBtn.addEventListener("click", () => openBidDialog(j));
     }
 
+<<<<<<< HEAD
     document.querySelectorAll("[data-decide]").forEach((b) =>
       b.addEventListener("click", async () => {
         try {
           await api.post(`/applications/${b.dataset.app}/decision`, {
             status: b.dataset.decide,
           });
+=======
+    const chatAfterApplyBtn = document.getElementById("chat-after-apply-btn");
+    if (chatAfterApplyBtn) {
+      chatAfterApplyBtn.addEventListener("click", async () => {
+        try {
+          const conv = await api.post("/chat/conversations", { recipientId: j.buyerId });
+          router.navigate("/chat/" + conv.id);
+        } catch (err) {
+          toast(err.message || "Gagal membuka chat", "error");
+        }
+      });
+    }
+
+    const chatBeforeApplyBtn = document.getElementById("chat-before-apply-btn");
+    if (chatBeforeApplyBtn) {
+      chatBeforeApplyBtn.addEventListener("click", async () => {
+        if (!u) {
+          toast("Silakan login dulu", "warning");
+          return router.navigate("/login");
+        }
+        if (u.id === j.buyerId) {
+          toast("Anda tidak bisa chat dengan diri sendiri", "warning");
+          return;
+        }
+        try {
+          const conv = await api.post("/chat/conversations", {
+            recipientId: j.buyerId,
+          });
+          toast("Membuka chat...", "info");
+          router.navigate("/chat/" + conv.id);
+        } catch (err) {
+          console.error("Chat error:", err);
+          toast(err.message || "Gagal membuka chat", "error");
+        }
+      });
+    }
+
+    document.querySelectorAll("[data-decide]").forEach((b) =>
+      b.addEventListener("click", async () => {
+        try {
+          const decision = String(b.dataset.decide || "").toLowerCase();
+          if (decision === "accepted") {
+            await api.post(`/applications/${b.dataset.app}/accept`, {});
+          } else {
+            await api.post(`/applications/${b.dataset.app}/reject`, {
+              reason: "Ditolak oleh pemilik pekerjaan",
+            });
+          }
+>>>>>>> ec26484 (implementasi demo)
           toast("Berhasil", "success");
           router.render();
         } catch (err) {

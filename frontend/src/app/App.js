@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Main App entry: registers routes & mounts the layout
 import { router } from "./router.js";
 import { renderLayout } from "./layout.js";
@@ -47,6 +48,11 @@ import {
   ActivityLog,
   ManageKyc,
 } from "../features/admin/AdminPages.js";
+=======
+// Main App entry: mounts the router (routes are pre-registered in router.js)
+import { router } from "./router.js";
+import { renderLayout } from "./layout.js";
+>>>>>>> ec26484 (implementasi demo)
 import { store } from "./store.js";
 import { api } from "../shared/utils/api.js";
 
@@ -68,6 +74,7 @@ async function silentRefresh() {
   }
 }
 
+<<<<<<< HEAD
 export function bootstrap() {
   const root = document.getElementById("app");
   const mount = renderLayout(root);
@@ -114,4 +121,26 @@ export function bootstrap() {
       m.innerHTML = `<div class="container page"><div class="empty"><i class="fa-solid fa-compass"></i><h3>404 — Halaman tidak ditemukan</h3><p>URL yang Anda buka tidak tersedia.</p><a class="btn btn-primary mt-2" href="#/">Kembali ke Beranda</a></div></div>`;
     })
     .mount(mount);
+=======
+// ========== NOT FOUND PAGE COMPONENT ==========
+export function NotFoundPage(mount) {
+  mount.innerHTML = `
+    <div class="container page" style="text-align:center; padding:60px 20px;" data-testid="not-found-page">
+      <i class="fa-solid fa-circle-exclamation" style="font-size:4rem; color:#ccc;"></i>
+      <h1 style="margin:16px 0 8px;">404 — Halaman Tidak Ditemukan</h1>
+      <p style="color:#666;">Maaf, halaman yang Anda cari tidak tersedia.</p>
+      <a href="#/" class="btn btn-primary" style="display:inline-block; margin-top:20px;" data-testid="back-home-btn">Kembali ke Beranda</a>
+    </div>
+  `;
+}
+
+export async function bootstrap() {
+  const root = document.getElementById("app");
+  const mount = renderLayout(root);
+  await silentRefresh();
+
+  // Routes are registered in router.js (side-effect on import).
+  // Just attach the not-found handler and mount the router.
+  router.setNotFound(NotFoundPage).mount(mount);
+>>>>>>> ec26484 (implementasi demo)
 }

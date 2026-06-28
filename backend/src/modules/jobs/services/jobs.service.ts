@@ -14,12 +14,20 @@ import {
 import { Prisma } from '@prisma/client';
 import { ROLE, JOB_STATUS } from '../../../common/constants/enums';
 import { JobFactory } from '../factories/job.factory';
+<<<<<<< HEAD
+=======
+import { NotificationsService } from '../../notifications/services/notifications.service';
+>>>>>>> ec26484 (implementasi demo)
 
 @Injectable()
 export class JobsService {
   constructor(
     private readonly repo: JobsRepository,
     private readonly factory: JobFactory,
+<<<<<<< HEAD
+=======
+    private readonly notifications: NotificationsService,
+>>>>>>> ec26484 (implementasi demo)
   ) {}
 
   private toDto(j: any) {
@@ -32,12 +40,42 @@ export class JobsService {
     const { skip, take } = paginate(page, limit);
 
     const where: Prisma.JobWhereInput = {};
+<<<<<<< HEAD
     if (query.q) where.title = { contains: query.q };
     if (query.categoryId) where.categoryId = query.categoryId;
     if (query.buyerId) where.buyerId = query.buyerId;
     if (query.status) where.status = (query.status as string).toUpperCase();
 
     const { items, total } = await this.repo.findMany(where, skip, take);
+=======
+    if (query.q) {
+      where.OR = [
+        { title: { contains: query.q } },
+        { description: { contains: query.q } },
+      ];
+    }
+    if (query.categoryId) where.categoryId = query.categoryId;
+    if (query.buyerId) where.buyerId = query.buyerId;
+    if (query.status) where.status = (query.status as string).toUpperCase();
+    if (query.urgency) where.urgency = query.urgency.toUpperCase();
+    if (query.location) where.location = { contains: query.location };
+    // Filter rentang budget
+    if (query.minBudget !== undefined || query.maxBudget !== undefined) {
+      where.budget = {};
+      if (query.minBudget !== undefined)
+        (where.budget as any).gte = query.minBudget;
+      if (query.maxBudget !== undefined)
+        (where.budget as any).lte = query.maxBudget;
+    }
+
+    const orderBy = this.resolveSort(query.sortBy, query.sortOrder);
+    const { items, total } = await this.repo.findMany(
+      where,
+      skip,
+      take,
+      orderBy,
+    );
+>>>>>>> ec26484 (implementasi demo)
 
     return {
       data: items.map((i) => this.toDto(i)),
@@ -45,6 +83,29 @@ export class JobsService {
     };
   }
 
+<<<<<<< HEAD
+=======
+  // Konversi parameter sortBy (termasuk alias) menjadi orderBy Prisma
+  private resolveSort(
+    sortBy?: string,
+    sortOrder?: 'asc' | 'desc',
+  ): Prisma.JobOrderByWithRelationInput {
+    switch (sortBy) {
+      case 'newest':
+        return { createdAt: 'desc' };
+      case 'budget_asc':
+        return { budget: 'asc' };
+      case 'budget_desc':
+        return { budget: 'desc' };
+      case 'budget':
+      case 'createdAt':
+        return { [sortBy]: sortOrder || 'desc' } as any;
+      default:
+        return { createdAt: 'desc' };
+    }
+  }
+
+>>>>>>> ec26484 (implementasi demo)
   async findById(id: string) {
     const j = await this.repo.findById(id);
     if (!j) throw new NotFoundException('Job not found');
@@ -52,6 +113,7 @@ export class JobsService {
   }
 
   async create(buyerId: string, dto: CreateJobDto) {
+<<<<<<< HEAD
 <<<<<<< HEAD
     const created = await this.repo.create({
       buyer: { connect: { id: buyerId } },
@@ -69,6 +131,19 @@ export class JobsService {
 =======
     const created = await this.repo.create(this.factory.create(buyerId, dto));
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+    const created = await this.repo.create(this.factory.create(buyerId, dto));
+    await this.notifications
+      .notify(
+        buyerId,
+        'SYSTEM',
+        '📢 Pekerjaan Anda telah dipublikasikan!',
+        `"${created.title}" sudah live dan siap menerima lamaran.`,
+        { jobId: created.id },
+        `/jobs/${created.id}`,
+      )
+      .catch(() => undefined);
+>>>>>>> ec26484 (implementasi demo)
     return this.toDto(created);
   }
 
@@ -85,6 +160,14 @@ export class JobsService {
       data.skills = stringifyJsonField(dto.skills);
     }
 
+<<<<<<< HEAD
+=======
+    // Normalisasi urgency ke uppercase
+    if (dto.urgency) {
+      data.urgency = dto.urgency.toUpperCase();
+    }
+
+>>>>>>> ec26484 (implementasi demo)
     // Handle deadline separately
     if (dto.deadline) {
       data.deadline = new Date(dto.deadline);

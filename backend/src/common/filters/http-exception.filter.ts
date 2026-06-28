@@ -33,7 +33,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         const r = exRes as Record<string, unknown>;
         message = (r.message as string) || exception.message;
         if (Array.isArray(r.message)) {
+<<<<<<< HEAD
           message = 'Validation failed';
+=======
+          message = r.message;
+>>>>>>> ec26484 (implementasi demo)
           errors = (r.message as string[]).map((m) => ({ message: m }));
         }
         if (r.errors) errors = r.errors;

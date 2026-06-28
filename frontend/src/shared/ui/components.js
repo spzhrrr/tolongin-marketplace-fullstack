@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 // Shared UI builders (return HTML strings or elements)
+=======
+// frontend/src/shared/ui/components.js
+
+>>>>>>> ec26484 (implementasi demo)
 import { escape, fmtIDR } from "../utils/helpers.js";
 import { resolveAssetUrl } from "../utils/api.js";
 
@@ -17,6 +22,7 @@ export function empty(title, sub, icon = "fa-folder-open", cta) {
 
 export function avatar(user, size = "") {
 <<<<<<< HEAD
+<<<<<<< HEAD
   // Pastikan user ada
   if (!user) {
     user = { name: "User", id: "default" };
@@ -25,6 +31,9 @@ export function avatar(user, size = "") {
 =======
   const safeUser = user || { name: "User" };
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+  const safeUser = user || { name: "User" };
+>>>>>>> ec26484 (implementasi demo)
   const cls =
     size === "sm"
       ? "avatar avatar-sm"
@@ -39,6 +48,7 @@ export function avatar(user, size = "") {
     safeUser.avatar.trim() &&
     !["null", "undefined"].includes(safeUser.avatar.trim());
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   // Handle avatar URL dengan aman
   let avatarUrl = "https://i.pravatar.cc/150?u=default";
@@ -60,6 +70,8 @@ export function avatar(user, size = "") {
 
   return `<img class="${cls}" src="${avatarUrl}" alt="${escape(userName)}" onerror="this.onerror=null;this.src='https://i.pravatar.cc/150?u=fallback'" />`;
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
   if (!validAvatar) {
     const initials = userName
       .split(/\s+/)
@@ -87,7 +99,10 @@ export function avatar(user, size = "") {
     escape(userName) +
     '" loading="lazy" />'
   );
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
 }
 export function statusPill(status) {
   if (!status) status = "unknown";
@@ -101,10 +116,13 @@ export function statusPill(status) {
     REJECTED: "status-rejected",
     RESOLVED: "status-resolved",
 <<<<<<< HEAD
+<<<<<<< HEAD
   };
   const statusClass = statusMap[status] || "status-pending";
   return `<span class="status-pill ${statusClass}" data-testid="status-pill">${escape(status.replace(/_/g, " ").toLowerCase())}</span>`;
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
     WAITING_CONFIRMATION: "status-pending",
     PAID: "status-accepted",
     WAITING_REVIEW: "status-in_progress",
@@ -135,7 +153,10 @@ export function statusPill(status) {
   const label =
     labelMap[key] || String(status).replace(/_/g, " ").toLowerCase();
   return `<span class="status-pill ${statusClass}" data-testid="status-pill">${escape(label)}</span>`;
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
 }
 
 export function stars(rating) {
@@ -149,12 +170,18 @@ export function stars(rating) {
 }
 
 export function serviceCard(s, opts = {}) {
+<<<<<<< HEAD
   // Pastikan s ada
+=======
+>>>>>>> ec26484 (implementasi demo)
   if (!s) return "";
 
   const seller = s.seller || {};
 
+<<<<<<< HEAD
   // Handle images dengan aman
+=======
+>>>>>>> ec26484 (implementasi demo)
   let img = "";
   if (s.images) {
     try {
@@ -166,18 +193,27 @@ export function serviceCard(s, opts = {}) {
     }
   }
 
+<<<<<<< HEAD
   // Fallback image jika tidak ada
+=======
+>>>>>>> ec26484 (implementasi demo)
   if (!img || img === "null" || img === "undefined") {
     const titleSlug = (s.title || "Service").slice(0, 20);
     img = `https://placehold.co/600x400/0a66c2/ffffff?text=${encodeURIComponent(titleSlug)}`;
   }
 
+<<<<<<< HEAD
   // Pastikan seller name tidak undefined
+=======
+>>>>>>> ec26484 (implementasi demo)
   const sellerName = seller.name || "Penjual";
   const sellerVerified = seller.verified === true;
   const sellerId = seller.id || s.sellerId || null;
 
+<<<<<<< HEAD
   // Pastikan angka valid
+=======
+>>>>>>> ec26484 (implementasi demo)
   const rating =
     typeof s.rating === "number" && !isNaN(s.rating) ? s.rating : 0;
   const reviewCount =
@@ -187,10 +223,20 @@ export function serviceCard(s, opts = {}) {
   const price = typeof s.price === "number" && !isNaN(s.price) ? s.price : 0;
   const title = s.title || "Untitled";
   const serviceId = s.id || "unknown";
+<<<<<<< HEAD
 
   return `<a class="service-card" href="#/service/${serviceId}" data-testid="service-card-${serviceId}">
     <div class="thumb">
       <img src="${img}" alt="${escape(title)}" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/600x400/0a66c2/ffffff?text=No+Image'" />
+=======
+  const categoryName = s.category?.name || s.categoryName || "";
+  const deliveryLabel = s.deliveryTime ? `${s.deliveryTime} hari` : "Fleksibel";
+
+  return `<a class="service-card" href="#/services/${serviceId}" data-testid="service-card-${serviceId}">
+    <div class="thumb">
+      <img src="${img}" alt="${escape(title)}" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/600x400/0a66c2/ffffff?text=No+Image'" />
+      ${categoryName ? `<span class="service-cat-badge">${escape(categoryName)}</span>` : ""}
+>>>>>>> ec26484 (implementasi demo)
       <button class="fav-btn ${opts.favorited ? "active" : ""}" data-fav="${serviceId}" data-testid="fav-btn-${serviceId}" aria-label="favorite">
         <i class="fa-${opts.favorited ? "solid" : "regular"} fa-heart"></i>
       </button>
@@ -204,7 +250,15 @@ export function serviceCard(s, opts = {}) {
       <div class="title">${escape(title)}</div>
       <div class="meta">
         <div class="rating"><i class="fa-solid fa-star" style="color:var(--warning)"></i> ${rating.toFixed(1)} <span class="text-muted">(${reviewCount})</span></div>
+<<<<<<< HEAD
         <div class="price">${fmtIDR(price)}</div>
+=======
+        <div class="text-xs text-muted"><i class="fa-regular fa-clock"></i> ${deliveryLabel}</div>
+      </div>
+      <div class="price-row">
+        <div class="price">${fmtIDR(price)}</div>
+        <span class="btn btn-secondary btn-sm service-detail-cta">Lihat Detail</span>
+>>>>>>> ec26484 (implementasi demo)
       </div>
     </div>
   </a>`;

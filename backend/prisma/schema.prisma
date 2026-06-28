@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
@@ -7,14 +8,21 @@ datasource db {
 // prisma/schema.prisma
 
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+// prisma/schema.prisma
+
+>>>>>>> ec26484 (implementasi demo)
 generator client {
   provider = "prisma-client-js"
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // ============================================================
 // BANK ACCOUNT
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
@@ -43,7 +51,10 @@ enum BadgeType {
 
 // ============================================================
 // MODEL DEFINITIONS
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
 // ============================================================
 
 model User {
@@ -62,6 +73,7 @@ model User {
   emailOtpExpiresAt DateTime?
   phoneOtpHash    String?
   phoneOtpExpiresAt DateTime?
+<<<<<<< HEAD
 <<<<<<< HEAD
 
   ktpNumber         String?
@@ -89,6 +101,8 @@ model User {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
   ktpNumber       String?
   ktpPhoto        String?
   ktpSelfie       String?
@@ -110,6 +124,7 @@ model User {
   bannedReason    String?   @db.Text
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 
   services        Service[]      @relation("UserServices")
@@ -119,14 +134,33 @@ model User {
   applications    Application[]
   reviewsGiven    Review[]       @relation("ReviewsGiven")
   reviewsReceived Review[]       @relation("ReviewsReceived")
+=======
+
+  // Relasi
+  services        Service[]
+  jobs            Job[]
+  reviewsGiven    Review[]      @relation("ReviewsGiven")
+  reviewsReceived Review[]      @relation("ReviewsReceived")
+>>>>>>> ec26484 (implementasi demo)
   payments        Payment[]
   withdrawals     Withdrawal[]
   bankAccounts    BankAccount[]
   notifications   Notification[]
   messages        Message[]
+<<<<<<< HEAD
   disputesRaised  Dispute[]      @relation("DisputeRaiser")
   passwordResets  PasswordReset[]
   favorites       Favorite[]
+=======
+  disputesRaised  Dispute[]     @relation("DisputeRaiser")
+  passwordResets  PasswordReset[]
+  favorites       Favorite[]
+  buyerOrders     Order[]       @relation("BuyerOrders")
+  sellerOrders    Order[]       @relation("SellerOrders")
+  applications    Application[]
+  portfolio       Portfolio[]
+  badges          UserBadge[]
+>>>>>>> ec26484 (implementasi demo)
 
   @@map("users")
 }
@@ -162,6 +196,7 @@ model Service {
   categoryId    String
   title         String
 <<<<<<< HEAD
+<<<<<<< HEAD
   description   String
   price         Float
   priceType     String    @default("FIXED")
@@ -169,13 +204,18 @@ model Service {
   revisionCount Int       @default(1)
   images        String    @default("[]")
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
   description   String    @db.Text
   price         Int
   priceType     String    @default("FIXED")
   deliveryTime  Int
   revisionCount Int       @default(1)
   images        String    @default("[]") @db.Text
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
   isActive      Boolean   @default(true)
   isFeatured    Boolean   @default(false)
   viewCount     Int       @default(0)
@@ -185,12 +225,17 @@ model Service {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   seller        User      @relation("UserServices", fields: [sellerId], references: [id], onDelete: Cascade)
 =======
   simulationOrderCreatedAt DateTime?
   seller        User      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+  simulationOrderCreatedAt DateTime?
+  seller        User      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+>>>>>>> ec26484 (implementasi demo)
   category      Category  @relation(fields: [categoryId], references: [id])
   orders        Order[]
   reviews       Review[]
@@ -206,27 +251,38 @@ model Job {
   categoryId        String
   title             String
 <<<<<<< HEAD
+<<<<<<< HEAD
   description       String
   budget            Float
 =======
   description       String        @db.Text
   budget            Int
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+  description       String        @db.Text
+  budget            Int
+>>>>>>> ec26484 (implementasi demo)
   budgetType        String        @default("FIXED")
   deadline          DateTime?
   location          String?
   isOnline          Boolean       @default(false)
+<<<<<<< HEAD
 <<<<<<< HEAD
   skills            String        @default("[]")
 =======
   urgency           String        @default("NORMAL")
   skills            String        @default("[]") @db.Text
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+  urgency           String        @default("NORMAL")
+  skills            String        @default("[]") @db.Text
+>>>>>>> ec26484 (implementasi demo)
   status            String        @default("OPEN")
   viewCount         Int           @default(0)
   applicationsCount Int           @default(0)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
+<<<<<<< HEAD
 <<<<<<< HEAD
 
   buyer             User          @relation("UserJobs", fields: [buyerId], references: [id], onDelete: Cascade)
@@ -234,6 +290,10 @@ model Job {
   simulationApplicationCreatedAt DateTime?
   buyer             User          @relation(fields: [buyerId], references: [id], onDelete: Cascade)
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+  simulationApplicationCreatedAt DateTime?
+  buyer             User          @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+>>>>>>> ec26484 (implementasi demo)
   category          Category      @relation(fields: [categoryId], references: [id])
   applications      Application[]
   @@index([buyerId])
@@ -246,27 +306,38 @@ model Application {
   jobId            String
   sellerId         String
 <<<<<<< HEAD
+<<<<<<< HEAD
   coverLetter      String
   proposedPrice    Float
   proposedDuration Int
   portfolioIds     String    @default("[]")
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
   coverLetter      String    @db.Text
   proposedPrice    Int
   proposedDuration Int
   portfolioIds     String    @default("[]") @db.Text
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
   status           String    @default("PENDING")
   rejectionReason  String?
   reviewedAt       DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
   simulationAcceptedAt DateTime?
   simulationApplicationCreatedAt DateTime?
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+  simulationAcceptedAt DateTime?
+  simulationApplicationCreatedAt DateTime?
+>>>>>>> ec26484 (implementasi demo)
   job              Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
   seller           User      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   order            Order?
@@ -280,15 +351,20 @@ model Order {
   sellerId            String
   serviceId           String?
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   jobId               String?
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+  jobId               String?
+>>>>>>> ec26484 (implementasi demo)
   applicationId       String?   @unique
   title               String
   amount              Int
   fee                 Int     @default(0)
   totalAmount         Int
   status              String    @default("WAITING_CONFIRMATION")
+<<<<<<< HEAD
 <<<<<<< HEAD
   notes               String?
   deliveryType        String    @default("DIGITAL")
@@ -299,6 +375,8 @@ model Order {
   cancellationReason  String?
   timeline            String    @default("[]")
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
   escrowStatus        String    @default("UNPAID")
   notes               String?   @db.Text
   deliveryType        String    @default("DIGITAL")
@@ -324,7 +402,10 @@ model Order {
   cancelledAt         DateTime?
   cancellationReason  String?   @db.Text
   timeline            String    @default("[]") @db.Text
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   buyer               User      @relation("BuyerOrders", fields: [buyerId], references: [id])
@@ -337,16 +418,25 @@ model Order {
   conversation        Conversation?
   @@index([buyerId])
   @@index([sellerId])
+<<<<<<< HEAD
+=======
+  @@index([jobId])
+>>>>>>> ec26484 (implementasi demo)
   @@map("orders")
 }
 
 model Review {
+<<<<<<< HEAD
   id           String    @id @default(cuid())
+=======
+  id           String     @id @default(cuid())
+>>>>>>> ec26484 (implementasi demo)
   orderId      String
   reviewerId   String
   revieweeId   String
   serviceId    String?
   rating       Int
+<<<<<<< HEAD
 <<<<<<< HEAD
   comment      String
   images       String    @default("[]")
@@ -363,6 +453,8 @@ model Review {
   service      Service?  @relation(fields: [serviceId], references: [id])
 
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
   comment      String     @db.Text
   reviewType   ReviewType @default(BUYER_TO_SELLER)
   images       String     @default("[]") @db.Text
@@ -377,7 +469,10 @@ model Review {
   reviewee     User       @relation("ReviewsReceived", fields: [revieweeId], references: [id])
   service      Service?   @relation(fields: [serviceId], references: [id])
   @@unique([orderId, reviewerId])
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
   @@map("reviews")
 }
 
@@ -425,12 +520,17 @@ model Notification {
   type      String
   title     String
 <<<<<<< HEAD
+<<<<<<< HEAD
   body      String
   data      String?
 =======
   body      String    @db.Text
   data      String?   @db.Text
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+  body      String    @db.Text
+  data      String?   @db.Text
+>>>>>>> ec26484 (implementasi demo)
   actionUrl String?
   isRead    Boolean   @default(false)
   readAt    DateTime?
@@ -443,6 +543,7 @@ model Notification {
 model Conversation {
   id            String    @id @default(cuid())
 <<<<<<< HEAD
+<<<<<<< HEAD
   participants  String
   orderId       String?   @unique
   lastMessage   String?
@@ -451,6 +552,11 @@ model Conversation {
   orderId       String?   @unique
   lastMessage   String?   @db.Text
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+  participants  String    @db.Text
+  orderId       String?   @unique
+  lastMessage   String?   @db.Text
+>>>>>>> ec26484 (implementasi demo)
   lastMessageAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -464,12 +570,17 @@ model Message {
   conversationId String
   senderId       String
 <<<<<<< HEAD
+<<<<<<< HEAD
   content        String
   attachment     String?
 =======
   content        String    @db.Text
   attachment     String?   @db.Text
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+  content        String    @db.Text
+  attachment     String?   @db.Text
+>>>>>>> ec26484 (implementasi demo)
   isRead         Boolean   @default(false)
   readAt         DateTime?
   createdAt      DateTime  @default(now())
@@ -480,6 +591,7 @@ model Message {
 }
 
 model Dispute {
+<<<<<<< HEAD
 <<<<<<< HEAD
   id          String    @id @default(cuid())
   orderId     String    @unique
@@ -499,6 +611,8 @@ model Dispute {
   raiser      User      @relation("DisputeRaiser", fields: [raisedBy], references: [id])
 
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
   id            String    @id @default(cuid())
   orderId       String    @unique
   raisedBy      String
@@ -515,7 +629,10 @@ model Dispute {
   updatedAt     DateTime  @updatedAt
   order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   raiser        User      @relation("DisputeRaiser", fields: [raisedBy], references: [id])
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
   @@map("disputes")
 }
 
@@ -534,10 +651,14 @@ model PlatformSetting {
   id        String   @id @default(cuid())
   key       String   @unique
 <<<<<<< HEAD
+<<<<<<< HEAD
   value     String
 =======
   value     String   @db.Text
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+  value     String   @db.Text
+>>>>>>> ec26484 (implementasi demo)
   updatedAt DateTime @updatedAt
   @@map("platform_settings")
 }
@@ -548,7 +669,11 @@ model ActivityLog {
   action    String
   entity    String?
   entityId  String?
+<<<<<<< HEAD
   metadata  String?
+=======
+  metadata  String?  @db.Text
+>>>>>>> ec26484 (implementasi demo)
   createdAt DateTime @default(now())
   @@index([userId])
   @@map("activity_logs")
@@ -564,7 +689,10 @@ model Favorite {
   @@unique([userId, serviceId])
   @@map("favorites")
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
 }
 
 model Portfolio {
@@ -589,5 +717,8 @@ model UserBadge {
   @@unique([userId, badgeType])
   @@index([userId])
   @@map("user_badges")
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
 }

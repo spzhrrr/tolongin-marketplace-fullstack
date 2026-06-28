@@ -49,6 +49,15 @@ export class DisputesService {
     return items.map((i) => this.toDto(i));
   }
 
+<<<<<<< HEAD
+=======
+  // Daftar sengketa milik user yang sedang login
+  async findMine(userId: string) {
+    const items = await this.repo.findByUser(userId);
+    return items.map((i) => this.toDto(i));
+  }
+
+>>>>>>> ec26484 (implementasi demo)
   async findById(id: string) {
     const d = await this.repo.findById(id);
     if (!d) throw new NotFoundException();

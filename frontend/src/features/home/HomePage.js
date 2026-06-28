@@ -8,12 +8,22 @@ export async function HomePage({ mount }) {
     <section class="hero">
       <div class="container hero-inner">
         <div>
+<<<<<<< HEAD
           <span class="hero-eyebrow"><i class="fa-solid fa-star"></i> ${t("hero.tag")}</span>
           <h1>${t("hero.title")} <span class="accent">tolong<span class="brand-accent">in</span><span class="brand-dot" aria-hidden="true"></span></span></h1>
           <p class="lead">${t("hero.lead")}</p>
           <div class="hero-actions">
             <a class="btn btn-primary btn-lg" href="#/marketplace" data-testid="hero-cta-marketplace"><i class="fa-solid fa-magnifying-glass"></i> ${t("hero.cta1")}</a>
             <a class="btn btn-secondary btn-lg" href="#/register" data-testid="hero-cta-seller"><i class="fa-solid fa-rocket"></i> ${t("hero.cta2")}</a>
+=======
+          <span class="hero-eyebrow"><i class="fa-solid fa-star"></i> Marketplace Jasa &amp; Lowongan #1 di Indonesia</span>
+          <h1>Cari bantuan, tawarkan kemampuan — semua di <span class="accent">tolong<span class="brand-accent">in</span><span class="brand-dot" aria-hidden="true"></span></span></h1>
+          <p class="lead">Satu akun, banyak kemungkinan. Temukan jasa terbaik, pasang lowongan, atau jual keahlian Anda dengan aman lewat sistem escrow.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary btn-lg" href="#/marketplace" data-testid="hero-cta-marketplace"><i class="fa-solid fa-magnifying-glass"></i> Cari Jasa</a>
+            <a class="btn btn-outline btn-lg" href="#/jobs" data-testid="hero-cta-jobs"><i class="fa-solid fa-briefcase"></i> Cari Kerja</a>
+            <a class="btn btn-secondary btn-lg" href="#/dashboard/manage-services/new" data-testid="hero-cta-seller"><i class="fa-solid fa-rocket"></i> Tawarkan Jasa</a>
+>>>>>>> ec26484 (implementasi demo)
           </div>
           <div class="flex gap-md mt-3" style="align-items:center">
             <div style="display:flex">
@@ -156,7 +166,11 @@ export async function HomePage({ mount }) {
         .map(
           (c) => `
         <a class="cat-card" href="#/marketplace?category=${encodeURIComponent(c.slug)}" data-testid="cat-${c.slug}">
+<<<<<<< HEAD
           <div class="cat-icon"><i class="fa-solid fa-${c.icon || "folder"}"></i></div>
+=======
+          <div class="cat-icon"><i class="fa-solid ${(c.icon || "fa-folder").startsWith("fa-") ? c.icon : "fa-" + c.icon}"></i></div>
+>>>>>>> ec26484 (implementasi demo)
           <div class="cat-name">${c.name}</div>
         </a>`,
         )

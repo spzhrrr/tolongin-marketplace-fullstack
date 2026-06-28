@@ -1,9 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { Controller, Get, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { UsersService } from '../services/users.service';
 import { Public } from '../../../common/decorators/public.decorator';
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
 import {
   Body,
   Controller,
@@ -21,7 +24,10 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { CreatePortfolioDto } from '../dto/portfolio.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { UpdateUserDto } from '../dto/update-user.dto';
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
 
 @ApiTags('Users')
 @Controller('users')
@@ -68,6 +74,52 @@ export class UsersController {
   }
 
   @Public()
+<<<<<<< HEAD
+=======
+  @Get(':id/work-history')
+  @ApiOperation({ summary: 'Get completed and active work history as seller' })
+  async getWorkHistory(@Param('id') id: string) {
+    return this.usersService.getWorkHistory(id);
+  }
+
+  @Public()
+  @Get(':id/portfolio')
+  @ApiOperation({ summary: 'Ambil daftar portofolio user' })
+  async getPortfolio(@Param('id') id: string) {
+    return this.usersService.getPortfolio(id);
+  }
+
+  @ApiBearerAuth('jwt')
+  @Post('portfolio')
+  @ApiOperation({ summary: 'Tambah item portofolio milik sendiri' })
+  async addPortfolio(
+    @CurrentUser('id') uid: string,
+    @Body() dto: CreatePortfolioDto,
+  ) {
+    return this.usersService.addPortfolio(uid, dto);
+  }
+
+  @ApiBearerAuth('jwt')
+  @Delete('portfolio/:portfolioId')
+  @ApiOperation({ summary: 'Hapus item portofolio milik sendiri' })
+  async deletePortfolio(
+    @Param('portfolioId') portfolioId: string,
+    @CurrentUser('id') uid: string,
+  ) {
+    return this.usersService.deletePortfolio(portfolioId, uid);
+  }
+
+  @Public()
+  @Get(':id/stats')
+  @ApiOperation({
+    summary: 'Statistik user (total pendapatan, rating, jumlah order)',
+  })
+  async getStats(@Param('id') id: string) {
+    return this.usersService.getStats(id);
+  }
+
+  @Public()
+>>>>>>> ec26484 (implementasi demo)
   @Get(':id/complete')
   @ApiOperation({
     summary: 'Get complete user profile with services, jobs, reviews',

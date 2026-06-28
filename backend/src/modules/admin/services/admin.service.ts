@@ -124,7 +124,11 @@ export class AdminService {
     return this.settings();
   }
 
+<<<<<<< HEAD
   // ==================== KYC MANAGEMENT METHODS ====================
+=======
+  //       ====== KYC MANAGEMENT METHODS       ======
+>>>>>>> ec26484 (implementasi demo)
 
   async getKycSubmissions(status: string) {
     const where: any = {};

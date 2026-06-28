@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { api } from "../../shared/utils/api.js";
 import { serviceCard } from "../../shared/ui/components.js";
 import { debounce, toast, escape, fmtIDR } from "../../shared/utils/helpers.js";
@@ -6,6 +7,25 @@ import { router } from "../../app/router.js";
 import { avatar } from "../../shared/ui/components.js";
 
 export async function MarketplacePage({ mount, query }) {
+=======
+// frontend/src/features/marketplace/MarketplacePages.js
+
+import { api } from "../../shared/utils/api.js";
+import {
+  debounce,
+  toast,
+  escape,
+  fmtIDR,
+  timeAgo,
+} from "../../shared/utils/helpers.js";
+import { store } from "../../app/store.js";
+import { router } from "../../app/router.js";
+import { avatar, serviceCard } from "../../shared/ui/components.js";
+
+export async function MarketplacePage({ mount, query }) {
+  const u = store.getState().user;
+
+>>>>>>> ec26484 (implementasi demo)
   mount.innerHTML = `
     <div class="container page">
       <div class="page-header">
@@ -13,6 +33,18 @@ export async function MarketplacePage({ mount, query }) {
           <h1 class="page-title">Cari Jasa</h1>
           <p class="page-subtitle">Temukan jasa terbaik dari freelancer profesional</p>
         </div>
+<<<<<<< HEAD
+=======
+        ${
+          u && u.role !== "ADMIN"
+            ? `
+          <a href="#/post-service" class="btn btn-primary" id="post-service-btn" data-testid="post-service-btn" style="display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-plus"></i> Posting Jasa
+          </a>
+        `
+            : ""
+        }
+>>>>>>> ec26484 (implementasi demo)
       </div>
       <div class="filters" data-testid="filters-bar" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;">
         <div class="input-icon" style="flex: 1; min-width: 200px; max-width: 300px;">
@@ -27,6 +59,28 @@ export async function MarketplacePage({ mount, query }) {
           <span class="text-muted">—</span>
           <input class="input" id="max" type="number" placeholder="Max Rp" style="width: 100px;">
         </div>
+<<<<<<< HEAD
+=======
+        <select class="select" id="min-rating" data-testid="filter-rating" style="width: 140px;">
+          <option value="">Semua Rating</option>
+          <option value="4.5">4.5★ ke atas</option>
+          <option value="4">4★ ke atas</option>
+          <option value="3">3★ ke atas</option>
+        </select>
+        <select class="select" id="delivery" data-testid="filter-delivery" style="width: 150px;">
+          <option value="">Semua Pengerjaan</option>
+          <option value="1">≤ 1 hari</option>
+          <option value="3">≤ 3 hari</option>
+          <option value="7">≤ 7 hari</option>
+          <option value="14">≤ 14 hari</option>
+        </select>
+        <select class="select" id="sort-by" data-testid="filter-sort" style="width: 160px;">
+          <option value="newest">Terbaru</option>
+          <option value="rating_desc">Rating Tertinggi</option>
+          <option value="price_asc">Harga Terendah</option>
+          <option value="price_desc">Harga Tertinggi</option>
+        </select>
+>>>>>>> ec26484 (implementasi demo)
         <button class="btn btn-secondary btn-sm" id="reset-filters" style="white-space: nowrap; padding: 8px 16px;">
           <i class="fa-solid fa-rotate-left"></i> Reset
         </button>
@@ -35,6 +89,7 @@ export async function MarketplacePage({ mount, query }) {
       <div id="results" class="services-grid" data-testid="services-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 24px;"></div>
     </div>`;
 
+<<<<<<< HEAD
   const cats = await api.get("/categories");
   const sel = document.getElementById("cat");
   sel.innerHTML =
@@ -45,17 +100,44 @@ export async function MarketplacePage({ mount, query }) {
           `<option value="${c.slug}" ${query.category === c.slug ? "selected" : ""}>${c.name}</option>`,
       )
       .join("");
+=======
+  const postServiceBtn = document.getElementById("post-service-btn");
+  if (postServiceBtn) {
+    postServiceBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (!store.getState().user) {
+        toast("Silakan login dulu", "warning");
+        return router.navigate("/login");
+      }
+      router.navigate("/post-service");
+    });
+  }
+
+  const cats = await api.get("/categories");
+  const sel = document.getElementById("cat");
+  if (sel) {
+    sel.innerHTML =
+      `<option value="all">Semua Kategori</option>` +
+      cats.map((c) => `<option value="${c.slug}">${c.name}</option>`).join("");
+  }
+>>>>>>> ec26484 (implementasi demo)
 
   let favs = [];
   try {
     if (store.getState().token) {
       const favResponse = await api.get("/favorites");
       favs = favResponse.map((s) => s.id);
+<<<<<<< HEAD
       console.log("Loaded favorites:", favs);
     }
   } catch (err) {
     if (import.meta.env.DEV)
       console.warn("[marketplace] favorites load failed", err);
+=======
+    }
+  } catch (err) {
+    console.warn("[marketplace] favorites load failed", err);
+>>>>>>> ec26484 (implementasi demo)
   }
 
   const load = async () => {
@@ -72,6 +154,15 @@ export async function MarketplacePage({ mount, query }) {
     }
     if (min) params.set("minPrice", min);
     if (max) params.set("maxPrice", max);
+<<<<<<< HEAD
+=======
+    const minRating = document.getElementById("min-rating")?.value || "";
+    const delivery = document.getElementById("delivery")?.value || "";
+    const sortBy = document.getElementById("sort-by")?.value || "";
+    if (minRating) params.set("minRating", minRating);
+    if (delivery) params.set("maxDeliveryDays", delivery);
+    if (sortBy) params.set("sortBy", sortBy);
+>>>>>>> ec26484 (implementasi demo)
 
     const res = document.getElementById("results");
     if (!res) return;
@@ -93,6 +184,7 @@ export async function MarketplacePage({ mount, query }) {
       }
 
       res.innerHTML = items
+<<<<<<< HEAD
         .map((s) => {
           const rating = s.rating || 0;
           const reviewCount = s.reviewCount || 0;
@@ -137,6 +229,9 @@ export async function MarketplacePage({ mount, query }) {
             </div>
           `;
         })
+=======
+        .map((s) => serviceCard(s, { favorited: favs.includes(s.id) }))
+>>>>>>> ec26484 (implementasi demo)
         .join("");
 
       const countEl = document.getElementById("results-count");
@@ -144,10 +239,17 @@ export async function MarketplacePage({ mount, query }) {
 
       res.querySelectorAll(".service-card").forEach((card) => {
         card.addEventListener("click", (e) => {
+<<<<<<< HEAD
           if (e.target.closest(".seller-link") || e.target.closest(".btn-fav"))
             return;
           const serviceId = card.dataset.serviceId;
           if (serviceId) router.navigate("/services/" + serviceId);
+=======
+          if (e.target.closest(".seller-link") || e.target.closest(".fav-btn"))
+            return;
+          const href = card.getAttribute("href");
+          if (href) router.navigate(href.replace("#", ""));
+>>>>>>> ec26484 (implementasi demo)
         });
       });
 
@@ -156,6 +258,7 @@ export async function MarketplacePage({ mount, query }) {
           e.preventDefault();
           e.stopPropagation();
           const uid = el.dataset.userId;
+<<<<<<< HEAD
           if (uid) {
             router.navigate("/users/" + uid);
           }
@@ -168,10 +271,21 @@ export async function MarketplacePage({ mount, query }) {
           e.preventDefault();
           e.stopPropagation();
 
+=======
+          if (uid) router.navigate("/users/" + uid);
+        }),
+      );
+
+      res.querySelectorAll(".fav-btn").forEach((btn) =>
+        btn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+>>>>>>> ec26484 (implementasi demo)
           if (!store.getState().token) {
             toast("Login dulu untuk menyimpan favorit", "warning");
             return;
           }
+<<<<<<< HEAD
 
           const serviceId = btn.dataset.fav;
           const icon = btn.querySelector("i");
@@ -225,12 +339,46 @@ export async function MarketplacePage({ mount, query }) {
               icon.classList.remove("fa-solid");
               icon.classList.add("fa-regular");
               icon.style.color = "#999";
+=======
+          const serviceId = btn.dataset.fav;
+          const icon = btn.querySelector("i");
+          const isCurrentlyFavorited = btn.classList.contains("active");
+          btn.disabled = true;
+          btn.style.opacity = "0.6";
+          try {
+            const response = await api.post("/favorites/" + serviceId);
+            let newStatus = !isCurrentlyFavorited;
+            if (response.favorited !== undefined)
+              newStatus = response.favorited;
+            else if (response.message?.toLowerCase().includes("added"))
+              newStatus = true;
+            else if (response.message?.toLowerCase().includes("removed"))
+              newStatus = false;
+
+            if (newStatus) {
+              btn.classList.add("active");
+              if (icon) {
+                icon.classList.remove("fa-regular");
+                icon.classList.add("fa-solid");
+              }
+              if (!favs.includes(serviceId)) favs.push(serviceId);
+              toast("❤️ Ditambahkan ke favorit", "success");
+            } else {
+              btn.classList.remove("active");
+              if (icon) {
+                icon.classList.remove("fa-solid");
+                icon.classList.add("fa-regular");
+              }
+>>>>>>> ec26484 (implementasi demo)
               const idx = favs.indexOf(serviceId);
               if (idx > -1) favs.splice(idx, 1);
               toast("💔 Dihapus dari favorit", "success");
             }
           } catch (err) {
+<<<<<<< HEAD
             console.error("Favorite error:", err);
+=======
+>>>>>>> ec26484 (implementasi demo)
             toast(err.message || "Gagal mengubah favorit", "error");
           } finally {
             btn.disabled = false;
@@ -238,7 +386,10 @@ export async function MarketplacePage({ mount, query }) {
           }
         }),
       );
+<<<<<<< HEAD
       // ========== END PERBAIKAN FAVORIT ==========
+=======
+>>>>>>> ec26484 (implementasi demo)
     } catch (err) {
       console.error("Load error:", err);
       res.innerHTML = `<div class="empty" style="grid-column:1/-1; text-align:center; padding:40px;">
@@ -255,18 +406,50 @@ export async function MarketplacePage({ mount, query }) {
     const el = document.getElementById(id);
     if (el) el.addEventListener("input", d);
   });
+<<<<<<< HEAD
   document.getElementById("cat")?.addEventListener("change", load);
   document.getElementById("reset-filters")?.addEventListener("click", () => {
     document.getElementById("q").value = "";
     document.getElementById("cat").value = "all";
     document.getElementById("min").value = "";
     document.getElementById("max").value = "";
+=======
+  ["cat", "min-rating", "delivery", "sort-by"].forEach((id) => {
+    document.getElementById(id)?.addEventListener("change", load);
+  });
+  document.getElementById("reset-filters")?.addEventListener("click", () => {
+    const q = document.getElementById("q");
+    if (q) q.value = "";
+    const cat = document.getElementById("cat");
+    if (cat) cat.value = "all";
+    ["min", "max"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+    const minRating = document.getElementById("min-rating");
+    if (minRating) minRating.value = "";
+    const delivery = document.getElementById("delivery");
+    if (delivery) delivery.value = "";
+    const sortBy = document.getElementById("sort-by");
+    if (sortBy) sortBy.value = "newest";
+>>>>>>> ec26484 (implementasi demo)
     load();
   });
   load();
 }
+<<<<<<< HEAD
 export async function ServiceDetailPage({ mount, params }) {
   mount.innerHTML = `<div class="container page"><div class="spinner" style="text-align:center; padding:40px;"></div></div>`;
+=======
+
+// frontend/src/features/marketplace/MarketplacePages.js
+
+// Ganti fungsi ServiceDetailPage dengan ini:
+
+export async function ServiceDetailPage({ mount, params }) {
+  mount.innerHTML = `<div class="container page"><div class="spinner" style="text-align:center; padding:40px;"></div></div>`;
+
+>>>>>>> ec26484 (implementasi demo)
   try {
     const s = await api.get("/services/" + params.id);
     const u = store.getState().user;
@@ -274,7 +457,10 @@ export async function ServiceDetailPage({ mount, params }) {
     const deliveryTime = s.deliveryTime
       ? `${s.deliveryTime} hari pengerjaan`
       : "Fleksibel";
+<<<<<<< HEAD
 
+=======
+>>>>>>> ec26484 (implementasi demo)
     const rating = s.rating || 0;
     const reviewCount = s.reviewCount || 0;
     const imageUrl =
@@ -288,6 +474,7 @@ export async function ServiceDetailPage({ mount, params }) {
           <i class="fa-solid fa-arrow-left"></i> Kembali ke Cari Jasa
         </a>
         
+<<<<<<< HEAD
         <div style="display:flex; gap:24px; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08);">
           
           <!-- KOLOM KIRI: GAMBAR VERTIKAL -->
@@ -295,11 +482,24 @@ export async function ServiceDetailPage({ mount, params }) {
             <img src="${imageUrl}" 
                  alt="${escape(s.title)}" 
                  style="width:100%; height:100%; min-height:500px; object-fit:cover; display:block;"
+=======
+        <div class="service-detail-shell">
+          
+          <!-- KOLOM KIRI: GAMBAR VERTIKAL -->
+          <div class="service-detail-media">
+            <img src="${imageUrl}" 
+                 alt="${escape(s.title)}" 
+                 style="width:100%; height:100%; object-fit:cover; display:block;"
+>>>>>>> ec26484 (implementasi demo)
                  onerror="this.src='https://placehold.co/600x800/0a66c2/ffffff?text=No+Image'" />
           </div>
           
           <!-- KOLOM KANAN: KONTEN -->
+<<<<<<< HEAD
           <div style="flex: 1.2; padding:24px; display:flex; flex-direction:column;">
+=======
+          <div class="service-detail-content">
+>>>>>>> ec26484 (implementasi demo)
             
             <span class="badge" style="display:inline-block; background:#e8f0fe; color:#0a66c2; padding:4px 12px; border-radius:20px; font-size:12px; width:fit-content; margin-bottom:16px;">
               ${escape(s.category?.name || s.category || "Umum")}
@@ -382,17 +582,24 @@ export async function ServiceDetailPage({ mount, params }) {
           </div>
         </div>
       </div>
+<<<<<<< HEAD
       
       <style>
         .order-btn:hover { background:#f0f0f0 !important; transform:translateY(-1px); transition:all 0.2s; }
         .chat-btn:hover { background:rgba(255,255,255,0.2) !important; transform:translateY(-1px); transition:all 0.2s; }
         .seller-link:hover { opacity:0.8; }
       </style>
+=======
+>>>>>>> ec26484 (implementasi demo)
     `;
 
     // Load reviews
     try {
+<<<<<<< HEAD
       const reviewsRes = await api.get(`/services/${s.id}/reviews`);
+=======
+      const reviewsRes = await api.get(`/reviews/service/${s.id}`);
+>>>>>>> ec26484 (implementasi demo)
       const reviews = Array.isArray(reviewsRes)
         ? reviewsRes
         : reviewsRes?.data || [];
@@ -436,7 +643,11 @@ export async function ServiceDetailPage({ mount, params }) {
       });
     }
 
+<<<<<<< HEAD
     // Order button dengan MODAL KONFIRMASI
+=======
+    // ✅ ORDER BUTTON - LENGKAP DENGAN KONFIRMASI
+>>>>>>> ec26484 (implementasi demo)
     const orderBtn = document.getElementById("order-btn");
     if (orderBtn) {
       orderBtn.addEventListener("click", async () => {
@@ -445,11 +656,20 @@ export async function ServiceDetailPage({ mount, params }) {
           return router.navigate("/login");
         }
 
+<<<<<<< HEAD
         try {
           const me = await api.get("/auth/me");
           if (!me.emailVerified || !me.phoneVerified) {
             toast(
               "Verifikasi email & nomor telepon dulu sebelum memesan",
+=======
+        // Cek verifikasi
+        try {
+          const me = await api.get("/auth/me");
+          if (!me.emailVerified || !me.phoneVerified || !me.ktpVerified) {
+            toast(
+              "Verifikasi email, telepon, dan KTP dulu sebelum memesan",
+>>>>>>> ec26484 (implementasi demo)
               "warning",
               6000,
             );
@@ -460,6 +680,10 @@ export async function ServiceDetailPage({ mount, params }) {
         const fee = Math.round((s.price || 0) * 0.05);
         const total = (s.price || 0) + fee;
 
+<<<<<<< HEAD
+=======
+        // Buat modal overlay
+>>>>>>> ec26484 (implementasi demo)
         const overlay = document.createElement("div");
         overlay.className = "modal-backdrop";
         overlay.style.cssText =
@@ -521,10 +745,20 @@ export async function ServiceDetailPage({ mount, params }) {
             confirmBtn.innerHTML =
               '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
             try {
+<<<<<<< HEAD
               const o = await api.post("/orders", { serviceId: s.id, note });
               closeModal();
               toast("Pesanan dibuat! Silakan bayar.", "success");
               router.navigate("/orders/" + o.id);
+=======
+              const order = await api.post("/orders", {
+                serviceId: s.id,
+                note,
+              });
+              closeModal();
+              toast("Pesanan dibuat! Silakan bayar.", "success");
+              router.navigate("/orders/" + order.id);
+>>>>>>> ec26484 (implementasi demo)
             } catch (err) {
               toast(err.message, "error");
               confirmBtn.disabled = false;
@@ -535,7 +769,11 @@ export async function ServiceDetailPage({ mount, params }) {
       });
     }
 
+<<<<<<< HEAD
     // ========== CHAT BUTTON - PERBAIKAN LENGKAP ==========
+=======
+    // ✅ CHAT BUTTON - LENGKAP
+>>>>>>> ec26484 (implementasi demo)
     const chatBtn = document.getElementById("chat-btn");
     if (chatBtn) {
       chatBtn.addEventListener("click", async () => {
@@ -543,13 +781,17 @@ export async function ServiceDetailPage({ mount, params }) {
           toast("Silakan login dulu", "warning");
           return router.navigate("/login");
         }
+<<<<<<< HEAD
 
         // Cek jangan chat dengan diri sendiri
+=======
+>>>>>>> ec26484 (implementasi demo)
         if (u.id === s.sellerId) {
           toast("Anda tidak bisa chat dengan diri sendiri", "warning");
           return;
         }
 
+<<<<<<< HEAD
         console.log("=== CHAT BUTTON CLICKED ===");
         console.log("Current user ID:", u.id);
         console.log("Current user name:", u.name);
@@ -557,11 +799,14 @@ export async function ServiceDetailPage({ mount, params }) {
         console.log("Seller name:", s.seller?.name);
 
         // Disable button sementara
+=======
+>>>>>>> ec26484 (implementasi demo)
         chatBtn.disabled = true;
         chatBtn.innerHTML =
           '<i class="fa-solid fa-spinner fa-spin"></i> Memuat...';
 
         try {
+<<<<<<< HEAD
           // Kirim request ke API untuk membuat atau mendapatkan conversation
           const response = await api.post("/chat/conversations", {
             recipientId: s.sellerId,
@@ -583,11 +828,25 @@ export async function ServiceDetailPage({ mount, params }) {
           }
 
           console.log("Conversation ID:", conversationId);
+=======
+          const response = await api.post("/chat/conversations", {
+            recipientId: s.sellerId,
+          });
+          let conversationId = null;
+          if (response && response.id) conversationId = response.id;
+          else if (
+            response &&
+            response.conversation &&
+            response.conversation.id
+          )
+            conversationId = response.conversation.id;
+>>>>>>> ec26484 (implementasi demo)
 
           if (conversationId) {
             toast("Membuka chat...", "info", 1000);
             router.navigate("/chat/" + conversationId);
           } else {
+<<<<<<< HEAD
             console.error("No conversation ID in response:", response);
             toast("Gagal memulai chat: response tidak valid", "error");
           }
@@ -602,6 +861,13 @@ export async function ServiceDetailPage({ mount, params }) {
             err.message || "Gagal memulai chat. Silakan coba lagi.",
             "error",
           );
+=======
+            toast("Gagal memulai chat", "error");
+          }
+        } catch (err) {
+          console.error("Chat error:", err);
+          toast(err.message || "Gagal memulai chat", "error");
+>>>>>>> ec26484 (implementasi demo)
         } finally {
           chatBtn.disabled = false;
           chatBtn.innerHTML =
@@ -609,7 +875,10 @@ export async function ServiceDetailPage({ mount, params }) {
         }
       });
     }
+<<<<<<< HEAD
     // ========== END CHAT BUTTON ==========
+=======
+>>>>>>> ec26484 (implementasi demo)
   } catch (err) {
     console.error("Detail error:", err);
     mount.innerHTML = `<div class="container"><div class="empty" style="text-align:center; padding:40px;">

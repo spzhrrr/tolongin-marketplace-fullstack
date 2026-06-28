@@ -6,13 +6,26 @@ import { Prisma } from '@prisma/client';
 export class JobsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+<<<<<<< HEAD
   async findMany(where: Prisma.JobWhereInput, skip: number, take: number) {
+=======
+  async findMany(
+    where: Prisma.JobWhereInput,
+    skip: number,
+    take: number,
+    orderBy: Prisma.JobOrderByWithRelationInput = { createdAt: 'desc' },
+  ) {
+>>>>>>> ec26484 (implementasi demo)
     const [items, total] = await Promise.all([
       this.prisma.job.findMany({
         where,
         skip,
         take,
+<<<<<<< HEAD
         orderBy: { createdAt: 'desc' },
+=======
+        orderBy,
+>>>>>>> ec26484 (implementasi demo)
         include: {
           buyer: { select: { id: true, name: true, avatar: true } },
           category: true,

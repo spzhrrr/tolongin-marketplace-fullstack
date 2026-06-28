@@ -1,10 +1,16 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { api } from "../../shared/utils/api.js";
 =======
 // frontend/src/features/profile/ProfilePages.js
 
 import { api, resolveAssetUrl } from "../../shared/utils/api.js";
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+// frontend/src/features/profile/ProfilePages.js
+
+import { api, resolveAssetUrl } from "../../shared/utils/api.js";
+>>>>>>> ec26484 (implementasi demo)
 import { escape, toast } from "../../shared/utils/helpers.js";
 import { avatar, serviceCard, empty } from "../../shared/ui/components.js";
 import { store } from "../../app/store.js";
@@ -16,14 +22,28 @@ export async function ProfilePage({ mount }) {
     const servicesResp = await api
       .get("/services?sellerId=" + me.id)
       .catch(() => []);
+<<<<<<< HEAD
     const services = Array.isArray(servicesResp) ? servicesResp : servicesResp.data || [];
+=======
+    const services = Array.isArray(servicesResp)
+      ? servicesResp
+      : servicesResp.data || [];
+
+>>>>>>> ec26484 (implementasi demo)
     mount.innerHTML = `
       <div class="container page">
         <div class="card card-pad-lg" data-testid="profile-card">
           <div class="flex gap-md" style="align-items:center;flex-wrap:wrap">
             ${avatar(me, "xl")}
             <div style="flex:1;min-width:200px">
+<<<<<<< HEAD
               <div class="flex gap-sm" style="align-items:center"><h1 style="margin:0">${escape(me.name)}</h1>${me.verified ? '<i class="fa-solid fa-circle-check" style="color:var(--primary)" title="Verified"></i>' : ""}</div>
+=======
+              <div class="flex gap-sm" style="align-items:center">
+                <h1 style="margin:0">${escape(me.name)}</h1>
+                ${me.verified ? '<i class="fa-solid fa-circle-check" style="color:var(--primary)" title="Verified"></i>' : ""}
+              </div>
+>>>>>>> ec26484 (implementasi demo)
               <p class="text-muted" style="margin:.25rem 0">${escape(me.bio || "Belum ada bio")}</p>
               <div class="flex gap-md text-sm text-muted" style="flex-wrap:wrap">
                 <span><i class="fa-solid fa-envelope"></i> ${escape(me.email)}</span>
@@ -33,8 +53,17 @@ export async function ProfilePage({ mount }) {
               </div>
             </div>
             <div class="flex gap-sm" style="flex-wrap:wrap">
+<<<<<<< HEAD
               <a class="btn btn-secondary" href="#/users/${me.id}" data-testid="view-public-profile-btn"><i class="fa-solid fa-eye"></i> Lihat Profil Publik</a>
               <a class="btn btn-primary" href="#/settings" data-testid="edit-profile-btn"><i class="fa-solid fa-pen"></i> Edit Profil</a>
+=======
+              <a class="btn btn-secondary" href="#/users/${me.id}" data-testid="view-public-profile-btn">
+                <i class="fa-solid fa-eye"></i> Lihat Profil Publik
+              </a>
+              <a class="btn btn-primary" href="#/settings" data-testid="edit-profile-btn">
+                <i class="fa-solid fa-pen"></i> Edit Profil
+              </a>
+>>>>>>> ec26484 (implementasi demo)
             </div>
           </div>
         </div>
@@ -42,10 +71,19 @@ export async function ProfilePage({ mount }) {
           services.length
             ? `
           <h2 class="mt-4">Jasa Saya</h2>
+<<<<<<< HEAD
           <div class="services-grid">${services.map((s) => serviceCard(s)).join("")}</div>`
             : ""
         }
       </div>`;
+=======
+          <div class="services-grid">${services.map((s) => serviceCard(s)).join("")}</div>
+        `
+            : ""
+        }
+      </div>
+    `;
+>>>>>>> ec26484 (implementasi demo)
   } catch (e) {
     mount.innerHTML = empty("Gagal memuat profil", e.message);
   }
@@ -60,8 +98,16 @@ function fileToBase64(file) {
   });
 }
 
+<<<<<<< HEAD
 export async function SettingsPage({ mount }) {
   const u = store.getState().user;
+=======
+// frontend/src/features/profile/ProfilePages.js - SettingsPage
+
+export async function SettingsPage({ mount }) {
+  const u = store.getState().user;
+
+>>>>>>> ec26484 (implementasi demo)
   mount.innerHTML = `
     <div class="container-sm page">
       <h1 class="page-title">Pengaturan Profil</h1>
@@ -72,11 +118,16 @@ export async function SettingsPage({ mount }) {
             <label class="label" style="display:block">Foto Profil</label>
             <div style="position:relative;display:inline-block">
 <<<<<<< HEAD
+<<<<<<< HEAD
               <img id="avatar-preview" src="${u.avatar && u.avatar !== "null" ? escape(u.avatar) : `https://i.pravatar.cc/150?u=${u.id}`}"
 =======
               <img id="avatar-preview" 
                    src="${u.avatar && u.avatar !== "null" ? escape(u.avatar) : `/logotolongin.svg`}"
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+              <img id="avatar-preview" 
+                   src="${u.avatar && u.avatar !== "null" ? escape(u.avatar) : `/logotolongin.svg`}"
+>>>>>>> ec26484 (implementasi demo)
                    alt="avatar"
                    style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid var(--border);display:block;margin:0 auto"
                    data-testid="avatar-preview" />
@@ -88,11 +139,32 @@ export async function SettingsPage({ mount }) {
               <input type="file" id="avatar-file" accept="image/jpeg,image/png,image/webp" style="display:none" data-testid="avatar-file-input" />
             </div>
             <div class="text-xs text-muted mt-1">JPG, PNG atau WebP. Maks 2MB.</div>
+<<<<<<< HEAD
           </div>
           <div class="form-group"><label class="label">Nama</label><input class="input" id="name" value="${escape(u.name)}" data-testid="set-name"></div>
           <div class="form-group"><label class="label">Bio</label><textarea class="textarea" id="bio" rows="3" maxlength="500" data-testid="set-bio" placeholder="Ceritakan tentang Anda...">${escape(u.bio || "")}</textarea></div>
           <div class="form-group"><label class="label">Kota</label><input class="input" id="city" value="${escape(u.city || "")}" placeholder="Contoh: Jakarta Selatan" data-testid="set-city"></div>
           <div class="form-group"><label class="label">Nomor Telepon</label><input class="input" id="phone" value="${escape(u.phone || "")}" placeholder="0812xxxxxxxx" data-testid="set-phone"></div>
+=======
+            <div id="avatar-upload-status" style="font-size:12px; color:#666; margin-top:8px; display:none;"></div>
+          </div>
+          <div class="form-group">
+            <label class="label">Nama</label>
+            <input class="input" id="name" value="${escape(u.name)}" data-testid="set-name">
+          </div>
+          <div class="form-group">
+            <label class="label">Bio</label>
+            <textarea class="textarea" id="bio" rows="3" maxlength="500" data-testid="set-bio" placeholder="Ceritakan tentang Anda...">${escape(u.bio || "")}</textarea>
+          </div>
+          <div class="form-group">
+            <label class="label">Kota</label>
+            <input class="input" id="city" value="${escape(u.city || "")}" placeholder="Contoh: Jakarta Selatan" data-testid="set-city">
+          </div>
+          <div class="form-group">
+            <label class="label">Nomor Telepon</label>
+            <input class="input" id="phone" value="${escape(u.phone || "")}" placeholder="0812xxxxxxxx" data-testid="set-phone">
+          </div>
+>>>>>>> ec26484 (implementasi demo)
           <button class="btn btn-primary btn-block" type="submit" data-testid="settings-save-btn">
             <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan
           </button>
@@ -100,6 +172,7 @@ export async function SettingsPage({ mount }) {
       </div>
     </div>`;
 
+<<<<<<< HEAD
   let avatarBase64 = null;
 
   // Avatar upload via file input
@@ -151,6 +224,33 @@ export async function SettingsPage({ mount }) {
     }
   });
 =======
+=======
+  let avatarFileToUpload = null;
+  const uploadStatus = document.getElementById("avatar-upload-status");
+
+  // Avatar upload via file input - UPLOAD LANGSUNG KE SERVER
+  const avatarFileInput = document.getElementById("avatar-file");
+  if (avatarFileInput) {
+    avatarFileInput.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (!file.type.startsWith("image/")) {
+        return toast("File harus berupa gambar", "error");
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        return toast("Ukuran maksimal 2MB", "error");
+      }
+
+      // Preview lokal dulu
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const preview = document.getElementById("avatar-preview");
+        if (preview) preview.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+
+>>>>>>> ec26484 (implementasi demo)
       // Upload langsung ke server
       if (uploadStatus) {
         uploadStatus.style.display = "block";
@@ -243,5 +343,8 @@ export async function SettingsPage({ mount }) {
       }
     });
   }
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
 }

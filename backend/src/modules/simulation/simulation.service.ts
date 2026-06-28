@@ -54,14 +54,25 @@ export class SimulationService {
   }
 
   // ✅ Setiap 12 detik - Simulasi order untuk jasa baru
+<<<<<<< HEAD
   @Cron('*/12 * * * * *')
+=======
+  @Cron('*/2 * * * * *')
+>>>>>>> ec26484 (implementasi demo)
   async simulateNewOrderForServices() {
     if (process.env.DEMO_AUTOMATION_ENABLED !== 'true') return;
     this.logger.debug('🔍 Checking for new services to simulate orders...');
 
     const services = await this.prisma.service.findMany({
       where: {
+<<<<<<< HEAD
         createdAt: { gte: new Date(Date.now() - 60 * 1000) },
+=======
+        createdAt: {
+          gte: new Date(Date.now() - 2 * 60 * 1000),
+          lte: new Date(Date.now() - 3000),
+        },
+>>>>>>> ec26484 (implementasi demo)
         simulationOrderCreatedAt: null,
         isActive: true,
       },
@@ -124,6 +135,7 @@ export class SimulationService {
 
       this.logger.log(`✅ Order ${order.id} created for service ${service.id}`);
 
+<<<<<<< HEAD
       // ✅ NOTIFIKASI KE SELLER (pemilik jasa)
       await this.notificationsService.notify(
         service.sellerId,
@@ -140,6 +152,22 @@ export class SimulationService {
         'ORDER',
         '✅ Pesanan Berhasil Dibuat (Simulasi)',
         `Anda telah memesan jasa "${service.title}" seharga ${this.formatIDR(service.price)}.`,
+=======
+      await this.notificationsService.notify(
+        service.sellerId,
+        'ORDER',
+        '🛒 Ada Pesanan Baru!',
+        `${dummyBuyer.name} ingin memesan jasa "${service.title}" seharga ${this.formatIDR(service.price)}. Klik untuk memproses.`,
+        { orderId: order.id, serviceId: service.id },
+        `/orders/${order.id}`,
+      );
+
+      await this.notificationsService.notify(
+        dummyBuyer.id,
+        'ORDER',
+        '📩 Pesanan Berhasil Dikirim!',
+        `Pesanan jasa "${service.title}" seharga ${this.formatIDR(service.price)} menunggu konfirmasi seller.`,
+>>>>>>> ec26484 (implementasi demo)
         { orderId: order.id, serviceId: service.id },
         `/orders/${order.id}`,
       );
@@ -147,14 +175,25 @@ export class SimulationService {
   }
 
   // ✅ Setiap 10 detik - Simulasi lamaran untuk job baru
+<<<<<<< HEAD
   @Cron('*/10 * * * * *')
+=======
+  @Cron('*/2 * * * * *')
+>>>>>>> ec26484 (implementasi demo)
   async simulateNewApplicationForJobs() {
     if (process.env.DEMO_AUTOMATION_ENABLED !== 'true') return;
     this.logger.debug('🔍 Checking for new jobs to simulate applications...');
 
     const jobs = await this.prisma.job.findMany({
       where: {
+<<<<<<< HEAD
         createdAt: { gte: new Date(Date.now() - 60 * 1000) },
+=======
+        createdAt: {
+          gte: new Date(Date.now() - 2 * 60 * 1000),
+          lte: new Date(Date.now() - 3000),
+        },
+>>>>>>> ec26484 (implementasi demo)
         simulationApplicationCreatedAt: null,
         status: 'OPEN',
       },
@@ -208,6 +247,10 @@ export class SimulationService {
           proposedPrice,
           proposedDuration,
           status: 'PENDING',
+<<<<<<< HEAD
+=======
+          simulationApplicationCreatedAt: new Date(),
+>>>>>>> ec26484 (implementasi demo)
         },
       });
 
@@ -225,17 +268,25 @@ export class SimulationService {
         data: { applicationsCount: { increment: 1 } },
       });
 
+<<<<<<< HEAD
       // ✅ NOTIFIKASI KE BUYER (pemilik job) - Redirect ke halaman job dengan tab aplikasi
       await this.notificationsService.notify(
         job.buyerId,
         'APPLICATION',
         '📝 Ada Lamaran Baru (Simulasi)',
+=======
+      await this.notificationsService.notify(
+        job.buyerId,
+        'APPLICATION',
+        '📩 Ada Lamaran Baru!',
+>>>>>>> ec26484 (implementasi demo)
         `${dummySeller.name} melamar pekerjaan "${job.title}" dengan tawaran ${this.formatIDR(proposedPrice)} (${proposedDuration} hari).`,
         {
           applicationId: application.id,
           jobId: job.id,
           sellerId: dummySeller.id,
         },
+<<<<<<< HEAD
         `/jobs/${job.id}?tab=applications`, // ✅ Redirect ke halaman job dengan tab aplikasi
       );
 
@@ -245,6 +296,16 @@ export class SimulationService {
         'APPLICATION',
         '✅ Lamaran Terkirim (Simulasi)',
         `Lamaran Anda untuk "${job.title}" telah terkirim. Tunggu respon dari pemilik job.`,
+=======
+        `/jobs/${job.id}?tab=applications`,
+      );
+
+      await this.notificationsService.notify(
+        dummySeller.id,
+        'APPLICATION',
+        '📩 Lamaran Terkirim!',
+        `Lamaran Anda untuk "${job.title}" telah terkirim. Tunggu respon dari pemilik pekerjaan.`,
+>>>>>>> ec26484 (implementasi demo)
         { applicationId: application.id, jobId: job.id },
         `/jobs/${job.id}`,
       );
@@ -259,6 +320,13 @@ export class SimulationService {
       where: {
         status: ORDER_STATUS.WAITING_CONFIRMATION,
         simulationAcceptedAt: null,
+<<<<<<< HEAD
+=======
+        createdAt: {
+          gte: new Date(Date.now() - 2 * 60 * 1000),
+          lte: new Date(Date.now() - 2000),
+        },
+>>>>>>> ec26484 (implementasi demo)
       },
       take: 1,
     });
@@ -286,12 +354,29 @@ export class SimulationService {
 
       await this.notificationsService.notify(
         order.buyerId,
+<<<<<<< HEAD
         'ORDER',
         '✅ Pesanan Diterima (Simulasi)',
+=======
+        'PAYMENT',
+        '💳 Pembayaran Telah Dikonfirmasi!',
+>>>>>>> ec26484 (implementasi demo)
         `Pesanan "${order.title}" telah diterima oleh penjual. Pengerjaan akan segera dimulai.`,
         { orderId: order.id },
         `/orders/${order.id}`,
       );
+<<<<<<< HEAD
+=======
+
+      await this.notificationsService.notify(
+        order.sellerId,
+        'ORDER',
+        '✅ Pesanan Diterima!',
+        `Pesanan "${order.title}" siap dikerjakan. Dana ditahan di escrow.`,
+        { orderId: order.id },
+        `/orders/${order.id}`,
+      );
+>>>>>>> ec26484 (implementasi demo)
     }
   }
 
@@ -303,6 +388,10 @@ export class SimulationService {
       where: {
         status: ORDER_STATUS.PAID,
         simulationWorkSubmittedAt: null,
+<<<<<<< HEAD
+=======
+        updatedAt: { lte: new Date(Date.now() - 5000) },
+>>>>>>> ec26484 (implementasi demo)
       },
       take: 1,
     });
@@ -333,7 +422,11 @@ export class SimulationService {
           status: ORDER_STATUS.WAITING_REVIEW,
           simulationWorkSubmittedAt: new Date(),
           workSubmission: JSON.stringify({
+<<<<<<< HEAD
             note: '✅ [DEMO OTOMATIS] Hasil kerja telah diselesaikan. Silakan lihat lampiran. Terima kasih atas kepercayaannya.',
+=======
+            note: 'Hasil kerja telah diselesaikan sesuai brief. Silakan lihat lampiran dan berikan feedback jika diperlukan. Terima kasih atas kepercayaannya.',
+>>>>>>> ec26484 (implementasi demo)
             attachments: [randomAttachment],
           }),
           workSubmittedAt: new Date(),
@@ -344,8 +437,22 @@ export class SimulationService {
       await this.notificationsService.notify(
         order.buyerId,
         'ORDER',
+<<<<<<< HEAD
         '📦 Bukti Kerja Dikirim (Simulasi)',
         `Penjual telah mengirimkan hasil kerja untuk "${order.title}". Silakan review dan approve.`,
+=======
+        '📤 Bukti Pengerjaan Telah Dikirim!',
+        `Penjual telah mengirimkan hasil kerja untuk "${order.title}". Silakan review dan setujui.`,
+        { orderId: order.id },
+        `/orders/${order.id}`,
+      );
+
+      await this.notificationsService.notify(
+        order.sellerId,
+        'ORDER',
+        '📤 Bukti Kerja Terkirim!',
+        `Bukti pengerjaan "${order.title}" telah dikirim. Menunggu approval pembeli.`,
+>>>>>>> ec26484 (implementasi demo)
         { orderId: order.id },
         `/orders/${order.id}`,
       );
@@ -379,6 +486,13 @@ export class SimulationService {
       where: {
         status: APPLICATION_STATUS.PENDING,
         simulationAcceptedAt: null,
+<<<<<<< HEAD
+=======
+        createdAt: {
+          gte: new Date(Date.now() - 2 * 60 * 1000),
+          lte: new Date(Date.now() - 3000),
+        },
+>>>>>>> ec26484 (implementasi demo)
       },
       include: {
         job: {
@@ -405,6 +519,7 @@ export class SimulationService {
         },
       });
 
+<<<<<<< HEAD
       // ✅ NOTIFIKASI KE SELLER (pelamar) - Redirect ke halaman JOB (bukan orders)
       await this.notificationsService.notify(
         app.sellerId,
@@ -420,6 +535,21 @@ export class SimulationService {
         app.job.buyerId,
         'APPLICATION',
         '✅ Lamaran Diterima',
+=======
+      await this.notificationsService.notify(
+        app.sellerId,
+        'APPLICATION',
+        '✅ Lamaran Diterima!',
+        `Lamaran Anda untuk "${app.job.title}" telah diterima! Pekerjaan dimulai.`,
+        { applicationId: app.id, jobId: app.jobId },
+        `/jobs/${app.jobId}`,
+      );
+
+      await this.notificationsService.notify(
+        app.job.buyerId,
+        'APPLICATION',
+        '✅ Lamaran Diterima!',
+>>>>>>> ec26484 (implementasi demo)
         `Anda telah menerima lamaran dari ${app.seller.name} untuk pekerjaan "${app.job.title}".`,
         { applicationId: app.id, jobId: app.jobId, sellerId: app.sellerId },
         `/jobs/${app.jobId}?tab=applications`,
@@ -460,6 +590,10 @@ export class SimulationService {
             buyerId: app.job.buyerId,
             sellerId: app.sellerId,
             jobId: app.jobId,
+<<<<<<< HEAD
+=======
+            applicationId: app.id,
+>>>>>>> ec26484 (implementasi demo)
             title: app.job.title,
             amount: app.proposedPrice,
             fee,

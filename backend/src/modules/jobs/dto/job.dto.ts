@@ -65,6 +65,18 @@ export class CreateJobDto {
   @ArrayMaxSize(20)
   @IsString({ each: true })
   skills?: string[];
+<<<<<<< HEAD
+=======
+
+  @ApiProperty({
+    required: false,
+    enum: ['LOW', 'NORMAL', 'HIGH', 'URGENT'],
+    description: 'Tingkat urgensi pekerjaan',
+  })
+  @IsOptional()
+  @IsString()
+  urgency?: string;
+>>>>>>> ec26484 (implementasi demo)
 }
 
 export class UpdateJobDto {
@@ -118,6 +130,17 @@ export class UpdateJobDto {
   @IsArray()
   @IsString({ each: true })
   skills?: string[];
+<<<<<<< HEAD
+=======
+
+  @ApiProperty({
+    required: false,
+    enum: ['LOW', 'NORMAL', 'HIGH', 'URGENT'],
+  })
+  @IsOptional()
+  @IsString()
+  urgency?: string;
+>>>>>>> ec26484 (implementasi demo)
 }
 
 export class JobQueryDto {
@@ -141,6 +164,48 @@ export class JobQueryDto {
   @IsString()
   status?: string;
 
+<<<<<<< HEAD
+=======
+  @ApiProperty({ required: false, description: 'Budget minimum' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  minBudget?: number;
+
+  @ApiProperty({ required: false, description: 'Budget maksimum' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  maxBudget?: number;
+
+  @ApiProperty({ required: false, description: 'Filter lokasi (mengandung)' })
+  @IsOptional()
+  @IsString()
+  location?: string;
+
+  @ApiProperty({
+    required: false,
+    enum: ['LOW', 'NORMAL', 'HIGH', 'URGENT'],
+  })
+  @IsOptional()
+  @IsString()
+  urgency?: string;
+
+  @ApiProperty({
+    required: false,
+    description:
+      'Pengurutan: newest|budget_asc|budget_desc ATAU field createdAt|budget',
+  })
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @ApiProperty({ required: false, enum: ['asc', 'desc'] })
+  @IsOptional()
+  @IsString()
+  sortOrder?: 'asc' | 'desc';
+
+>>>>>>> ec26484 (implementasi demo)
   @ApiProperty({ required: false })
   @IsOptional()
   @Type(() => Number)

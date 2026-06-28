@@ -8,15 +8,26 @@ import { OrdersRepository } from '../repositories/orders.repository';
 import { ServicesRepository } from '../../services/repositories/services.repository';
 import { ApplicationsService } from '../../applications/services/applications.service';
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { NotificationsService } from '../../notifications/services/notifications.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { OrderFactory } from '../factories/order.factory';
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+import { NotificationsService } from '../../notifications/services/notifications.service';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { OrderFactory } from '../factories/order.factory';
+>>>>>>> ec26484 (implementasi demo)
 import {
   CreateOrderFromServiceDto,
   CancelOrderDto,
   RevisionRequestDto,
+<<<<<<< HEAD
+=======
+  SubmitWorkDto,
+  OpenDisputeDto,
+>>>>>>> ec26484 (implementasi demo)
 } from '../dto/order.dto';
 import {
   parseJsonField,
@@ -28,9 +39,20 @@ import {
   OrderStatus,
   ROLE,
   APPLICATION_STATUS,
+<<<<<<< HEAD
 } from '../../../common/constants/enums';
 
 const PLATFORM_FEE_RATE = 0.05; // 5%
+=======
+  DISPUTE_STATUS,
+} from '../../../common/constants/enums';
+
+const PLATFORM_FEE_RATE = 0.05; // 5%
+const AUTO_COMPLETE_DAYS = 7;
+const AUTO_CANCEL_DAYS = 14;
+const DISPUTE_AUTO_RESOLVE_DAYS = 3;
+const DAY_MS = 24 * 60 * 60 * 1000;
+>>>>>>> ec26484 (implementasi demo)
 
 interface TimelineEntry {
   status: OrderStatus;
@@ -46,6 +68,7 @@ export class OrdersService {
     private readonly servicesRepo: ServicesRepository,
     private readonly applicationsService: ApplicationsService,
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     private readonly notifications: NotificationsService,
     private readonly prisma: PrismaService,
@@ -55,6 +78,34 @@ export class OrdersService {
 
   private toDto(o: any) {
     return { ...o, timeline: parseJsonField<TimelineEntry[]>(o.timeline, []) };
+=======
+    private readonly notifications: NotificationsService,
+    private readonly prisma: PrismaService,
+    private readonly factory: OrderFactory,
+  ) {}
+
+  private toDto(o: any) {
+    const parsedSubmission = parseJsonField(o.workSubmission, null);
+    const proofAttachments = parseJsonField<string[]>(o.workProof, []);
+    const submissionFiles = parseJsonField<string[]>(o.workSubmissionFiles, []);
+    return {
+      ...o,
+      timeline: parseJsonField<TimelineEntry[]>(o.timeline, []),
+      workSubmissionFiles: submissionFiles,
+      workSubmission:
+        parsedSubmission ||
+        (o.workNote || proofAttachments.length || o.workSubmissionNote
+          ? {
+              note: o.workNote || o.workSubmissionNote,
+              attachments: proofAttachments.length
+                ? proofAttachments
+                : submissionFiles,
+              submittedAt: o.workSubmittedAt || o.workSubmissionDate,
+              status: o.workSubmissionStatus || null,
+            }
+          : null),
+    };
+>>>>>>> ec26484 (implementasi demo)
   }
 
   private roleFor(
@@ -88,11 +139,27 @@ export class OrdersService {
       );
     }
 
+<<<<<<< HEAD
+=======
+    return this.applyStatus(o, nextStatus, userId, note);
+  }
+
+  private async applyStatus(
+    o: any,
+    nextStatus: OrderStatus,
+    byUserId: string,
+    note?: string,
+  ) {
+>>>>>>> ec26484 (implementasi demo)
     const timeline = parseJsonField<TimelineEntry[]>(o.timeline, []);
     timeline.push({
       status: nextStatus,
       at: new Date().toISOString(),
+<<<<<<< HEAD
       by: userId,
+=======
+      by: byUserId,
+>>>>>>> ec26484 (implementasi demo)
       note,
     });
 
@@ -148,19 +215,31 @@ export class OrdersService {
       timeline: stringifyJsonField(timeline),
     };
 <<<<<<< HEAD
+<<<<<<< HEAD
     if (nextStatus === ORDER_STATUS.COMPLETED) data.completedAt = new Date();
 =======
 
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+
+>>>>>>> ec26484 (implementasi demo)
     if (nextStatus === ORDER_STATUS.CANCELLED) {
       data.cancelledAt = new Date();
       if (note) data.cancellationReason = note;
     }
+<<<<<<< HEAD
     const updated = await this.repo.update(orderId, data);
     return this.toDto(updated);
   }
 <<<<<<< HEAD
 =======
+=======
+
+    const updated = await this.repo.update(o.id, data);
+    await this.notifyStatusChange(o, nextStatus, byUserId, note);
+    return this.toDto(updated);
+  }
+>>>>>>> ec26484 (implementasi demo)
   private async notifyStatusChange(
     o: any,
     nextStatus: OrderStatus,
@@ -232,7 +311,10 @@ export class OrdersService {
   private formatCurrency(amount: number): string {
     return `Rp${amount.toLocaleString('id-ID')}`;
   }
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
 
   async createFromService(
     buyerId: string,
@@ -244,6 +326,7 @@ export class OrdersService {
     if (!s.isActive) throw new BadRequestException('Service is not active');
     if (s.sellerId === buyerId)
       throw new BadRequestException('Cannot order your own service');
+<<<<<<< HEAD
 <<<<<<< HEAD
     const fee = +(s.price * PLATFORM_FEE_RATE).toFixed(2);
     const totalAmount = +(s.price + fee).toFixed(2);
@@ -269,6 +352,8 @@ export class OrdersService {
       timeline: stringifyJsonField(timeline),
     });
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
 
     const created = await this.repo.create(
       this.factory.fromService(buyerId, s, dto),
@@ -285,7 +370,10 @@ export class OrdersService {
       )
       .catch(() => undefined);
 
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
     return this.toDto(created);
   }
 
@@ -295,6 +383,7 @@ export class OrdersService {
     if (app.job.buyerId !== buyerId) throw new ForbiddenException();
     if (app.status !== APPLICATION_STATUS.ACCEPTED)
       throw new BadRequestException('Application not accepted');
+<<<<<<< HEAD
 <<<<<<< HEAD
     const fee = +(app.proposedPrice * PLATFORM_FEE_RATE).toFixed(2);
     const totalAmount = +(app.proposedPrice + fee).toFixed(2);
@@ -317,6 +406,8 @@ export class OrdersService {
       timeline: stringifyJsonField(timeline),
     });
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
 
     const created = await this.repo.create(
       this.factory.fromApplication(buyerId, app),
@@ -333,7 +424,10 @@ export class OrdersService {
       )
       .catch(() => undefined);
 
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
     return this.toDto(created);
   }
 
@@ -363,6 +457,7 @@ export class OrdersService {
   accept(id: string, userId: string, userRole: string) {
     return this.transition(id, userId, userRole, ORDER_STATUS.ACCEPTED);
   }
+<<<<<<< HEAD
   start(id: string, userId: string, userRole: string) {
     return this.transition(id, userId, userRole, ORDER_STATUS.IN_PROGRESS);
   }
@@ -371,6 +466,12 @@ export class OrdersService {
     return this.transition(id, userId, userRole, ORDER_STATUS.IN_REVIEW);
   }
 =======
+=======
+
+  start(id: string, userId: string, userRole: string) {
+    return this.transition(id, userId, userRole, ORDER_STATUS.IN_PROGRESS);
+  }
+>>>>>>> ec26484 (implementasi demo)
 
   submitReview(_id: string, _userId: string, _userRole: string) {
     throw new BadRequestException(
@@ -540,7 +641,10 @@ export class OrdersService {
     return this.toDto(updated);
   }
 
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
   requestRevision(
     id: string,
     userId: string,
@@ -555,9 +659,13 @@ export class OrdersService {
       dto.reason,
     );
   }
+<<<<<<< HEAD
   complete(id: string, userId: string, userRole: string) {
     return this.transition(id, userId, userRole, ORDER_STATUS.COMPLETED);
   }
+=======
+
+>>>>>>> ec26484 (implementasi demo)
   cancel(id: string, userId: string, userRole: string, dto: CancelOrderDto) {
     return this.transition(
       id,
@@ -568,6 +676,76 @@ export class OrdersService {
     );
   }
 
+<<<<<<< HEAD
+=======
+  async openDispute(
+    id: string,
+    userId: string,
+    userRole: string,
+    dto: OpenDisputeDto,
+  ) {
+    const o = await this.repo.findById(id);
+    if (!o) throw new NotFoundException('Order not found');
+    const role = this.roleFor(userId, o, userRole);
+    if (role !== 'buyer' && role !== 'seller')
+      throw new ForbiddenException(
+        'Hanya pihak terkait yang dapat membuka sengketa',
+      );
+
+    const existing = await this.prisma.dispute.findUnique({
+      where: { orderId: id },
+    });
+    if (existing)
+      throw new BadRequestException('Sengketa untuk order ini sudah ada');
+
+    const now = new Date();
+    const dispute = await this.prisma.dispute.create({
+      data: {
+        order: { connect: { id } },
+        raiser: { connect: { id: userId } },
+        reason: dto.reason,
+        description: dto.description,
+        evidence: stringifyJsonField(dto.evidence || []),
+        status: DISPUTE_STATUS.PENDING,
+        autoResolveAt: new Date(
+          now.getTime() + DISPUTE_AUTO_RESOLVE_DAYS * DAY_MS,
+        ),
+      },
+    });
+
+    const timeline = parseJsonField<TimelineEntry[]>(o.timeline, []);
+    timeline.push({
+      status: ORDER_STATUS.DISPUTED,
+      at: now.toISOString(),
+      by: userId,
+      note: dto.reason,
+    });
+
+    await this.repo.update(id, {
+      status: ORDER_STATUS.DISPUTED,
+      workSubmissionStatus: 'DISPUTED',
+      timeline: stringifyJsonField(timeline),
+    } as any);
+
+    const target = userId === o.buyerId ? o.sellerId : o.buyerId;
+    await this.notifications
+      .notify(
+        target,
+        'DISPUTE',
+        '⚠️ Sengketa Dibuka',
+        `Sengketa dibuka untuk pesanan "${o.title}". Alasan: ${dto.reason}`,
+        { orderId: o.id, disputeId: dispute.id, event: 'DISPUTE_OPENED' },
+        `/orders/${o.id}`,
+      )
+      .catch(() => undefined);
+
+    return {
+      ...dispute,
+      evidence: parseJsonField<string[]>(dispute.evidence, []),
+    };
+  }
+
+>>>>>>> ec26484 (implementasi demo)
   async getTimeline(id: string, userId: string, userRole: string) {
     const o = await this.getById(id, userId, userRole);
     return o.timeline;
@@ -589,7 +767,10 @@ export class OrdersService {
     };
   }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
 
   async runDemoFlow(id: string, userId: string, userRole: string) {
     const demoEnabled =
@@ -673,9 +854,14 @@ export class OrdersService {
     });
     let count = 0;
     for (const o of candidates) {
+<<<<<<< HEAD
       await this.applyStatus(
         o,
         ORDER_STATUS.CANCELLED,
+=======
+      await this.cancelAndRefund(
+        o,
+>>>>>>> ec26484 (implementasi demo)
         'SYSTEM',
         `Auto-cancel: tidak ada pengumpulan hasil kerja dalam ${AUTO_CANCEL_DAYS} hari`,
       );
@@ -684,6 +870,81 @@ export class OrdersService {
     return count;
   }
 
+<<<<<<< HEAD
+=======
+  /**
+   * Membatalkan order dan, jika pembeli sudah membayar, mengembalikan dana
+   * ke saldo pembeli serta menandai payment terkait sebagai REFUNDED. Semua
+   * dilakukan dalam satu transaksi agar tidak meninggalkan dana di limbo.
+   */
+  private async cancelAndRefund(
+    order: any,
+    byUserId: string,
+    note: string,
+  ) {
+    const wasFunded =
+      order.escrowStatus === 'FUNDED' ||
+      order.status === ORDER_STATUS.PAID ||
+      order.status === ORDER_STATUS.IN_PROGRESS;
+
+    const now = new Date();
+    const timeline = parseJsonField<TimelineEntry[]>(order.timeline, []);
+    timeline.push({
+      status: ORDER_STATUS.CANCELLED,
+      at: now.toISOString(),
+      by: byUserId,
+      note,
+    });
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.order.update({
+        where: { id: order.id },
+        data: {
+          status: ORDER_STATUS.CANCELLED,
+          cancelledAt: now,
+          cancellationReason: note,
+          escrowStatus: wasFunded ? 'REFUNDED' : order.escrowStatus,
+          timeline: stringifyJsonField(timeline),
+        },
+      });
+      if (wasFunded) {
+        await tx.payment.updateMany({
+          where: { orderId: order.id, status: 'COMPLETED' },
+          data: { status: 'REFUNDED' },
+        });
+        await tx.user.update({
+          where: { id: order.buyerId },
+          data: { balance: { increment: order.amount } },
+        });
+      }
+    });
+
+    // Notifikasi kedua pihak
+    await this.notifications
+      .notify(
+        order.buyerId,
+        'ORDER',
+        wasFunded ? '↩️ Dana Dikembalikan' : '❌ Pesanan Dibatalkan',
+        wasFunded
+          ? `Pesanan "${order.title}" dibatalkan otomatis. Dana ${this.formatCurrency(order.amount)} telah dikembalikan ke saldo Anda.`
+          : `Pesanan "${order.title}" telah dibatalkan otomatis.`,
+        { orderId: order.id, event: 'ORDER_AUTO_CANCELLED', refunded: wasFunded },
+        `/orders/${order.id}`,
+      )
+      .catch(() => undefined);
+    await this.notifications
+      .notify(
+        order.sellerId,
+        'ORDER',
+        '❌ Pesanan Dibatalkan',
+        `Pesanan "${order.title}" telah dibatalkan otomatis karena melewati batas waktu pengerjaan.`,
+        { orderId: order.id, event: 'ORDER_AUTO_CANCELLED' },
+        `/orders/${order.id}`,
+      )
+      .catch(() => undefined);
+  }
+
+>>>>>>> ec26484 (implementasi demo)
   async runAutoResolveDisputes(): Promise<number> {
     const now = new Date();
     const disputes = await this.prisma.dispute.findMany({
@@ -731,5 +992,8 @@ export class OrdersService {
     }
     return count;
   }
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+>>>>>>> ec26484 (implementasi demo)
 }

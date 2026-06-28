@@ -125,7 +125,11 @@ export async function ManageServices({ mount }) {
     const s = await api.get("/admin/services");
     document.getElementById("list").innerHTML =
       `<div class="card scroll-x"><table class="tbl"><thead><tr><th>Jasa</th><th>Kategori</th><th>Harga</th><th></th></tr></thead><tbody>
+<<<<<<< HEAD
       ${s.map((x) => `<tr><td>${escape(x.title)}</td><td><span class="badge">${escape(x.category)}</span></td><td>${fmtIDR(x.price)}</td><td><a class="btn btn-secondary btn-sm" href="#/service/${x.id}">Lihat</a> <button class="btn btn-danger btn-sm" data-del-svc="${x.id}" data-testid="adm-del-svc-${x.id}">Hapus</button></td></tr>`).join("")}
+=======
+      ${s.map((x) => `<tr><td>${escape(x.title)}</td><td><span class="badge">${escape(x.category)}</span></td><td>${fmtIDR(x.price)}</td><td><a class="btn btn-secondary btn-sm" href="#/service/${x.id}">Lihat</a> <button class="btn btn-danger btn-sm" data-del-svc="${x.id}" data-testid="adm-del-svc-${x.id}">Hapus</button></td>`).join("")}
+>>>>>>> ec26484 (implementasi demo)
     </tbody></table></div>`;
     document.querySelectorAll("[data-del-svc]").forEach((b) =>
       b.addEventListener("click", () =>
@@ -150,7 +154,11 @@ export async function ManageJobs({ mount }) {
     const j = await api.get("/admin/jobs");
     document.getElementById("list").innerHTML =
       `<div class="card scroll-x"><table class="tbl"><thead><tr><th>Judul</th><th>Kategori</th><th>Budget</th><th>Status</th><th></th></tr></thead><tbody>
+<<<<<<< HEAD
       ${j.map((x) => `<tr><td>${escape(x.title)}</td><td>${escape(x.category)}</td><td>${fmtIDR(x.budget)}</td><td>${statusPill(x.status)}</td><td><a class="btn btn-secondary btn-sm" href="#/jobs/${x.id}">Lihat</a> <button class="btn btn-danger btn-sm" data-del-job="${x.id}" data-testid="adm-del-job-${x.id}">Hapus</button></td></tr>`).join("")}
+=======
+      ${j.map((x) => `<tr><td>${escape(x.title)}</td><td>${escape(x.category)}</td><td>${fmtIDR(x.budget)}</td><td>${statusPill(x.status)}</td><td><a class="btn btn-secondary btn-sm" href="#/jobs/${x.id}">Lihat</a> <button class="btn btn-danger btn-sm" data-del-job="${x.id}" data-testid="adm-del-job-${x.id}">Hapus</button></td>`).join("")}
+>>>>>>> ec26484 (implementasi demo)
     </tbody></table></div>`;
     document.querySelectorAll("[data-del-job]").forEach((b) =>
       b.addEventListener("click", () =>
@@ -175,7 +183,11 @@ export async function ManageDisputes({ mount }) {
     const d = await api.get("/admin/disputes");
     document.getElementById("list").innerHTML = d.length
       ? `<div class="card scroll-x"><table class="tbl"><thead><tr><th>Order</th><th>Alasan</th><th>Status</th><th>Waktu</th><th></th></tr></thead><tbody>
+<<<<<<< HEAD
       ${d.map((x) => `<tr><td>#${x.orderId.slice(0, 8)}</td><td>${escape(x.reason)}</td><td>${statusPill(x.status)}</td><td>${timeAgo(x.createdAt)}</td><td>${x.status === "open" ? `<button class="btn btn-success btn-sm" data-resolve="${x.id}" data-testid="resolve-${x.id}">Selesaikan</button>` : ""}</td></tr>`).join("")}
+=======
+      ${d.map((x) => `<tr><td>#${x.orderId.slice(0, 8)}</td><td>${escape(x.reason)}</td><td>${statusPill(x.status)}</td><td>${timeAgo(x.createdAt)}</td><td>${x.status === "open" ? `<button class="btn btn-success btn-sm" data-resolve="${x.id}" data-testid="resolve-${x.id}">Selesaikan</button>` : ""}</td>`).join("")}
+>>>>>>> ec26484 (implementasi demo)
     </tbody></table></div>`
       : empty("Tidak ada sengketa", "", "fa-circle-check");
     document.querySelectorAll("[data-resolve]").forEach((b) =>
@@ -207,7 +219,11 @@ export async function PlatformSettings({ mount }) {
   document
     .getElementById("ss-save")
     .addEventListener("click", () =>
+<<<<<<< HEAD
       toast("Pengaturan disimpan (demo)", "success"),
+=======
+      toast("Pengaturan disimpan", "success"),
+>>>>>>> ec26484 (implementasi demo)
     );
 }
 
@@ -221,7 +237,14 @@ export async function ActivityLog({ mount }) {
     </div></div>`
       : empty("Belum ada aktivitas");
   } catch (e) {
+<<<<<<< HEAD
     document.getElementById("list").innerHTML = empty("Gagal");
+=======
+    document.getElementById("list").innerHTML = empty(
+      "Gagal memuat",
+      e.message,
+    );
+>>>>>>> ec26484 (implementasi demo)
   }
 }
 
@@ -268,9 +291,14 @@ export async function ManageKyc({ mount }) {
               </table>
             </div>
             <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+<<<<<<< HEAD
              // KODE BARU (BENAR)
 ${k.ktpPhoto ? `<div><div class="text-xs text-muted">KTP</div><img src="${escape(k.ktpPhoto)}" style="width:160px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"/></div>` : ""}
 ${k.ktpSelfie ? `<div><div class="text-xs text-muted">Selfie</div><img src="${escape(k.ktpSelfie)}" style="width:160px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"/></div>` : ""}
+=======
+              ${k.ktpPhoto ? `<div><div class="text-xs text-muted">KTP</div><img src="${escape(k.ktpPhoto)}" style="width:160px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"/></div>` : ""}
+              ${k.ktpSelfie ? `<div><div class="text-xs text-muted">Selfie</div><img src="${escape(k.ktpSelfie)}" style="width:160px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"/></div>` : ""}
+>>>>>>> ec26484 (implementasi demo)
             </div>
           </div>
           ${
@@ -288,7 +316,10 @@ ${k.ktpSelfie ? `<div><div class="text-xs text-muted">Selfie</div><img src="${es
 
       document.querySelectorAll("[data-reject]").forEach((b) =>
         b.addEventListener("click", () => {
+<<<<<<< HEAD
           // Buat modal dialog untuk input alasan penolakan
+=======
+>>>>>>> ec26484 (implementasi demo)
           const modalDiv = document.createElement("div");
           modalDiv.className = "modal-overlay";
           modalDiv.innerHTML = `
@@ -311,9 +342,13 @@ ${k.ktpSelfie ? `<div><div class="text-xs text-muted">Selfie</div><img src="${es
         </div>
       </div>
     `;
+<<<<<<< HEAD
 
           document.body.appendChild(modalDiv);
 
+=======
+          document.body.appendChild(modalDiv);
+>>>>>>> ec26484 (implementasi demo)
           const closeModal = () => modalDiv.remove();
           modalDiv
             .querySelector(".modal-close")
@@ -321,18 +356,27 @@ ${k.ktpSelfie ? `<div><div class="text-xs text-muted">Selfie</div><img src="${es
           modalDiv
             .querySelector(".cancel-btn")
             .addEventListener("click", closeModal);
+<<<<<<< HEAD
 
           // Klik di luar modal juga tutup
           modalDiv.addEventListener("click", (e) => {
             if (e.target === modalDiv) closeModal();
           });
 
+=======
+          modalDiv.addEventListener("click", (e) => {
+            if (e.target === modalDiv) closeModal();
+          });
+>>>>>>> ec26484 (implementasi demo)
           const confirmBtn = modalDiv.querySelector(".confirm-reject-btn");
           confirmBtn.addEventListener("click", async () => {
             const reason = modalDiv
               .querySelector("#reject-reason")
               .value.trim();
+<<<<<<< HEAD
 
+=======
+>>>>>>> ec26484 (implementasi demo)
             if (!reason) {
               modalDiv.querySelector("#reason-error").textContent =
                 "Alasan penolakan wajib diisi";
@@ -343,17 +387,26 @@ ${k.ktpSelfie ? `<div><div class="text-xs text-muted">Selfie</div><img src="${es
                 "Alasan minimal 3 karakter";
               return;
             }
+<<<<<<< HEAD
 
             confirmBtn.disabled = true;
             confirmBtn.textContent = "Memproses...";
 
+=======
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = "Memproses...";
+>>>>>>> ec26484 (implementasi demo)
             try {
               await api.post(`/admin/kyc/${b.dataset.reject}/reject`, {
                 reason,
               });
               closeModal();
               toast("KYC ditolak", "success");
+<<<<<<< HEAD
               load(); // refresh halaman
+=======
+              load();
+>>>>>>> ec26484 (implementasi demo)
             } catch (err) {
               modalDiv.querySelector("#reason-error").textContent = err.message;
               confirmBtn.disabled = false;

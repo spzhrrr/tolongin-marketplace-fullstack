@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 FROM node:20-slim
 
 RUN apt-get update -y && apt-get install -y openssl
@@ -12,11 +13,14 @@ RUN npm install --legacy-peer-deps
 RUN npx prisma generate
 
 =======
+=======
+>>>>>>> ec26484 (implementasi demo)
 FROM node:20-alpine AS build
 RUN apk add --no-cache openssl
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
+<<<<<<< HEAD
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 COPY . .
 
@@ -27,6 +31,11 @@ EXPOSE 8001
 
 CMD npx prisma migrate deploy && npx prisma db seed && node dist/main.js
 =======
+=======
+COPY . .
+RUN npx prisma generate && npm run build
+
+>>>>>>> ec26484 (implementasi demo)
 FROM node:20-alpine AS production
 RUN apk add --no-cache openssl
 WORKDIR /app
@@ -40,5 +49,9 @@ RUN addgroup -S nodejs && adduser -S nestjs -G nodejs     && mkdir -p /app/uploa
 USER nestjs
 EXPOSE 8001
 ENTRYPOINT ["./docker-entrypoint.sh"]
+<<<<<<< HEAD
 CMD ["node", "dist/main.js"]
 >>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+=======
+CMD ["node", "dist/main.js"]
+>>>>>>> ec26484 (implementasi demo)

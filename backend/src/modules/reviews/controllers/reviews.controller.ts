@@ -43,6 +43,25 @@ export class ReviewsController {
     return this.reviewsService.getByService(serviceId);
   }
 
+<<<<<<< HEAD
+=======
+  @Public()
+  @Get('order/:orderId')
+  @ApiOperation({ summary: 'Ambil semua ulasan pada sebuah order' })
+  byOrder(@Param('orderId') orderId: string) {
+    return this.reviewsService.getByOrder(orderId);
+  }
+
+  @Public()
+  @Get('user/:userId')
+  @ApiOperation({
+    summary: 'Ambil ulasan seorang user (dipisah sebagai penjual & pembeli)',
+  })
+  byUser(@Param('userId') userId: string) {
+    return this.reviewsService.getByUser(userId);
+  }
+
+>>>>>>> ec26484 (implementasi demo)
   @ApiBearerAuth('jwt')
   @Put(':id')
   @ApiOperation({ summary: 'Update own review' })

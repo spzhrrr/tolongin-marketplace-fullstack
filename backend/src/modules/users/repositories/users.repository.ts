@@ -117,6 +117,51 @@ export class UsersRepository {
     });
   }
 
+<<<<<<< HEAD
+=======
+  // ---- PORTOFOLIO ----
+  async findPortfolio(userId: string) {
+    return this.prisma.portfolio.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async createPortfolio(data: Prisma.PortfolioCreateInput) {
+    return this.prisma.portfolio.create({ data });
+  }
+
+  async findPortfolioById(id: string) {
+    return this.prisma.portfolio.findUnique({ where: { id } });
+  }
+
+  async deletePortfolio(id: string) {
+    return this.prisma.portfolio.delete({ where: { id } });
+  }
+
+  // ---- STATISTIK USER ----
+  // Hitung total pendapatan & jumlah order yang selesai sebagai penjual
+  async aggregateSellerStats(userId: string) {
+    return this.prisma.order.aggregate({
+      where: { sellerId: userId, status: 'COMPLETED' },
+      _sum: { amount: true },
+      _count: true,
+    });
+  }
+
+  async countOrders(userId: string) {
+    return this.prisma.order.count({ where: { sellerId: userId } });
+  }
+
+  async aggregateRating(userId: string) {
+    return this.prisma.review.aggregate({
+      where: { revieweeId: userId },
+      _avg: { rating: true },
+      _count: true,
+    });
+  }
+
+>>>>>>> ec26484 (implementasi demo)
   async findUserWithAllData(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },

@@ -2,6 +2,10 @@ import { api } from "../../shared/utils/api.js";
 import { toast, modal, escape } from "../../shared/utils/helpers.js";
 import { store } from "../../app/store.js";
 import { router } from "../../app/router.js";
+<<<<<<< HEAD
+=======
+import { uploadFile } from "../../shared/utils/uploads.js";
+>>>>>>> ec26484 (implementasi demo)
 
 function getStatusLabel(status) {
   const labels = {
@@ -170,6 +174,7 @@ export async function VerificationPage({ mount }) {
               <i class="fa-solid fa-clock"></i> KTP sedang diproses oleh admin
             </div>`
                 : `<form id="ktp-form" class="mt-3">
+<<<<<<< HEAD
               <div class="alert alert-info mb-3">
                 <i class="fa-solid fa-flask"></i> <strong>Mode Demo:</strong> Klik "Demo Instan" untuk verifikasi otomatis tanpa upload file.
               </div>
@@ -184,6 +189,29 @@ export async function VerificationPage({ mount }) {
                 </button>
                 <button type="button" class="btn btn-success" id="demo-ktp-btn" data-testid="demo-ktp-btn">
                   <i class="fa-solid fa-bolt"></i> Demo Instan
+=======
+              <div class="form-group">
+                <label class="label">Nomor KTP (16 digit)</label>
+                <input class="input" id="ktp-number" inputmode="numeric" maxlength="16" placeholder="3273xxxxxxxxxxxx" required>
+              </div>
+              <div class="grid grid-2 verification-upload-grid">
+              <div class="form-group">
+                <label class="label">Foto KTP (depan, maks 5MB)</label>
+                <input type="file" id="ktp-file" accept="image/jpeg,image/png,image/jpg" class="input" data-testid="ktp-input">
+                <img id="ktp-preview" class="verification-file-preview" alt="Preview foto KTP" hidden>
+                <div class="text-xs text-muted mt-1">Format JPG/PNG, pastikan foto jelas dan terbaca</div>
+              </div>
+              <div class="form-group">
+                <label class="label">Selfie sambil memegang KTP</label>
+                <input type="file" id="ktp-selfie-file" accept="image/jpeg,image/png,image/jpg" class="input" data-testid="ktp-selfie-input">
+                <img id="ktp-selfie-preview" class="verification-file-preview" alt="Preview selfie dengan KTP" hidden>
+                <div class="text-xs text-muted mt-1">Pastikan wajah dan informasi KTP terlihat jelas</div>
+              </div>
+              </div>
+              <div class="flex gap-sm mt-2" style="flex-wrap:wrap">
+                <button type="submit" class="btn btn-primary" data-testid="ktp-submit-btn">
+                  <i class="fa-solid fa-upload"></i> Kirim Verifikasi
+>>>>>>> ec26484 (implementasi demo)
                 </button>
               </div>
             </form>`
@@ -218,9 +246,12 @@ export async function VerificationPage({ mount }) {
               <i class="fa-solid fa-clock"></i> Rekening bank sedang diproses oleh admin
             </div>`
                 : `<form id="bank-form" class="mt-3">
+<<<<<<< HEAD
               <div class="alert alert-info mb-3">
                 <i class="fa-solid fa-flask"></i> <strong>Mode Demo:</strong> Isi form lalu klik "Demo Instan".
               </div>
+=======
+>>>>>>> ec26484 (implementasi demo)
               <div class="grid grid-2">
                 <div class="form-group">
                   <label class="label">Nama Bank</label>
@@ -249,6 +280,7 @@ export async function VerificationPage({ mount }) {
               <div class="form-group">
                 <label class="label">Foto Buku Tabungan / Kartu ATM (opsional)</label>
                 <input type="file" id="bank-file" accept="image/jpeg,image/png,image/jpg" class="input" data-testid="bank-file-input">
+<<<<<<< HEAD
                 <div class="text-xs text-muted mt-1">Bukti kepemilikan rekening (opsional di mode demo)</div>
               </div>
               <div class="flex gap-sm mt-2" style="flex-wrap:wrap">
@@ -257,6 +289,14 @@ export async function VerificationPage({ mount }) {
                 </button>
                 <button type="button" class="btn btn-success" id="demo-bank-btn" data-testid="demo-bank-btn">
                   <i class="fa-solid fa-bolt"></i> Demo Instan
+=======
+                <img id="bank-preview" class="verification-file-preview" alt="Preview bukti rekening" hidden>
+                <div class="text-xs text-muted mt-1">Bukti kepemilikan rekening (opsional)</div>
+              </div>
+              <div class="flex gap-sm mt-2" style="flex-wrap:wrap">
+                <button type="submit" class="btn btn-primary" data-testid="bank-submit-btn">
+                  <i class="fa-solid fa-upload"></i> Kirim Verifikasi
+>>>>>>> ec26484 (implementasi demo)
                 </button>
               </div>
             </form>`
@@ -264,7 +304,11 @@ export async function VerificationPage({ mount }) {
       </div>
     </div>`;
 
+<<<<<<< HEAD
   // =================== EMAIL OTP HANDLERS ===================
+=======
+  // ===== EMAIL OTP HANDLERS =====
+>>>>>>> ec26484 (implementasi demo)
   if (!emailDone) {
     const sendEmailBtn = document.getElementById("send-email-otp");
     const resendEmailBtn = document.getElementById("resend-email-otp");
@@ -274,8 +318,12 @@ export async function VerificationPage({ mount }) {
       try {
         const r = await api.post("/verification/email/request", {});
         if (r.demoOtp) {
+<<<<<<< HEAD
           toast(`Demo OTP: ${r.demoOtp} (berlaku 10 menit)`, "info", 12000);
           console.log(`[DEMO] Email OTP: ${r.demoOtp}`);
+=======
+          toast(`Kode OTP: ${r.demoOtp} (berlaku 10 menit)`, "info", 12000);
+>>>>>>> ec26484 (implementasi demo)
         } else {
           toast("OTP dikirim ke email Anda", "success");
         }
@@ -306,7 +354,11 @@ export async function VerificationPage({ mount }) {
       });
   }
 
+<<<<<<< HEAD
   // =================== PHONE OTP HANDLERS ===================
+=======
+  // ===== PHONE OTP HANDLERS =====
+>>>>>>> ec26484 (implementasi demo)
   if (!phoneDone) {
     document
       .getElementById("send-phone-otp")
@@ -317,8 +369,12 @@ export async function VerificationPage({ mount }) {
         try {
           const r = await api.post("/verification/phone/request", { phone });
           if (r.demoOtp) {
+<<<<<<< HEAD
             toast(`Demo OTP: ${r.demoOtp} (berlaku 10 menit)`, "info", 12000);
             console.log(`[DEMO] Phone OTP: ${r.demoOtp}`);
+=======
+            toast(`Kode OTP: ${r.demoOtp} (berlaku 10 menit)`, "info", 12000);
+>>>>>>> ec26484 (implementasi demo)
           } else {
             toast("OTP dikirim via SMS", "success");
           }
@@ -348,6 +404,7 @@ export async function VerificationPage({ mount }) {
       });
   }
 
+<<<<<<< HEAD
   // =================== DEMO KTP ===================
   document
     .getElementById("demo-ktp-btn")
@@ -415,20 +472,90 @@ export async function VerificationPage({ mount }) {
   document
     .getElementById("bank-form")
     ?.addEventListener("submit", async (e) => {
+=======
+  const bindPreview = (inputId, previewId) => {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    input?.addEventListener("change", () => {
+      const file = input.files?.[0];
+      if (!file || !preview) return;
+      if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) {
+        input.value = "";
+        return toast("Gunakan gambar JPG/PNG maksimal 5MB", "error");
+      }
+      preview.src = URL.createObjectURL(file);
+      preview.hidden = false;
+    });
+  };
+  bindPreview("ktp-file", "ktp-preview");
+  bindPreview("ktp-selfie-file", "ktp-selfie-preview");
+  bindPreview("bank-file", "bank-preview");
+
+  const ktpForm = document.getElementById("ktp-form");
+  if (ktpForm) {
+    ktpForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const file = document.getElementById("ktp-file")?.files[0];
+      const selfie = document.getElementById("ktp-selfie-file")?.files[0];
+      const ktpNumber = document.getElementById("ktp-number")?.value.trim();
+      if (!/^\d{16}$/.test(ktpNumber || ""))
+        return toast("Nomor KTP harus 16 digit", "error");
+      if (!file || !selfie)
+        return toast("Foto KTP dan selfie dengan KTP wajib dipilih", "error");
+      const btn = e.target.querySelector("button[type=submit]");
+      btn.disabled = true;
+      btn.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+      try {
+        const [ktpUpload, selfieUpload] = await Promise.all([
+          uploadFile(file, "kyc", (pct) => {
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> KTP ${pct}%`;
+          }),
+          uploadFile(selfie, "kyc"),
+        ]);
+        await api.post("/verification/ktp/submit", {
+          ktpNumber,
+          ktpPhoto: ktpUpload.url,
+          ktpSelfie: selfieUpload.url,
+        });
+        toast("📤 Dokumen KTP berhasil dikirim! Menunggu verifikasi admin.", "success");
+        setTimeout(() => router.render(), 1500);
+      } catch (err) {
+        toast(err.message, "error");
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload KTP';
+      }
+    });
+  }
+
+  // ===== REAL BANK SUBMIT =====
+  const bankForm = document.getElementById("bank-form");
+  if (bankForm) {
+    bankForm.addEventListener("submit", async (e) => {
+>>>>>>> ec26484 (implementasi demo)
       e.preventDefault();
       const bankName = document.getElementById("bank-name")?.value;
       const accountNumber = document.getElementById("account-number")?.value;
       const accountName = document.getElementById("account-name")?.value;
       const file = document.getElementById("bank-file")?.files[0];
+<<<<<<< HEAD
+=======
+
+>>>>>>> ec26484 (implementasi demo)
       if (!bankName) return toast("Pilih nama bank", "error");
       if (!accountNumber || accountNumber.length < 5)
         return toast("Nomor rekening minimal 5 digit", "error");
       if (!accountName || accountName.length < 3)
         return toast("Nama pemilik minimal 3 karakter", "error");
+<<<<<<< HEAD
+=======
+
+>>>>>>> ec26484 (implementasi demo)
       const btn = e.target.querySelector("button[type=submit]");
       btn.disabled = true;
       btn.innerHTML =
         '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+<<<<<<< HEAD
       const fd = new FormData();
       fd.append("bankName", bankName);
       fd.append("accountNumber", accountNumber);
@@ -437,6 +564,16 @@ export async function VerificationPage({ mount }) {
       try {
         await api.post("/verification/bank", fd, {
           headers: { "Content-Type": "multipart/form-data" },
+=======
+
+      try {
+        const bankProof = file ? (await uploadFile(file, "kyc")).url : undefined;
+        await api.post("/verification/bank", {
+          bankName,
+          accountNumber,
+          accountName,
+          bankProof,
+>>>>>>> ec26484 (implementasi demo)
         });
         toast("Verifikasi bank submitted, menunggu admin", "success");
         setTimeout(() => router.render(), 1500);
@@ -447,4 +584,8 @@ export async function VerificationPage({ mount }) {
           '<i class="fa-solid fa-upload"></i> Submit Verifikasi Bank';
       }
     });
+<<<<<<< HEAD
+=======
+  }
+>>>>>>> ec26484 (implementasi demo)
 }

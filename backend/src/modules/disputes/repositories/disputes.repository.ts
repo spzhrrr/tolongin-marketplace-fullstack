@@ -23,6 +23,23 @@ export class DisputesRepository {
       include: { order: true },
     });
   }
+<<<<<<< HEAD
+=======
+  // Ambil sengketa milik user (sebagai pembuat, pembeli, atau penjual pada order)
+  findByUser(userId: string) {
+    return this.prisma.dispute.findMany({
+      where: {
+        OR: [
+          { raisedBy: userId },
+          { order: { buyerId: userId } },
+          { order: { sellerId: userId } },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      include: { order: true },
+    });
+  }
+>>>>>>> ec26484 (implementasi demo)
   update(id: string, data: Prisma.DisputeUpdateInput) {
     return this.prisma.dispute.update({ where: { id }, data });
   }
