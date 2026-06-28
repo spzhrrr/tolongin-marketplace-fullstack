@@ -10,6 +10,93 @@ import { statusPill, serviceCard, empty } from "../../shared/ui/components.js";
 import { store } from "../../app/store.js";
 import { router } from "../../app/router.js";
 
+<<<<<<< HEAD
+=======
+// Status order yang masih dianggap aktif (bukan selesai/batal/sengketa)
+const ACTIVE_STATUSES = [
+  "WAITING_CONFIRMATION",
+  "PAID",
+  "WAITING_REVIEW",
+  "REJECTED",
+  "ACCEPTED",
+  "IN_PROGRESS",
+  "IN_REVIEW",
+  "REVISION_REQUESTED",
+];
+
+// Container untuk konten dashboard
+let dashboardContentContainer = null;
+
+// Bar chart sederhana berbasis inline SVG
+function svgBarChart(data, opts = {}) {
+  const {
+    width = 520,
+    height = 200,
+    barColor = "#0a66c2",
+    valueFormatter = (v) => v,
+  } = opts;
+  if (!data || !data.length) {
+    return `<p class="text-muted" style="text-align:center;padding:24px">Belum ada data untuk ditampilkan.</p>`;
+  }
+  const pad = { top: 16, right: 12, bottom: 32, left: 12 };
+  const chartW = width - pad.left - pad.right;
+  const chartH = height - pad.top - pad.bottom;
+  const maxVal = Math.max(...data.map((d) => d.value), 1);
+  const n = data.length;
+  const slot = chartW / n;
+  const barW = Math.min(slot * 0.6, 48);
+  const bars = data
+    .map((d, i) => {
+      const h = Math.round((d.value / maxVal) * chartH);
+      const x = pad.left + i * slot + (slot - barW) / 2;
+      const y = pad.top + (chartH - h);
+      const labelY = height - pad.bottom + 18;
+      const valY = y - 6;
+      return `
+        <g>
+          <rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="4" fill="${barColor}">
+            <title>${escape(String(d.label))}: ${escape(String(valueFormatter(d.value)))}</title>
+          </rect>
+          ${d.value > 0 ? `<text x="${x + barW / 2}" y="${valY}" text-anchor="middle" font-size="10" fill="#666">${escape(String(valueFormatter(d.value)))}</text>` : ""}
+          <text x="${x + barW / 2}" y="${labelY}" text-anchor="middle" font-size="11" fill="#888">${escape(String(d.label))}</text>
+        </g>`;
+    })
+    .join("");
+  return `
+    <svg viewBox="0 0 ${width} ${height}" width="100%" height="${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Grafik batang">
+      <line x1="${pad.left}" y1="${pad.top + chartH}" x2="${width - pad.right}" y2="${pad.top + chartH}" stroke="#e0e0e0" stroke-width="1"/>
+      ${bars}
+    </svg>`;
+}
+
+// Bangun data 6 bulan terakhir
+function buildMonthlySeries(orders, valueKey) {
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      key: `${d.getFullYear()}-${d.getMonth()}`,
+      label: d.toLocaleDateString("id-ID", { month: "short" }),
+      value: 0,
+    });
+  }
+  const idx = {};
+  months.forEach((m) => (idx[m.key] = m));
+  orders.forEach((o) => {
+    const ref = o.completedAt || o.createdAt;
+    if (!ref) return;
+    const d = new Date(ref);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    if (idx[key]) {
+      idx[key].value += valueKey === "earnings" ? o.amount || 0 : 1;
+    }
+  });
+  return months;
+}
+
+// SIDEBAR — anchor tags trigger hashchange so router stays in sync
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 function sidebar(active) {
   const u = store.getState().user;
   return `<aside class="dash-side">

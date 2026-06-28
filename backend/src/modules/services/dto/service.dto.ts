@@ -42,7 +42,7 @@ export class CreateServiceDto {
 
   @ApiProperty({ example: 150000, minimum: 1 })
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   price!: number;
 
@@ -94,7 +94,7 @@ export class UpdateServiceDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   price?: number;
 

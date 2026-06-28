@@ -681,6 +681,17 @@ textarea {
   border: 2px solid #fff;
   box-shadow: var(--shadow-sm);
 }
+.avatar-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
 .avatar-sm {
   width: 30px;
   height: 30px;

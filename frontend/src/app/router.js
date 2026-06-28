@@ -112,10 +112,22 @@ function emitToast(type, text) {
   window.dispatchEvent(new CustomEvent("toast", { detail: { type, text } }));
 }
 
-function checkGuards(r) {
+function checkGuards(r, pathname) {
   if (r.opts.auth && !store.getState().token) {
     emitToast("warning", "Silakan login terlebih dahulu");
     router.navigate("/login");
+    return false;
+  }
+  const currentUser = store.getState().user;
+  if (
+    r.opts.auth &&
+    currentUser &&
+    currentUser.role !== "ADMIN" &&
+    !currentUser.avatar &&
+    pathname !== "/settings"
+  ) {
+    emitToast("warning", "Upload foto profil untuk melanjutkan");
+    router.navigate("/settings");
     return false;
   }
   if (r.opts.role) {
@@ -150,9 +162,58 @@ function pathToRegex(path) {
   return new RegExp("^" + path.replace(/:[^/]+/g, "([^/]+)") + "$");
 }
 
+<<<<<<< HEAD
 function extractKeys(path) {
   return [...path.matchAll(/:([^/]+)/g)].map((m) => m[1]);
 }
+=======
+export const router = {
+  add(path, handler, opts = {}) {
+    routes.push({
+      path,
+      handler,
+      opts,
+      regex: pathToRegex(path),
+      keys: extractKeys(path),
+    });
+    return this;
+  },
+  setNotFound(fn) {
+    notFound = fn;
+    return this;
+  },
+  mount(el) {
+    mountEl = el;
+    window.addEventListener("hashchange", () => this.render());
+    this.render();
+  },
+  navigate(to) {
+    let normalizedTo = to;
+    if (normalizedTo !== "/" && normalizedTo.endsWith("/")) {
+      normalizedTo = normalizedTo.slice(0, -1);
+    }
+    if (location.hash === `#${normalizedTo}`) {
+      this.render();
+      return;
+    }
+    location.hash = `#${normalizedTo}`;
+  },
+  current() {
+    let path = location.hash.replace(/^#/, "") || "/";
+    if (path !== "/" && path.endsWith("/")) {
+      path = path.slice(0, -1);
+    }
+    return path;
+  },
+  async render() {
+    let path = this.current();
+    const [pathname, qstr = ""] = path.split("?");
+    const query = Object.fromEntries(new URLSearchParams(qstr));
+    const match = findMatch(pathname);
+    runCleanup();
+    if (!match) return renderNotFound();
+    if (!checkGuards(match.r, pathname)) return;
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 
 function paramsFrom(match, keys) {
   const o = {};

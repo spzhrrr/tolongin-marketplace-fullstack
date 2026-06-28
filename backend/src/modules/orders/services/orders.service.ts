@@ -7,6 +7,12 @@ import {
 import { OrdersRepository } from '../repositories/orders.repository';
 import { ServicesRepository } from '../../services/repositories/services.repository';
 import { ApplicationsService } from '../../applications/services/applications.service';
+<<<<<<< HEAD
+=======
+import { NotificationsService } from '../../notifications/services/notifications.service';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { OrderFactory } from '../factories/order.factory';
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 import {
   CreateOrderFromServiceDto,
   CancelOrderDto,
@@ -39,6 +45,12 @@ export class OrdersService {
     private readonly repo: OrdersRepository,
     private readonly servicesRepo: ServicesRepository,
     private readonly applicationsService: ApplicationsService,
+<<<<<<< HEAD
+=======
+    private readonly notifications: NotificationsService,
+    private readonly prisma: PrismaService,
+    private readonly factory: OrderFactory,
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
   ) {}
 
   private toDto(o: any) {
@@ -84,11 +96,62 @@ export class OrdersService {
       note,
     });
 
+    if (nextStatus === ORDER_STATUS.COMPLETED) {
+      const hasSubmission =
+        Boolean(o.workSubmittedAt || o.workSubmissionDate) ||
+        Boolean(o.workSubmission && o.workSubmission !== 'null');
+      if (!hasSubmission) {
+        throw new BadRequestException(
+          'Dana tidak dapat dirilis sebelum penjual mengirim bukti kerja',
+        );
+      }
+
+      const completedAt = new Date();
+      const updated = await this.prisma.$transaction(async (tx) => {
+        const claimed = await tx.order.updateMany({
+          where: {
+            id: o.id,
+            fundsReleasedAt: null,
+            status: {
+              in: [
+                ORDER_STATUS.WAITING_REVIEW,
+                ORDER_STATUS.IN_REVIEW,
+                ORDER_STATUS.DISPUTED,
+              ],
+            },
+          },
+          data: {
+            status: ORDER_STATUS.COMPLETED,
+            completedAt,
+            workApprovedAt: completedAt,
+            workSubmissionStatus: 'APPROVED',
+            escrowStatus: 'RELEASED',
+            fundsReleasedAt: completedAt,
+            timeline: stringifyJsonField(timeline),
+          },
+        });
+        if (claimed.count === 0) {
+          return tx.order.findUniqueOrThrow({ where: { id: o.id } });
+        }
+        await tx.user.update({
+          where: { id: o.sellerId },
+          data: { balance: { increment: o.amount } },
+        });
+        return tx.order.findUniqueOrThrow({ where: { id: o.id } });
+      });
+      await this.notifyStatusChange(o, nextStatus, byUserId, note);
+      return this.toDto(updated);
+    }
+
     const data: any = {
       status: nextStatus,
       timeline: stringifyJsonField(timeline),
     };
+<<<<<<< HEAD
     if (nextStatus === ORDER_STATUS.COMPLETED) data.completedAt = new Date();
+=======
+
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
     if (nextStatus === ORDER_STATUS.CANCELLED) {
       data.cancelledAt = new Date();
       if (note) data.cancellationReason = note;
@@ -96,6 +159,80 @@ export class OrdersService {
     const updated = await this.repo.update(orderId, data);
     return this.toDto(updated);
   }
+<<<<<<< HEAD
+=======
+  private async notifyStatusChange(
+    o: any,
+    nextStatus: OrderStatus,
+    byUserId: string,
+    note?: string,
+  ) {
+    const url = `/orders/${o.id}`;
+    try {
+      if (nextStatus === ORDER_STATUS.COMPLETED) {
+        await this.notifications.notify(
+          o.sellerId,
+          'ORDER',
+          '💰 Dana Dirilis',
+          `Pesanan "${o.title}" telah selesai. Dana sebesar ${this.formatCurrency(o.amount)} telah masuk ke saldo Anda.`,
+          { orderId: o.id, event: 'WORK_APPROVED' },
+          url,
+        );
+        await this.notifications.notify(
+          o.buyerId,
+          'ORDER',
+          '✅ Pesanan Selesai',
+          `Pesanan "${o.title}" telah selesai. Terima kasih telah menggunakan layanan Tolongin.`,
+          { orderId: o.id, event: 'ORDER_COMPLETED' },
+          url,
+        );
+      } else if (nextStatus === ORDER_STATUS.REVISION_REQUESTED) {
+        await this.notifications.notify(
+          o.sellerId,
+          'ORDER',
+          '🔄 Permintaan Revisi',
+          `Pembeli meminta revisi untuk pesanan "${o.title}".${note ? ' Alasan: ' + note : ''}`,
+          { orderId: o.id, event: 'REVISION_REQUESTED', reason: note },
+          url,
+        );
+      } else if (nextStatus === ORDER_STATUS.PAID) {
+        await this.notifications.notify(
+          o.buyerId,
+          'ORDER',
+          '✅ Pesanan Diterima',
+          `Penjual menerima pesanan "${o.title}". Pengerjaan akan segera dimulai.`,
+          { orderId: o.id, event: 'ORDER_ACCEPTED' },
+          url,
+        );
+      } else if (nextStatus === ORDER_STATUS.WAITING_REVIEW) {
+        await this.notifications.notify(
+          o.buyerId,
+          'ORDER',
+          '📦 Hasil Kerja Dikirim',
+          `Penjual telah mengirimkan hasil kerja untuk "${o.title}". Silakan review dan approve.`,
+          { orderId: o.id, event: 'WORK_SUBMITTED' },
+          url,
+        );
+      } else if (nextStatus === ORDER_STATUS.CANCELLED) {
+        const target = byUserId === o.buyerId ? o.sellerId : o.buyerId;
+        await this.notifications.notify(
+          target,
+          'ORDER',
+          '❌ Pesanan Dibatalkan',
+          `Pesanan "${o.title}" telah dibatalkan.${note ? ' Alasan: ' + note : ''}`,
+          { orderId: o.id, event: 'ORDER_CANCELLED', reason: note },
+          url,
+        );
+      }
+    } catch {
+      // Notifikasi tidak boleh menggagalkan transaksi utama
+    }
+  }
+
+  private formatCurrency(amount: number): string {
+    return `Rp${amount.toLocaleString('id-ID')}`;
+  }
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 
   async createFromService(
     buyerId: string,
@@ -107,6 +244,7 @@ export class OrdersService {
     if (!s.isActive) throw new BadRequestException('Service is not active');
     if (s.sellerId === buyerId)
       throw new BadRequestException('Cannot order your own service');
+<<<<<<< HEAD
     const fee = +(s.price * PLATFORM_FEE_RATE).toFixed(2);
     const totalAmount = +(s.price + fee).toFixed(2);
     const timeline: TimelineEntry[] = [
@@ -130,6 +268,24 @@ export class OrdersService {
       deliveryAddress: dto.deliveryAddress,
       timeline: stringifyJsonField(timeline),
     });
+=======
+
+    const created = await this.repo.create(
+      this.factory.fromService(buyerId, s, dto),
+    );
+
+    await this.notifications
+      .notify(
+        s.sellerId,
+        'ORDER',
+        '📦 Pesanan Baru',
+        `Anda menerima pesanan baru: "${s.title}" seharga ${this.formatCurrency(s.price)}.`,
+        { orderId: created.id, event: 'ORDER_CREATED' },
+        `/orders/${created.id}`,
+      )
+      .catch(() => undefined);
+
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
     return this.toDto(created);
   }
 
@@ -139,6 +295,7 @@ export class OrdersService {
     if (app.job.buyerId !== buyerId) throw new ForbiddenException();
     if (app.status !== APPLICATION_STATUS.ACCEPTED)
       throw new BadRequestException('Application not accepted');
+<<<<<<< HEAD
     const fee = +(app.proposedPrice * PLATFORM_FEE_RATE).toFixed(2);
     const totalAmount = +(app.proposedPrice + fee).toFixed(2);
     const timeline: TimelineEntry[] = [
@@ -159,6 +316,24 @@ export class OrdersService {
       status: ORDER_STATUS.WAITING_CONFIRMATION,
       timeline: stringifyJsonField(timeline),
     });
+=======
+
+    const created = await this.repo.create(
+      this.factory.fromApplication(buyerId, app),
+    );
+
+    await this.notifications
+      .notify(
+        app.sellerId,
+        'ORDER',
+        '📦 Pesanan Baru',
+        `Pekerjaan "${app.job.title}" telah dijadikan pesanan. Silakan tunggu pembayaran dari pembeli.`,
+        { orderId: created.id, event: 'ORDER_CREATED' },
+        `/orders/${created.id}`,
+      )
+      .catch(() => undefined);
+
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
     return this.toDto(created);
   }
 
@@ -191,9 +366,181 @@ export class OrdersService {
   start(id: string, userId: string, userRole: string) {
     return this.transition(id, userId, userRole, ORDER_STATUS.IN_PROGRESS);
   }
+<<<<<<< HEAD
   submitReview(id: string, userId: string, userRole: string) {
     return this.transition(id, userId, userRole, ORDER_STATUS.IN_REVIEW);
   }
+=======
+
+  submitReview(_id: string, _userId: string, _userRole: string) {
+    throw new BadRequestException(
+      'Gunakan endpoint work-submission dan lampirkan bukti kerja',
+    );
+  }
+  async submitWork(
+    id: string,
+    userId: string,
+    userRole: string,
+    dto: SubmitWorkDto,
+  ) {
+    const o = await this.repo.findById(id);
+    if (!o) throw new NotFoundException('Order not found');
+    const role = this.roleFor(userId, o, userRole);
+    if (role !== 'seller') throw new ForbiddenException();
+    if (
+      o.status !== ORDER_STATUS.PAID &&
+      o.status !== ORDER_STATUS.REJECTED &&
+      o.status !== ORDER_STATUS.IN_PROGRESS &&
+      o.status !== ORDER_STATUS.REVISION_REQUESTED
+    ) {
+      throw new BadRequestException(
+        'Hasil kerja hanya bisa dikumpulkan setelah order dikerjakan',
+      );
+    }
+
+    const attachments = dto.attachments || [];
+    if (!attachments.length) {
+      throw new BadRequestException('Minimal satu bukti kerja wajib diupload');
+    }
+    const now = new Date();
+    const timeline = parseJsonField<TimelineEntry[]>(o.timeline, []);
+    timeline.push({
+      status: ORDER_STATUS.WAITING_REVIEW,
+      at: now.toISOString(),
+      by: userId,
+      note: dto.note,
+    });
+
+    const updated = await this.repo.update(id, {
+      status: ORDER_STATUS.WAITING_REVIEW,
+      workSubmission: stringifyJsonField({
+        note: dto.note,
+        attachments,
+        submittedBy: userId,
+        submittedAt: now.toISOString(),
+      }),
+      workProof: stringifyJsonField(attachments),
+      workNote: dto.note,
+      workSubmittedAt: now,
+      workSubmissionNote: dto.note,
+      workSubmissionFiles: stringifyJsonField(attachments),
+      workSubmissionDate: now,
+      workSubmissionStatus: 'PENDING',
+      autoReleaseAt: null,
+      workRejectedAt: null,
+      workRejectionReason: null,
+      escrowStatus: 'AWAITING_APPROVAL',
+      timeline: stringifyJsonField(timeline),
+    } as any);
+
+    await this.notifications
+      .notify(
+        o.buyerId,
+        'ORDER',
+        '📦 Hasil Kerja Dikirim',
+        `Penjual telah mengirimkan hasil kerja untuk "${o.title}". Silakan review dan approve.`,
+        { orderId: o.id, event: 'WORK_SUBMITTED' },
+        `/orders/${o.id}`,
+      )
+      .catch(() => undefined);
+
+    return this.toDto(updated);
+  }
+
+  async approveWork(id: string, userId: string, userRole: string) {
+    const o = await this.repo.findById(id);
+    if (!o) throw new NotFoundException('Order not found');
+    const role = this.roleFor(userId, o, userRole);
+    if (role !== 'buyer' && role !== 'admin')
+      throw new ForbiddenException('Hanya pembeli yang dapat menyetujui');
+
+    if (o.status === ORDER_STATUS.COMPLETED) {
+      return this.toDto(o);
+    }
+
+    if (
+      o.status !== ORDER_STATUS.WAITING_REVIEW &&
+      o.status !== ORDER_STATUS.IN_REVIEW
+    ) {
+      throw new BadRequestException(
+        'Order tidak sedang menunggu persetujuan hasil kerja',
+      );
+    }
+
+    return this.applyStatus(o, ORDER_STATUS.COMPLETED, userId);
+  }
+
+  async complete(id: string, userId: string, userRole: string) {
+    const o = await this.repo.findById(id);
+    if (!o) throw new NotFoundException('Order not found');
+    const role = this.roleFor(userId, o, userRole);
+
+    if (o.status === ORDER_STATUS.COMPLETED) {
+      return this.toDto(o);
+    }
+
+    if (role !== 'buyer' && role !== 'admin')
+      throw new ForbiddenException('Hanya pembeli yang dapat menyelesaikan');
+
+    if (
+      o.status !== ORDER_STATUS.WAITING_REVIEW &&
+      o.status !== ORDER_STATUS.IN_REVIEW
+    ) {
+      throw new BadRequestException('Order harus dalam status review');
+    }
+
+    return this.applyStatus(o, ORDER_STATUS.COMPLETED, userId);
+  }
+
+  async rejectWork(
+    id: string,
+    userId: string,
+    userRole: string,
+    dto: RevisionRequestDto,
+  ) {
+    const o = await this.repo.findById(id);
+    if (!o) throw new NotFoundException('Order not found');
+    const role = this.roleFor(userId, o, userRole);
+    if (role !== 'buyer') throw new ForbiddenException();
+    if (
+      o.status !== ORDER_STATUS.WAITING_REVIEW &&
+      o.status !== ORDER_STATUS.IN_REVIEW
+    ) {
+      throw new BadRequestException('Order is not waiting for review');
+    }
+
+    const timeline = parseJsonField<TimelineEntry[]>(o.timeline, []);
+    timeline.push({
+      status: ORDER_STATUS.REJECTED,
+      at: new Date().toISOString(),
+      by: userId,
+      note: dto.reason,
+    });
+
+    const updated = await this.repo.update(id, {
+      status: ORDER_STATUS.REJECTED,
+      workRejectedAt: new Date(),
+      workRejectionReason: dto.reason,
+      workSubmissionStatus: 'REVISION_REQUESTED',
+      escrowStatus: 'FUNDED',
+      timeline: stringifyJsonField(timeline),
+    } as any);
+
+    await this.notifications
+      .notify(
+        o.sellerId,
+        'ORDER',
+        '🔄 Permintaan Revisi',
+        `Pembeli meminta revisi untuk "${o.title}". Alasan: ${dto.reason}`,
+        { orderId: o.id, event: 'REVISION_REQUESTED', reason: dto.reason },
+        `/orders/${o.id}`,
+      )
+      .catch(() => undefined);
+
+    return this.toDto(updated);
+  }
+
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
   requestRevision(
     id: string,
     userId: string,
@@ -241,4 +588,148 @@ export class OrdersService {
       paidAt: o.completedAt,
     };
   }
+<<<<<<< HEAD
+=======
+
+  async runDemoFlow(id: string, userId: string, userRole: string) {
+    const demoEnabled =
+      process.env.DEMO_MODE_ENABLED === 'true' ||
+      process.env.NODE_ENV !== 'production';
+    if (!demoEnabled) {
+      throw new ForbiddenException('Demo mode is disabled');
+    }
+
+    let order = await this.repo.findById(id);
+    if (!order) throw new NotFoundException('Order not found');
+    if (!this.roleFor(userId, order, userRole)) throw new ForbiddenException();
+
+    if (order.status === ORDER_STATUS.WAITING_CONFIRMATION) {
+      const now = new Date();
+      const timeline = parseJsonField<TimelineEntry[]>(order.timeline, []);
+      timeline.push({
+        status: ORDER_STATUS.PAID,
+        at: now.toISOString(),
+        by: 'DEMO_PAYMENT',
+        note: 'Pembayaran demo dikonfirmasi dan masuk escrow',
+      });
+      await this.prisma.$transaction([
+        this.prisma.payment.create({
+          data: {
+            orderId: order.id,
+            userId: order.buyerId,
+            amount: order.amount,
+            fee: order.fee,
+            totalAmount: order.totalAmount,
+            method: 'BANK_TRANSFER',
+            status: 'COMPLETED',
+            transactionId: 'DEMO-AUTO-' + Date.now(),
+            paidAt: now,
+          },
+        }),
+        this.prisma.order.update({
+          where: { id: order.id },
+          data: {
+            status: ORDER_STATUS.PAID,
+            escrowStatus: 'FUNDED',
+            timeline: stringifyJsonField(timeline),
+          },
+        }),
+      ]);
+      order = await this.repo.findById(id);
+    }
+
+    if (
+      order &&
+      (order.status === ORDER_STATUS.PAID ||
+        order.status === ORDER_STATUS.REJECTED)
+    ) {
+      await this.submitWork(order.id, order.sellerId, ROLE.USER, {
+        note:
+          'Bukti demo: pekerjaan telah diselesaikan sesuai brief dan siap diperiksa.',
+        attachments: ['https://demo.tolongin.local/bukti-kerja.pdf'],
+      });
+      order = await this.repo.findById(id);
+    }
+
+    if (order?.status === ORDER_STATUS.WAITING_REVIEW) {
+      await this.approveWork(order.id, order.buyerId, ROLE.USER);
+    }
+
+    return this.getById(id, userId, userRole);
+  }
+  async runAutoComplete(): Promise<number> {
+    // Escrow is never auto-released: explicit buyer approval (or an audited
+    // admin dispute resolution) is required.
+    return 0;
+  }
+  async runAutoCancel(): Promise<number> {
+    const threshold = new Date(Date.now() - AUTO_CANCEL_DAYS * DAY_MS);
+    const candidates = await this.prisma.order.findMany({
+      where: {
+        status: { in: [ORDER_STATUS.PAID, ORDER_STATUS.IN_PROGRESS] },
+        workSubmittedAt: null,
+        updatedAt: { lte: threshold },
+      },
+    });
+    let count = 0;
+    for (const o of candidates) {
+      await this.applyStatus(
+        o,
+        ORDER_STATUS.CANCELLED,
+        'SYSTEM',
+        `Auto-cancel: tidak ada pengumpulan hasil kerja dalam ${AUTO_CANCEL_DAYS} hari`,
+      );
+      count++;
+    }
+    return count;
+  }
+
+  async runAutoResolveDisputes(): Promise<number> {
+    const now = new Date();
+    const disputes = await this.prisma.dispute.findMany({
+      where: {
+        status: DISPUTE_STATUS.PENDING,
+        autoResolveAt: { not: null, lte: now },
+      },
+      include: { order: true },
+    });
+    let count = 0;
+    for (const d of disputes) {
+      await this.prisma.dispute.update({
+        where: { id: d.id },
+        data: {
+          status: DISPUTE_STATUS.RESOLVED,
+          resolution:
+            'Diselesaikan otomatis oleh sistem setelah 3 hari (demo).',
+          resolvedAt: now,
+        },
+      });
+      if (d.order && d.order.status === ORDER_STATUS.DISPUTED) {
+        await this.applyStatus(
+          d.order,
+          ORDER_STATUS.COMPLETED,
+          'SYSTEM',
+          'Auto-resolve sengketa (demo)',
+        );
+      }
+      const targets = d.order
+        ? [d.order.buyerId, d.order.sellerId]
+        : [d.raisedBy];
+      for (const t of targets) {
+        await this.notifications
+          .notify(
+            t,
+            'DISPUTE',
+            '✅ Sengketa Diselesaikan',
+            'Sengketa pesanan Anda telah diselesaikan otomatis oleh sistem.',
+            { disputeId: d.id, event: 'DISPUTE_RESOLVED' },
+            d.order ? `/orders/${d.order.id}` : '/disputes',
+          )
+          .catch(() => undefined);
+      }
+      count++;
+    }
+    return count;
+  }
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 }

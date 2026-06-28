@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -34,7 +35,7 @@ export class CreateJobDto {
 
   @ApiProperty({ minimum: 1 })
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   budget!: number;
 
@@ -88,7 +89,7 @@ export class UpdateJobDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   budget?: number;
 

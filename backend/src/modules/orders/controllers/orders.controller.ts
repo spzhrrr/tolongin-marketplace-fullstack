@@ -235,4 +235,66 @@ export class OrdersController {
   ) {
     return this.ordersService.getInvoice(id, uid, role);
   }
+<<<<<<< HEAD
+=======
+
+  @Roles(ROLE.USER)
+  @Post(':id/demo-auto')
+  @ApiOperation({ summary: '[Demo] Jalankan payment, submission, dan approval' })
+  demoAuto(
+    @Param('id') id: string,
+    @CurrentUser('id') uid: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.ordersService.runDemoFlow(id, uid, role);
+  }
+  // ========== DEMO ENDPOINTS (seperti Verifikasi) ==========
+
+  @Roles(ROLE.USER)
+  @Post(':id/demo-accept')
+  @ApiOperation({ summary: '[Demo] Langsung terima order tanpa verifikasi' })
+  async demoAccept(
+    @Param('id') id: string,
+    @CurrentUser('id') uid: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.ordersService.accept(id, uid, role);
+  }
+
+  @Roles(ROLE.USER)
+  @Post(':id/demo-submit-work')
+  @ApiOperation({ summary: '[Demo] Langsung submit bukti kerja tanpa upload' })
+  async demoSubmitWork(
+    @Param('id') id: string,
+    @CurrentUser('id') uid: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.ordersService.submitWork(id, uid, role, {
+      note: '✅ [DEMO] Hasil kerja diserahkan secara instan. File demo terlampir.',
+      attachments: ['https://demo.tolongin.com/sample-work.pdf'],
+    });
+  }
+
+  @Roles(ROLE.USER)
+  @Post(':id/demo-approve')
+  @ApiOperation({ summary: '[Demo] Langsung approve kerja dan rilis dana' })
+  async demoApprove(
+    @Param('id') id: string,
+    @CurrentUser('id') uid: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.ordersService.approveWork(id, uid, role);
+  }
+
+  @Roles(ROLE.USER)
+  @Post(':id/demo-complete')
+  @ApiOperation({ summary: '[Demo] Langsung selesaikan order' })
+  async demoComplete(
+    @Param('id') id: string,
+    @CurrentUser('id') uid: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.ordersService.complete(id, uid, role);
+  }
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 }

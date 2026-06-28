@@ -6,7 +6,7 @@ export class MockSmsService implements ISmsService {
   private readonly logger = new Logger('MockSmsService');
 
   async sendOtp(phone: string, otp: string) {
-    this.logger.log(`📱 [MOCK] SMS OTP -> ${phone} : ${otp}`);
+    this.logger.log(`📱 [MOCK] SMS OTP -> ${phone} (redacted)`);
   }
 
   async sendSms(phone: string, message: string) {

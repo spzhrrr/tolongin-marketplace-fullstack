@@ -1,4 +1,47 @@
 -- CreateTable
+CREATE TABLE `users` (
+    `id` VARCHAR(191) NOT NULL,
+    `email` VARCHAR(191) NOT NULL,
+    `password` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(191) NOT NULL,
+    `phone` VARCHAR(191) NULL,
+    `avatar` VARCHAR(191) NULL,
+    `role` VARCHAR(191) NOT NULL DEFAULT 'USER',
+    `emailVerified` BOOLEAN NOT NULL DEFAULT false,
+    `emailVerifiedAt` DATETIME(3) NULL,
+    `phoneVerified` BOOLEAN NOT NULL DEFAULT false,
+    `phoneVerifiedAt` DATETIME(3) NULL,
+    `emailOtpHash` VARCHAR(191) NULL,
+    `emailOtpExpiresAt` DATETIME(3) NULL,
+    `phoneOtpHash` VARCHAR(191) NULL,
+    `phoneOtpExpiresAt` DATETIME(3) NULL,
+    `ktpNumber` VARCHAR(191) NULL,
+    `ktpPhoto` VARCHAR(191) NULL,
+    `ktpSelfie` VARCHAR(191) NULL,
+    `ktpVerified` BOOLEAN NOT NULL DEFAULT false,
+    `ktpVerifiedAt` DATETIME(3) NULL,
+    `ktpRejectedReason` TEXT NULL,
+    `ktpSubmittedAt` DATETIME(3) NULL,
+    `bio` TEXT NULL,
+    `city` VARCHAR(191) NULL,
+    `skills` TEXT NOT NULL DEFAULT '[]',
+    `rating` DOUBLE NOT NULL DEFAULT 0,
+    `reviewCount` INTEGER NOT NULL DEFAULT 0,
+    `totalOrders` INTEGER NOT NULL DEFAULT 0,
+    `completedOrders` INTEGER NOT NULL DEFAULT 0,
+    `balance` DOUBLE NOT NULL DEFAULT 0,
+    `verified` BOOLEAN NOT NULL DEFAULT false,
+    `isActive` BOOLEAN NOT NULL DEFAULT true,
+    `isBanned` BOOLEAN NOT NULL DEFAULT false,
+    `bannedReason` TEXT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `users_email_key`(`email`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `bank_accounts` (
     `id` VARCHAR(191) NOT NULL,
     `userId` VARCHAR(191) NOT NULL,
@@ -27,60 +70,17 @@ CREATE TABLE `categories` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `users` (
-    `id` VARCHAR(191) NOT NULL,
-    `email` VARCHAR(191) NOT NULL,
-    `password` VARCHAR(191) NOT NULL,
-    `name` VARCHAR(191) NOT NULL,
-    `phone` VARCHAR(191) NULL,
-    `avatar` VARCHAR(191) NULL,
-    `role` VARCHAR(191) NOT NULL DEFAULT 'USER',
-    `emailVerified` BOOLEAN NOT NULL DEFAULT false,
-    `emailVerifiedAt` DATETIME(3) NULL,
-    `phoneVerified` BOOLEAN NOT NULL DEFAULT false,
-    `phoneVerifiedAt` DATETIME(3) NULL,
-    `emailOtpHash` VARCHAR(191) NULL,
-    `emailOtpExpiresAt` DATETIME(3) NULL,
-    `phoneOtpHash` VARCHAR(191) NULL,
-    `phoneOtpExpiresAt` DATETIME(3) NULL,
-    `ktpNumber` VARCHAR(191) NULL,
-    `ktpPhoto` VARCHAR(191) NULL,
-    `ktpSelfie` VARCHAR(191) NULL,
-    `ktpVerified` BOOLEAN NOT NULL DEFAULT false,
-    `ktpVerifiedAt` DATETIME(3) NULL,
-    `ktpRejectedReason` VARCHAR(191) NULL,
-    `ktpSubmittedAt` DATETIME(3) NULL,
-    `bio` VARCHAR(191) NULL,
-    `city` VARCHAR(191) NULL,
-    `skills` VARCHAR(191) NOT NULL DEFAULT '[]',
-    `rating` DOUBLE NOT NULL DEFAULT 0,
-    `reviewCount` INTEGER NOT NULL DEFAULT 0,
-    `totalOrders` INTEGER NOT NULL DEFAULT 0,
-    `completedOrders` INTEGER NOT NULL DEFAULT 0,
-    `balance` DOUBLE NOT NULL DEFAULT 0,
-    `verified` BOOLEAN NOT NULL DEFAULT false,
-    `isActive` BOOLEAN NOT NULL DEFAULT true,
-    `isBanned` BOOLEAN NOT NULL DEFAULT false,
-    `bannedReason` VARCHAR(191) NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL,
-
-    UNIQUE INDEX `users_email_key`(`email`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `services` (
     `id` VARCHAR(191) NOT NULL,
     `sellerId` VARCHAR(191) NOT NULL,
     `categoryId` VARCHAR(191) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
-    `description` VARCHAR(191) NOT NULL,
+    `description` TEXT NOT NULL,
     `price` DOUBLE NOT NULL,
     `priceType` VARCHAR(191) NOT NULL DEFAULT 'FIXED',
     `deliveryTime` INTEGER NOT NULL,
     `revisionCount` INTEGER NOT NULL DEFAULT 1,
-    `images` VARCHAR(191) NOT NULL DEFAULT '[]',
+    `images` TEXT NOT NULL DEFAULT '[]',
     `isActive` BOOLEAN NOT NULL DEFAULT true,
     `isFeatured` BOOLEAN NOT NULL DEFAULT false,
     `viewCount` INTEGER NOT NULL DEFAULT 0,
@@ -89,6 +89,7 @@ CREATE TABLE `services` (
     `reviewCount` INTEGER NOT NULL DEFAULT 0,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
+    `simulationOrderCreatedAt` DATETIME(3) NULL,
 
     INDEX `services_sellerId_idx`(`sellerId`),
     INDEX `services_categoryId_idx`(`categoryId`),
@@ -101,18 +102,20 @@ CREATE TABLE `jobs` (
     `buyerId` VARCHAR(191) NOT NULL,
     `categoryId` VARCHAR(191) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
-    `description` VARCHAR(191) NOT NULL,
+    `description` TEXT NOT NULL,
     `budget` DOUBLE NOT NULL,
     `budgetType` VARCHAR(191) NOT NULL DEFAULT 'FIXED',
     `deadline` DATETIME(3) NULL,
     `location` VARCHAR(191) NULL,
     `isOnline` BOOLEAN NOT NULL DEFAULT false,
-    `skills` VARCHAR(191) NOT NULL DEFAULT '[]',
+    `urgency` VARCHAR(191) NOT NULL DEFAULT 'NORMAL',
+    `skills` TEXT NOT NULL DEFAULT '[]',
     `status` VARCHAR(191) NOT NULL DEFAULT 'OPEN',
     `viewCount` INTEGER NOT NULL DEFAULT 0,
     `applicationsCount` INTEGER NOT NULL DEFAULT 0,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
+    `simulationApplicationCreatedAt` DATETIME(3) NULL,
 
     INDEX `jobs_buyerId_idx`(`buyerId`),
     INDEX `jobs_categoryId_idx`(`categoryId`),
@@ -124,15 +127,17 @@ CREATE TABLE `applications` (
     `id` VARCHAR(191) NOT NULL,
     `jobId` VARCHAR(191) NOT NULL,
     `sellerId` VARCHAR(191) NOT NULL,
-    `coverLetter` VARCHAR(191) NOT NULL,
+    `coverLetter` TEXT NOT NULL,
     `proposedPrice` DOUBLE NOT NULL,
     `proposedDuration` INTEGER NOT NULL,
-    `portfolioIds` VARCHAR(191) NOT NULL DEFAULT '[]',
+    `portfolioIds` TEXT NOT NULL DEFAULT '[]',
     `status` VARCHAR(191) NOT NULL DEFAULT 'PENDING',
     `rejectionReason` VARCHAR(191) NULL,
     `reviewedAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
+    `simulationAcceptedAt` DATETIME(3) NULL,
+    `simulationApplicationCreatedAt` DATETIME(3) NULL,
 
     UNIQUE INDEX `applications_jobId_sellerId_key`(`jobId`, `sellerId`),
     PRIMARY KEY (`id`)
@@ -144,26 +149,45 @@ CREATE TABLE `orders` (
     `buyerId` VARCHAR(191) NOT NULL,
     `sellerId` VARCHAR(191) NOT NULL,
     `serviceId` VARCHAR(191) NULL,
+    `jobId` VARCHAR(191) NULL,
     `applicationId` VARCHAR(191) NULL,
     `title` VARCHAR(191) NOT NULL,
     `amount` DOUBLE NOT NULL,
     `fee` DOUBLE NOT NULL DEFAULT 0,
     `totalAmount` DOUBLE NOT NULL,
     `status` VARCHAR(191) NOT NULL DEFAULT 'WAITING_CONFIRMATION',
-    `notes` VARCHAR(191) NULL,
+    `escrowStatus` VARCHAR(191) NOT NULL DEFAULT 'UNPAID',
+    `notes` TEXT NULL,
     `deliveryType` VARCHAR(191) NOT NULL DEFAULT 'DIGITAL',
-    `deliveryAddress` VARCHAR(191) NULL,
+    `deliveryAddress` TEXT NULL,
+    `workProof` TEXT NULL,
+    `workNote` TEXT NULL,
+    `workSubmission` TEXT NULL,
+    `workSubmittedAt` DATETIME(3) NULL,
+    `workApprovedAt` DATETIME(3) NULL,
+    `workRejectedAt` DATETIME(3) NULL,
+    `workRejectionReason` TEXT NULL,
+    `workSubmissionNote` TEXT NULL,
+    `workSubmissionFiles` TEXT NOT NULL DEFAULT '[]',
+    `workSubmissionDate` DATETIME(3) NULL,
+    `workSubmissionStatus` ENUM('PENDING', 'APPROVED', 'REVISION_REQUESTED', 'DISPUTED') NULL,
+    `simulationAcceptedAt` DATETIME(3) NULL,
+    `simulationWorkSubmittedAt` DATETIME(3) NULL,
+    `simulationApprovedAt` DATETIME(3) NULL,
+    `autoReleaseAt` DATETIME(3) NULL,
+    `fundsReleasedAt` DATETIME(3) NULL,
     `deadline` DATETIME(3) NULL,
     `completedAt` DATETIME(3) NULL,
     `cancelledAt` DATETIME(3) NULL,
-    `cancellationReason` VARCHAR(191) NULL,
-    `timeline` VARCHAR(191) NOT NULL DEFAULT '[]',
+    `cancellationReason` TEXT NULL,
+    `timeline` TEXT NOT NULL DEFAULT '[]',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `orders_applicationId_key`(`applicationId`),
     INDEX `orders_buyerId_idx`(`buyerId`),
     INDEX `orders_sellerId_idx`(`sellerId`),
+    INDEX `orders_jobId_idx`(`jobId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -175,15 +199,17 @@ CREATE TABLE `reviews` (
     `revieweeId` VARCHAR(191) NOT NULL,
     `serviceId` VARCHAR(191) NULL,
     `rating` INTEGER NOT NULL,
-    `comment` VARCHAR(191) NOT NULL,
-    `images` VARCHAR(191) NOT NULL DEFAULT '[]',
-    `reply` VARCHAR(191) NULL,
+    `comment` TEXT NOT NULL,
+    `reviewType` ENUM('BUYER_TO_SELLER', 'SELLER_TO_BUYER') NOT NULL DEFAULT 'BUYER_TO_SELLER',
+    `images` TEXT NOT NULL DEFAULT '[]',
+    `reply` TEXT NULL,
     `replyAt` DATETIME(3) NULL,
     `isAnonymous` BOOLEAN NOT NULL DEFAULT false,
     `helpfulCount` INTEGER NOT NULL DEFAULT 0,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
+    UNIQUE INDEX `reviews_orderId_reviewerId_key`(`orderId`, `reviewerId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -232,8 +258,8 @@ CREATE TABLE `notifications` (
     `userId` VARCHAR(191) NOT NULL,
     `type` VARCHAR(191) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
-    `body` VARCHAR(191) NOT NULL,
-    `data` VARCHAR(191) NULL,
+    `body` TEXT NOT NULL,
+    `data` TEXT NULL,
     `actionUrl` VARCHAR(191) NULL,
     `isRead` BOOLEAN NOT NULL DEFAULT false,
     `readAt` DATETIME(3) NULL,
@@ -246,9 +272,9 @@ CREATE TABLE `notifications` (
 -- CreateTable
 CREATE TABLE `conversations` (
     `id` VARCHAR(191) NOT NULL,
-    `participants` VARCHAR(191) NOT NULL,
+    `participants` TEXT NOT NULL,
     `orderId` VARCHAR(191) NULL,
-    `lastMessage` VARCHAR(191) NULL,
+    `lastMessage` TEXT NULL,
     `lastMessageAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -262,8 +288,8 @@ CREATE TABLE `messages` (
     `id` VARCHAR(191) NOT NULL,
     `conversationId` VARCHAR(191) NOT NULL,
     `senderId` VARCHAR(191) NOT NULL,
-    `content` VARCHAR(191) NOT NULL,
-    `attachment` VARCHAR(191) NULL,
+    `content` TEXT NOT NULL,
+    `attachment` TEXT NULL,
     `isRead` BOOLEAN NOT NULL DEFAULT false,
     `readAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -277,14 +303,15 @@ CREATE TABLE `disputes` (
     `id` VARCHAR(191) NOT NULL,
     `orderId` VARCHAR(191) NOT NULL,
     `raisedBy` VARCHAR(191) NOT NULL,
-    `reason` VARCHAR(191) NOT NULL,
-    `description` VARCHAR(191) NOT NULL,
-    `evidence` VARCHAR(191) NULL,
+    `reason` TEXT NOT NULL,
+    `description` TEXT NOT NULL,
+    `evidence` TEXT NULL,
     `status` VARCHAR(191) NOT NULL DEFAULT 'PENDING',
-    `resolution` VARCHAR(191) NULL,
+    `resolution` TEXT NULL,
     `resolvedBy` VARCHAR(191) NULL,
     `resolvedAt` DATETIME(3) NULL,
-    `messages` VARCHAR(191) NULL,
+    `autoResolveAt` DATETIME(3) NULL,
+    `messages` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -309,7 +336,7 @@ CREATE TABLE `password_resets` (
 CREATE TABLE `platform_settings` (
     `id` VARCHAR(191) NOT NULL,
     `key` VARCHAR(191) NOT NULL,
-    `value` VARCHAR(191) NOT NULL,
+    `value` TEXT NOT NULL,
     `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `platform_settings_key_key`(`key`),
@@ -323,7 +350,7 @@ CREATE TABLE `activity_logs` (
     `action` VARCHAR(191) NOT NULL,
     `entity` VARCHAR(191) NULL,
     `entityId` VARCHAR(191) NULL,
-    `metadata` VARCHAR(191) NULL,
+    `metadata` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `activity_logs_userId_idx`(`userId`),
@@ -338,6 +365,32 @@ CREATE TABLE `favorites` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `favorites_userId_serviceId_key`(`userId`, `serviceId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `portfolios` (
+    `id` VARCHAR(191) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
+    `title` VARCHAR(191) NOT NULL,
+    `description` TEXT NULL,
+    `imageUrl` TEXT NULL,
+    `projectUrl` TEXT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `portfolios_userId_idx`(`userId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `user_badges` (
+    `id` VARCHAR(191) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
+    `badgeType` ENUM('TOP_RATED', 'FAST_DELIVERY', 'VERIFIED_PRO', 'RISING_TALENT', 'TRUSTED_BUYER', 'TOP_SELLER') NOT NULL,
+    `earnedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `user_badges_userId_idx`(`userId`),
+    UNIQUE INDEX `user_badges_userId_badgeType_key`(`userId`, `badgeType`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -421,3 +474,9 @@ ALTER TABLE `favorites` ADD CONSTRAINT `favorites_userId_fkey` FOREIGN KEY (`use
 
 -- AddForeignKey
 ALTER TABLE `favorites` ADD CONSTRAINT `favorites_serviceId_fkey` FOREIGN KEY (`serviceId`) REFERENCES `services`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `portfolios` ADD CONSTRAINT `portfolios_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `user_badges` ADD CONSTRAINT `user_badges_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

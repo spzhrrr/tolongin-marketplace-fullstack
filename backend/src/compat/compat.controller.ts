@@ -16,6 +16,12 @@ import { AuthService } from '../modules/auth/services/auth.service';
 import { ChatService } from '../modules/chat/services/chat.service';
 import { AdminService } from '../modules/admin/services/admin.service';
 import { OrdersService } from '../modules/orders/services/orders.service';
+<<<<<<< HEAD
+=======
+import { ReviewsService } from '../modules/reviews/services/reviews.service';
+import { ApplicationsService } from '../modules/applications/services/applications.service';
+import { PaymentsService } from '../modules/payments/services/payments.service';
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 import { PrismaService } from '../prisma/prisma.service';
 import { ROLE } from '../common/constants/enums';
 
@@ -31,6 +37,12 @@ export class CompatController {
     private readonly chat: ChatService,
     private readonly admin: AdminService,
     private readonly orders: OrdersService,
+<<<<<<< HEAD
+=======
+    private readonly reviews: ReviewsService,
+    private readonly applications: ApplicationsService,
+    private readonly payments: PaymentsService,
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
     private readonly prisma: PrismaService,
   ) {}
 
@@ -169,22 +181,30 @@ export class CompatController {
         ktpVerifiedAt: true,
         ktpSubmittedAt: true,
         ktpRejectedReason: true,
-        // bankVerified tidak ada di User model, gunakan data dari bankAccounts
+        ktpNumber: true,
+        ktpPhoto: true,
+        ktpSelfie: true,
+        name: true,
         bankAccounts: {
           where: { isDefault: true },
-          select: { isVerified: true },
+          select: {
+            isVerified: true,
+            bankName: true,
+            accountNumber: true,
+            accountName: true,
+          },
           take: 1,
         },
       },
     });
     if (!u) return { status: 'NOT_SUBMITTED' };
     const status = u.ktpVerified
-      ? 'VERIFIED'
+      ? 'approved'
       : u.ktpRejectedReason
-        ? 'REJECTED'
+        ? 'rejected'
         : u.ktpSubmittedAt
-          ? 'PENDING'
-          : 'NOT_SUBMITTED';
+          ? 'pending'
+          : 'not_submitted';
     return {
       status,
       emailVerified: u.emailVerified,
@@ -194,6 +214,16 @@ export class CompatController {
       rejectionReason: u.ktpRejectedReason,
       verifiedAt: u.ktpVerifiedAt,
       submittedAt: u.ktpSubmittedAt,
+      data: {
+        fullName: u.name,
+        ktpNumber: u.ktpNumber,
+        ktpPhoto: u.ktpPhoto,
+        ktpSelfie: u.ktpSelfie,
+        bankName: u.bankAccounts[0]?.bankName,
+        bankAccountNumber: u.bankAccounts[0]?.accountNumber,
+        bankAccountName: u.bankAccounts[0]?.accountName,
+        rejectReason: u.ktpRejectedReason,
+      },
     };
   }
 
@@ -203,18 +233,51 @@ export class CompatController {
     if (!body?.ktpPhoto || !body?.ktpSelfie) {
       // do not throw — mock submission still acceptable
     }
-    await this.prisma.user.update({
-      where: { id: uid },
-      data: {
+
+    await this.prisma.$transaction(async (tx) => {
+      const userData: any = {
         ktpNumber: body?.ktpNumber || null,
         ktpPhoto: body?.ktpPhoto || null,
         ktpSelfie: body?.ktpSelfie || null,
         ktpSubmittedAt: new Date(),
         ktpVerified: false,
         ktpRejectedReason: null,
-      },
+      };
+      if (body?.fullName) {
+        userData.name = body.fullName;
+      }
+      await tx.user.update({ where: { id: uid }, data: userData });
+
+      if (body?.bankName && body?.bankAccountNumber && body?.bankAccountName) {
+        const existingBank = await tx.bankAccount.findFirst({
+          where: { userId: uid, isDefault: true },
+        });
+        if (existingBank) {
+          await tx.bankAccount.update({
+            where: { id: existingBank.id },
+            data: {
+              bankName: body.bankName,
+              accountNumber: body.bankAccountNumber,
+              accountName: body.bankAccountName,
+              isVerified: false,
+            },
+          });
+        } else {
+          await tx.bankAccount.create({
+            data: {
+              userId: uid,
+              bankName: body.bankName,
+              accountNumber: body.bankAccountNumber,
+              accountName: body.bankAccountName,
+              isDefault: true,
+              isVerified: false,
+            },
+          });
+        }
+      }
     });
-    return { status: 'PENDING' };
+
+    return { status: 'pending' };
   }
 
   // ----- integrations status -----
@@ -248,10 +311,13 @@ export class CompatController {
     @CurrentUser('role') role: string,
     @Param('orderId') orderId: string,
   ) {
+<<<<<<< HEAD
     // mark order ACCEPTED as if seller accepted after buyer paid; or just mark COMPLETED on demo
     return this.orders.accept(orderId, uid, role).catch(() => ({ ok: true }));
+=======
+    return this.payments.confirmDemo(uid, orderId);
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
   }
-
   // ----- order create (frontend posts to /orders) -----
   @ApiBearerAuth('jwt')
   @Post('orders')

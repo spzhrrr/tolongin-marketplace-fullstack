@@ -1,0 +1,14 @@
+-- Store whole Indonesian rupiah to avoid floating-point rounding.
+ALTER TABLE users MODIFY balance INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE services MODIFY price INTEGER NOT NULL;
+ALTER TABLE jobs MODIFY budget INTEGER NOT NULL;
+ALTER TABLE applications MODIFY proposedPrice INTEGER NOT NULL;
+ALTER TABLE orders
+  MODIFY amount INTEGER NOT NULL,
+  MODIFY fee INTEGER NOT NULL DEFAULT 0,
+  MODIFY totalAmount INTEGER NOT NULL;
+ALTER TABLE payments
+  MODIFY amount INTEGER NOT NULL,
+  MODIFY fee INTEGER NOT NULL DEFAULT 0,
+  MODIFY totalAmount INTEGER NOT NULL;
+ALTER TABLE withdrawals MODIFY amount INTEGER NOT NULL;

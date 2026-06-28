@@ -11,7 +11,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { randomBytes, randomUUID } from 'crypto';
+import { randomBytes, randomInt, randomUUID } from 'crypto';
 import { AuthRepository } from '../repositories/auth.repository';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
@@ -133,7 +133,12 @@ export class AuthService {
     });
 
     // mock email verification
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = randomInt(100000, 1000000).toString();
+    await this.repo.saveEmailOtp(
+      user.id,
+      otp,
+      new Date(Date.now() + 10 * 60 * 1000),
+    );
     await this.email.sendVerificationEmail(user.email, otp);
     if (user.phone) await this.sms.sendOtp(user.phone, otp);
 
@@ -171,6 +176,7 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token has been revoked');
     const user = await this.repo.findById(payload.sub);
     if (!user || !user.isActive) throw new UnauthorizedException();
+    if (payload.jti && payload.exp) this.blacklist.add(payload.jti, payload.exp);
     return this.buildTokens(user);
   }
 
@@ -220,7 +226,8 @@ export class AuthService {
     const token = randomBytes(24).toString('hex');
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1h
     await this.repo.createPasswordReset(u.id, token, expiresAt);
-    const link = `https://tolongin.local/reset-password?token=${token}`;
+    const appUrl = process.env.APP_URL || 'http://localhost:3000';
+    const link = appUrl + '/reset-password?token=' + token;
     await this.email.sendPasswordReset(u.email, token, link);
     await this.audit.log(u.id, 'PASSWORD_RESET_REQUESTED', 'User', u.id);
     this.logger.log(`Password reset token for ${u.email}: ${token}`);
@@ -245,16 +252,17 @@ export class AuthService {
     if (user.emailVerified)
       throw new BadRequestException('Email sudah terverifikasi');
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = randomInt(100000, 1000000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 menit
 
     // Simpan OTP ke database (perlu tambah field di schema)
     await this.repo.saveEmailOtp(userId, otp, expiresAt);
 
-    // Mock mode - kirim link via console
-    const mockLink = `http://localhost:3000/verify-email?token=${otp}`;
-    this.logger.log(`[MOCK EMAIL] Link verifikasi: ${mockLink}`);
-    this.logger.log(`[MOCK EMAIL] Kode OTP: ${otp}`);
+    const demoMode =
+      process.env.DEMO_MODE_ENABLED === 'true' ||
+      process.env.NODE_ENV !== 'production';
+    const appUrl = process.env.APP_URL || 'http://localhost:3000';
+    const mockLink = appUrl + '/verify-email?token=' + otp;
 
     await this.email.sendVerificationEmail(user.email, otp);
 

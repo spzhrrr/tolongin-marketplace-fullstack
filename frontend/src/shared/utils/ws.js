@@ -3,7 +3,14 @@
 import { io } from "socket.io-client";
 import { store } from "../../app/store.js";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+function normalizeBackendUrl(value) {
+  if (!value || typeof value !== "string") return "";
+  return value.replace(/\/api\/?$/i, "").replace(/\/+$/, "");
+}
+
+const BACKEND_URL = normalizeBackendUrl(
+  import.meta.env.VITE_BACKEND_URL || window.location.origin,
+);
 const DEBUG = import.meta.env.DEV;
 
 class WSClient {

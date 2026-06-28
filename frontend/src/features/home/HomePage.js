@@ -1,6 +1,6 @@
 import { api } from "../../shared/utils/api.js";
 import { t } from "../../shared/utils/i18n.js";
-import { serviceCard } from "../../shared/ui/components.js";
+import { serviceCard, avatar } from "../../shared/ui/components.js";
 import { escape } from "../../shared/utils/helpers.js";
 
 export async function HomePage({ mount }) {
@@ -17,7 +17,9 @@ export async function HomePage({ mount }) {
           </div>
           <div class="flex gap-md mt-3" style="align-items:center">
             <div style="display:flex">
-              ${[1, 2, 3, 4].map((i) => `<img src="https://i.pravatar.cc/40?img=${i + 10}" class="avatar avatar-sm" style="margin-left:-10px;border:2px solid white"/>`).join("")}
+              <span class="avatar avatar-sm avatar-placeholder" style="margin-left:-10px">AP</span>
+              <span class="avatar avatar-sm avatar-placeholder" style="margin-left:-10px">CK</span>
+              <span class="avatar avatar-sm avatar-placeholder" style="margin-left:-10px">MS</span>
             </div>
             <div class="text-sm"><strong>10,000+</strong> freelancer terpercaya</div>
           </div>
@@ -110,7 +112,7 @@ export async function HomePage({ mount }) {
               <div class="stars">${'<i class="fa-solid fa-star"></i>'.repeat(5)}</div>
               <p class="quote">"${escape(tt.q)}"</p>
               <div class="who">
-                <img src="https://i.pravatar.cc/100?img=${i + 20}" class="avatar"/>
+                ${avatar({ name: tt.name })}
                 <div><div class="name">${tt.name}</div><div class="role">${tt.role}</div></div>
               </div>
             </div>`,

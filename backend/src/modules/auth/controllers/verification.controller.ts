@@ -20,7 +20,9 @@ import {
 } from '@nestjs/swagger';
 import * as bcrypt from 'bcrypt';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { mkdirSync } from 'fs';
+import { resolve } from 'path';
+import { randomInt, randomUUID } from 'crypto';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { EMAIL_SERVICE } from '../../../integrations/email/email.interface';
@@ -42,21 +44,21 @@ interface MulterFile {
 }
 
 function generateOtp() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(randomInt(100000, 1000000));
 }
 
 // Konfigurasi upload file
 const storageConfig = {
   storage: diskStorage({
-    destination: (req, file, cb) => {
-      let folder = './uploads';
-      if (file.fieldname === 'ktpImage') folder = './uploads/ktp';
-      if (file.fieldname === 'bankProof') folder = './uploads/bank';
+    destination: (_req, file, cb) => {
+      const subfolder = file.fieldname === 'bankProof' ? 'bank' : 'ktp';
+      const folder = resolve(process.cwd(), 'uploads', subfolder);
+      mkdirSync(folder, { recursive: true });
       cb(null, folder);
     },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      cb(null, `user-${uniqueSuffix}${extname(file.originalname)}`);
+    filename: (_req, file, cb) => {
+      const extension = file.mimetype === 'image/png' ? '.png' : '.jpg';
+      cb(null, randomUUID() + extension);
     },
   }),
   fileFilter: (req, file, cb) => {
@@ -154,7 +156,10 @@ export class VerificationController {
     });
 
     await this.email.sendOtp(u.email, otp);
-    return { ok: true, demoOtp: otp };
+    const demoMode =
+      process.env.DEMO_MODE_ENABLED === 'true' ||
+      process.env.NODE_ENV !== 'production';
+    return { ok: true, demoOtp: demoMode ? otp : undefined };
   }
 
   @Post('email/confirm')
@@ -235,7 +240,10 @@ export class VerificationController {
     });
 
     await this.sms.sendOtp(phone, otp);
-    return { ok: true, demoOtp: otp };
+    const demoMode =
+      process.env.DEMO_MODE_ENABLED === 'true' ||
+      process.env.NODE_ENV !== 'production';
+    return { ok: true, demoOtp: demoMode ? otp : undefined };
   }
 
   @Post('phone/confirm')
@@ -307,7 +315,7 @@ export class VerificationController {
       throw new BadRequestException('File KTP tidak ditemukan');
     }
 
-    const ktpPhotoUrl = `/uploads/ktp/${file.filename}`;
+    const ktpPhotoUrl = '/api/uploads/ktp/' + file.filename;
 
     await this.prisma.user.update({
       where: { id: uid },

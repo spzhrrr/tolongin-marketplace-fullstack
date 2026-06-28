@@ -57,10 +57,15 @@ function setRefreshCookie(res: Response, token: string) {
   const isProd = process.env.NODE_ENV === 'production';
   res.cookie(REFRESH_COOKIE, token, {
     httpOnly: true,
+<<<<<<< HEAD
     secure: isProd,
     // 'none' required for cross-origin (Railway API + Vercel frontend)
     // 'lax' only works for same-site (same domain)
     sameSite: isProd ? 'none' : 'lax',
+=======
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
     maxAge: REFRESH_COOKIE_MAX_AGE_MS,
     path: '/api/auth',
   });
@@ -156,9 +161,29 @@ export class AuthController {
 
   @ApiBearerAuth('jwt')
   @Get('me')
+<<<<<<< HEAD
   @ApiOperation({ summary: 'Get current user profile' })
   async me(@CurrentUser('id') uid: string) {
     return this.authService.getProfile(uid);
+=======
+  @ApiOperation({ summary: 'Get authenticated user profile' })
+  getMe(@CurrentUser('id') userId: string) {
+    return this.authService.getProfile(userId);
+  }
+
+  @ApiBearerAuth('jwt')
+  @Get('profile')
+  @ApiOperation({ summary: 'Get authenticated user profile' })
+  getProfile(@CurrentUser('id') userId: string) {
+    return this.authService.getProfile(userId);
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+  }
+
+  @ApiBearerAuth('jwt')
+  @Put('me')
+  @ApiOperation({ summary: 'Update profile' })
+  updateMe(@CurrentUser('id') userId: string, @Body() dto: UpdateProfileDto) {
+    return this.authService.updateProfile(userId, dto);
   }
 
   @ApiBearerAuth('jwt')

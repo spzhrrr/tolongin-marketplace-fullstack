@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PaymentsService } from '../services/payments.service';
 import { CreatePaymentDto } from '../dto/payment.dto';
@@ -20,6 +20,15 @@ export class PaymentsController {
     return this.paymentsService.create(userId, dto);
   }
 
+  @ApiBearerAuth('jwt')
+  @Post('demo/confirm/:orderId')
+  @ApiOperation({ summary: '[Demo] Confirm payment and fund escrow' })
+  confirmDemo(
+    @Param('orderId') orderId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.paymentsService.confirmDemo(userId, orderId);
+  }
   @ApiBearerAuth('jwt')
   @Get(':id/status')
   @ApiOperation({ summary: 'Check payment status' })
@@ -44,7 +53,11 @@ export class PaymentsController {
   @Public()
   @Post('webhook/:provider')
   @ApiOperation({ summary: 'Payment provider webhook' })
-  webhook(@Param('provider') provider: string, @Body() body: any) {
-    return this.paymentsService.webhook(provider, body);
+  webhook(
+    @Param('provider') provider: string,
+    @Body() body: any,
+    @Headers('x-webhook-secret') secret?: string,
+  ) {
+    return this.paymentsService.webhook(provider, body, secret);
   }
 }

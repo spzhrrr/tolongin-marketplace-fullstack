@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { Prisma, User, PasswordReset } from '@prisma/client';
+import { createHash } from 'crypto';
+
+const hashToken = (value: string) =>
+  createHash('sha256').update(value).digest('hex');
 
 @Injectable()
 export class AuthRepository {
@@ -30,13 +34,13 @@ export class AuthRepository {
     expiresAt: Date,
   ): Promise<PasswordReset> {
     return this.prisma.passwordReset.create({
-      data: { userId, token, expiresAt },
+      data: { userId, token: hashToken(token), expiresAt },
     });
   }
 
   findValidPasswordReset(token: string): Promise<PasswordReset | null> {
     return this.prisma.passwordReset.findFirst({
-      where: { token, usedAt: null, expiresAt: { gt: new Date() } },
+      where: { token: hashToken(token), usedAt: null, expiresAt: { gt: new Date() } },
     });
   }
 
@@ -50,7 +54,7 @@ export class AuthRepository {
   async findByEmailOtp(otp: string): Promise<User | null> {
     return this.prisma.user.findFirst({
       where: {
-        emailOtpHash: otp,
+        emailOtpHash: hashToken(otp),
         emailOtpExpiresAt: { gt: new Date() },
       },
     });
@@ -63,7 +67,7 @@ export class AuthRepository {
     await this.prisma.user.update({
       where: { id: userId },
       data: {
-        emailOtpHash: otp,
+        emailOtpHash: hashToken(otp),
         emailOtpExpiresAt: expiresAt,
       },
     });
@@ -76,7 +80,7 @@ export class AuthRepository {
     });
 
     if (!user || !user.emailOtpHash || !user.emailOtpExpiresAt) return false;
-    if (user.emailOtpHash !== otp) return false;
+    if (user.emailOtpHash !== hashToken(otp)) return false;
     if (new Date() > user.emailOtpExpiresAt) return false;
 
     await this.prisma.user.update({

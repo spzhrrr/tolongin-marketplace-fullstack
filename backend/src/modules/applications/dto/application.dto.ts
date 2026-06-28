@@ -4,7 +4,6 @@ import {
   ArrayMaxSize,
   IsArray,
   IsInt,
-  IsNumber,
   IsOptional,
   IsString,
   Min,
@@ -17,7 +16,7 @@ export class CreateApplicationDto {
   @IsString()
   @MinLength(20)
   coverLetter!: string;
-  @ApiProperty() @Type(() => Number) @IsNumber() @Min(1) proposedPrice!: number;
+  @ApiProperty() @Type(() => Number) @IsInt() @Min(1) proposedPrice!: number;
   @ApiProperty({ minimum: 1 })
   @Type(() => Number)
   @IsInt()
@@ -39,7 +38,7 @@ export class UpdateApplicationDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   proposedPrice?: number;
   @ApiProperty({ required: false })
   @IsOptional()

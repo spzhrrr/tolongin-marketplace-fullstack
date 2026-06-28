@@ -3,6 +3,7 @@ import { serviceCard } from "../../shared/ui/components.js";
 import { debounce, toast, escape, fmtIDR } from "../../shared/utils/helpers.js";
 import { store } from "../../app/store.js";
 import { router } from "../../app/router.js";
+import { avatar } from "../../shared/ui/components.js";
 
 export async function MarketplacePage({ mount, query }) {
   mount.innerHTML = `
@@ -328,7 +329,7 @@ export async function ServiceDetailPage({ mount, params }) {
             <div style="background:#f8f9fa; border-radius:12px; padding:16px; margin-bottom:24px;">
               <h3 style="font-size:0.8rem; margin:0 0 12px 0; color:#666;">TENTANG PENJUAL</h3>
               <div class="seller-link" data-user-id="${s.sellerId}" style="cursor:pointer; display:flex; align-items:center; gap:12px;">
-                <img src="${s.seller?.avatar || "https://i.pravatar.cc/48"}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;">
+                ${avatar(s.seller, "")}
                 <div>
                   <div style="font-weight:700; display:flex; align-items:center; gap:6px;">
                     ${escape(s.seller?.name || "Penjual")}
@@ -402,7 +403,7 @@ export async function ServiceDetailPage({ mount, params }) {
             (r) => `
           <div style="padding:12px 0; border-bottom:1px solid #eee;">
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-              <img src="${r.reviewer?.avatar || r.buyerAvatar || "https://i.pravatar.cc/32"}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+              ${avatar(r.reviewer || { name: "Pengguna", avatar: r.buyerAvatar }, "sm")}
               <div>
                 <div style="font-weight:600; font-size:0.85rem;">${escape(r.reviewer?.name || r.buyerName || "User")}</div>
                 <div style="font-size:0.7rem; color:#f5b042;">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</div>

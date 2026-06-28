@@ -18,12 +18,14 @@ import {
 } from '../../../common/utils/helpers';
 import { Prisma } from '@prisma/client';
 import { ROLE } from '../../../common/constants/enums';
+import { ServiceFactory } from '../factories/service.factory';
 
 @Injectable()
 export class ServicesService {
   constructor(
     private readonly repo: ServicesRepository,
     private readonly categoriesRepo: CategoriesRepository,
+    private readonly factory: ServiceFactory,
   ) {}
 
   private toDto(s: any) {
@@ -74,17 +76,7 @@ export class ServicesService {
   async create(sellerId: string, dto: CreateServiceDto) {
     const cat = await this.categoriesRepo.findById(dto.categoryId);
     if (!cat) throw new NotFoundException('Category not found');
-    const created = await this.repo.create({
-      seller: { connect: { id: sellerId } },
-      category: { connect: { id: dto.categoryId } },
-      title: dto.title,
-      description: dto.description,
-      price: dto.price,
-      priceType: dto.priceType || 'FIXED',
-      deliveryTime: dto.deliveryTime,
-      revisionCount: dto.revisionCount ?? 1,
-      images: stringifyJsonField(dto.images || []),
-    });
+    const created = await this.repo.create(this.factory.create(sellerId, dto));
     return this.toDto(created);
   }
 

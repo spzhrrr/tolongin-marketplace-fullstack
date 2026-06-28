@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import appConfig from './config/app.config';
+import { validateEnvironment } from './config/environment.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { CommonModule } from './common/common.module';
 import { IntegrationsModule } from './integrations/integrations.module';
@@ -20,11 +21,25 @@ import { ChatModule } from './modules/chat/chat.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { DisputesModule } from './modules/disputes/disputes.module';
 import { AdminModule } from './modules/admin/admin.module';
+<<<<<<< HEAD
+=======
+import { SimulationModule } from './modules/simulation/simulation.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 import { CompatModule } from './compat/compat.module';
 
 @Module({
   imports: [
+<<<<<<< HEAD
     ConfigModule.forRoot({ isGlobal: true, load: [appConfig] }),
+=======
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [appConfig],
+      validate: validateEnvironment,
+    }),
+    ScheduleModule.forRoot(),
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
     ThrottlerModule.forRoot([
       { name: 'short', ttl: 1000, limit: 5 },
       { name: 'medium', ttl: 10_000, limit: 30 },
@@ -47,6 +62,11 @@ import { CompatModule } from './compat/compat.module';
     NotificationsModule,
     DisputesModule,
     AdminModule,
+<<<<<<< HEAD
+=======
+    SimulationModule,
+    UploadsModule,
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
     CompatModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

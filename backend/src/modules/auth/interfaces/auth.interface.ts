@@ -6,6 +6,8 @@ export interface JwtPayload {
   role: Role;
   type?: 'access' | 'refresh';
   jti?: string;
+  iat?: number;
+  exp?: number;
 }
 
 export interface AuthResponse {

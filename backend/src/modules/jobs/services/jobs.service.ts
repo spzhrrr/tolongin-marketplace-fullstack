@@ -13,10 +13,14 @@ import {
 } from '../../../common/utils/helpers';
 import { Prisma } from '@prisma/client';
 import { ROLE, JOB_STATUS } from '../../../common/constants/enums';
+import { JobFactory } from '../factories/job.factory';
 
 @Injectable()
 export class JobsService {
-  constructor(private readonly repo: JobsRepository) {}
+  constructor(
+    private readonly repo: JobsRepository,
+    private readonly factory: JobFactory,
+  ) {}
 
   private toDto(j: any) {
     return { ...j, skills: parseJsonField<string[]>(j.skills, []) };
@@ -48,6 +52,7 @@ export class JobsService {
   }
 
   async create(buyerId: string, dto: CreateJobDto) {
+<<<<<<< HEAD
     const created = await this.repo.create({
       buyer: { connect: { id: buyerId } },
       category: { connect: { id: dto.categoryId } },
@@ -61,6 +66,9 @@ export class JobsService {
       skills: stringifyJsonField(dto.skills || []),
       status: JOB_STATUS.OPEN,
     });
+=======
+    const created = await this.repo.create(this.factory.create(buyerId, dto));
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
     return this.toDto(created);
   }
 

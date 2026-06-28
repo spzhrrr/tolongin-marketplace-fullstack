@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateWithdrawalDto {
-  @ApiProperty() @Type(() => Number) @IsNumber() @Min(50000) amount!: number;
+  @ApiProperty() @Type(() => Number) @IsInt() @Min(50000) amount!: number;
   @ApiProperty() @IsString() bankAccountId!: string;
 }
 

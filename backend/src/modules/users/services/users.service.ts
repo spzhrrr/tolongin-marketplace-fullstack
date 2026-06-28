@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UsersRepository } from '../repositories/users.repository';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { UpdateUserDto } from '../dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly repo: UsersRepository,
     private readonly prisma: PrismaService,
+    private readonly usersRepository: UsersRepository,
   ) {}
 
   async getPublicProfile(id: string) {
@@ -29,7 +31,20 @@ export class UsersService {
     return {
       ...rest,
       skills: skillsArray,
+<<<<<<< HEAD
+=======
+      email: isOwner ? rest.email : undefined,
+      phone: isOwner ? rest.phone : undefined,
+      balance: isOwner ? rest.balance : undefined,
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
     };
+  }
+  async update(userId: string, dto: UpdateUserDto) {
+    const user = await this.usersRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return this.usersRepository.update(userId, dto);
   }
 
   async getServices(id: string) {

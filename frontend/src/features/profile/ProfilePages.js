@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 import { api } from "../../shared/utils/api.js";
+=======
+// frontend/src/features/profile/ProfilePages.js
+
+import { api, resolveAssetUrl } from "../../shared/utils/api.js";
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 import { escape, toast } from "../../shared/utils/helpers.js";
 import { avatar, serviceCard, empty } from "../../shared/ui/components.js";
 import { store } from "../../app/store.js";
@@ -59,12 +65,18 @@ export async function SettingsPage({ mount }) {
   mount.innerHTML = `
     <div class="container-sm page">
       <h1 class="page-title">Pengaturan Profil</h1>
+      <div class="alert alert-info"><i class="fa-solid fa-camera"></i><div><strong>Gunakan foto profil Anda</strong><p style="margin:.25rem 0 0">Foto yang jelas membantu pengguna lain mengenali dan mempercayai Anda.</p></div></div>
       <div class="card card-pad-lg">
         <form id="s-form" data-testid="settings-form">
           <div class="form-group text-center">
             <label class="label" style="display:block">Foto Profil</label>
             <div style="position:relative;display:inline-block">
+<<<<<<< HEAD
               <img id="avatar-preview" src="${u.avatar && u.avatar !== "null" ? escape(u.avatar) : `https://i.pravatar.cc/150?u=${u.id}`}"
+=======
+              <img id="avatar-preview" 
+                   src="${u.avatar && u.avatar !== "null" ? escape(u.avatar) : `/logotolongin.svg`}"
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
                    alt="avatar"
                    style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid var(--border);display:block;margin:0 auto"
                    data-testid="avatar-preview" />
@@ -126,6 +138,7 @@ export async function SettingsPage({ mount }) {
       };
       if (avatarBase64) payload.avatar = avatarBase64;
 
+<<<<<<< HEAD
       const updated = await api.put("/users/me", payload);
       store.setState({ user: updated });
       toast("Profil berhasil diperbarui", "success");
@@ -137,4 +150,98 @@ export async function SettingsPage({ mount }) {
       btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan';
     }
   });
+=======
+      // Upload langsung ke server
+      if (uploadStatus) {
+        uploadStatus.style.display = "block";
+        uploadStatus.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin"></i> Mengupload foto...';
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+                const uploadResult = await api.post("/uploads?folder=avatars", formData);
+
+        const uploadedUrl =
+          resolveAssetUrl(uploadResult.url || uploadResult.secure_url || uploadResult.fileUrl);
+
+        if (uploadStatus) {
+          uploadStatus.innerHTML =
+            '<i class="fa-solid fa-check-circle" style="color:#10b981;"></i> Foto berhasil diupload!';
+          setTimeout(() => {
+            if (uploadStatus) uploadStatus.style.display = "none";
+          }, 2000);
+        }
+
+        // Simpan URL untuk dikirim saat submit form
+        avatarFileToUpload = uploadedUrl;
+
+        // Update preview dengan URL dari server
+        const preview = document.getElementById("avatar-preview");
+        if (preview) preview.src = uploadedUrl;
+
+        toast(
+          "Foto berhasil diupload. Klik Simpan untuk menyimpan perubahan.",
+          "success",
+        );
+      } catch (err) {
+        console.error("Upload avatar error:", err);
+        if (uploadStatus) {
+          uploadStatus.innerHTML =
+            '<i class="fa-solid fa-exclamation-circle" style="color:#ef4444;"></i> Gagal upload foto';
+          setTimeout(() => {
+            if (uploadStatus) uploadStatus.style.display = "none";
+          }, 3000);
+        }
+        toast("Gagal upload foto: " + (err.message || "Coba lagi"), "error");
+      }
+    });
+  }
+
+  const form = document.getElementById("s-form");
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector("button[type=submit]");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+      }
+
+      try {
+        const payload = {
+          name: document.getElementById("name")?.value.trim() || "",
+          bio: document.getElementById("bio")?.value.trim() || "",
+          city: document.getElementById("city")?.value.trim() || "",
+          phone: document.getElementById("phone")?.value.trim() || "",
+        };
+
+        // Gunakan URL yang sudah diupload (bukan base64)
+        if (avatarFileToUpload) {
+          payload.avatar = avatarFileToUpload;
+        }
+
+        const updated = await api.put("/users/me", payload);
+        store.setState({ user: updated });
+        toast("Profil berhasil diperbarui", "success");
+        avatarFileToUpload = null;
+
+        // Redirect ke profile setelah update
+        setTimeout(() => {
+          window.location.hash = "#/profile";
+        }, 1200);
+      } catch (err) {
+        toast(err.message || "Gagal menyimpan", "error");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML =
+            '<i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan';
+        }
+      }
+    });
+  }
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 }

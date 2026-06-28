@@ -1,5 +1,6 @@
 // Shared UI builders (return HTML strings or elements)
 import { escape, fmtIDR } from "../utils/helpers.js";
+import { resolveAssetUrl } from "../utils/api.js";
 
 export function loading() {
   return '<div class="spinner" data-testid="loading-spinner"></div>';
@@ -15,11 +16,15 @@ export function empty(title, sub, icon = "fa-folder-open", cta) {
 }
 
 export function avatar(user, size = "") {
+<<<<<<< HEAD
   // Pastikan user ada
   if (!user) {
     user = { name: "User", id: "default" };
   }
 
+=======
+  const safeUser = user || { name: "User" };
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
   const cls =
     size === "sm"
       ? "avatar avatar-sm"
@@ -28,7 +33,13 @@ export function avatar(user, size = "") {
         : size === "xl"
           ? "avatar avatar-xl"
           : "avatar";
+  const userName = safeUser.name || "User";
+  const validAvatar =
+    typeof safeUser.avatar === "string" &&
+    safeUser.avatar.trim() &&
+    !["null", "undefined"].includes(safeUser.avatar.trim());
 
+<<<<<<< HEAD
   // Handle avatar URL dengan aman
   let avatarUrl = "https://i.pravatar.cc/150?u=default";
 
@@ -48,8 +59,36 @@ export function avatar(user, size = "") {
   const userName = user.name ? user.name : "User";
 
   return `<img class="${cls}" src="${avatarUrl}" alt="${escape(userName)}" onerror="this.onerror=null;this.src='https://i.pravatar.cc/150?u=fallback'" />`;
-}
+=======
+  if (!validAvatar) {
+    const initials = userName
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0] || "")
+      .join("")
+      .toUpperCase();
+    return (
+      '<span class="' +
+      cls +
+      ' avatar-placeholder" role="img" aria-label="' +
+      escape(userName) +
+      '">' +
+      escape(initials || "U") +
+      "</span>"
+    );
+  }
 
+  return (
+    '<img class="' +
+    cls +
+    '" src="' +
+    escape(resolveAssetUrl(safeUser.avatar.trim())) +
+    '" alt="' +
+    escape(userName) +
+    '" loading="lazy" />'
+  );
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
+}
 export function statusPill(status) {
   if (!status) status = "unknown";
   const statusMap = {
@@ -61,9 +100,42 @@ export function statusPill(status) {
     ACCEPTED: "status-accepted",
     REJECTED: "status-rejected",
     RESOLVED: "status-resolved",
+<<<<<<< HEAD
   };
   const statusClass = statusMap[status] || "status-pending";
   return `<span class="status-pill ${statusClass}" data-testid="status-pill">${escape(status.replace(/_/g, " ").toLowerCase())}</span>`;
+=======
+    WAITING_CONFIRMATION: "status-pending",
+    PAID: "status-accepted",
+    WAITING_REVIEW: "status-in_progress",
+    IN_REVIEW: "status-in_progress",
+    REVISION_REQUESTED: "status-pending",
+    DISPUTED: "status-rejected",
+  };
+  // Label dalam Bahasa Indonesia untuk semua status
+  const labelMap = {
+    OPEN: "Dibuka",
+    IN_PROGRESS: "Dikerjakan",
+    COMPLETED: "Selesai",
+    CANCELLED: "Dibatalkan",
+    PENDING: "Menunggu",
+    ACCEPTED: "Diterima",
+    REJECTED: "Ditolak",
+    RESOLVED: "Selesai",
+    WAITING_CONFIRMATION: "Menunggu Pembayaran",
+    PAID: "Dibayar · Escrow Aktif",
+    WAITING_REVIEW: "Menunggu Review",
+    IN_REVIEW: "Ditinjau",
+    REVISION_REQUESTED: "Minta Revisi",
+    DISPUTED: "Sengketa",
+    CLOSED: "Ditutup",
+  };
+  const key = String(status).toUpperCase();
+  const statusClass = statusMap[key] || "status-pending";
+  const label =
+    labelMap[key] || String(status).replace(/_/g, " ").toLowerCase();
+  return `<span class="status-pill ${statusClass}" data-testid="status-pill">${escape(label)}</span>`;
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 }
 
 export function stars(rating) {

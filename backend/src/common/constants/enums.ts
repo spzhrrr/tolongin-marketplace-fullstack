@@ -41,6 +41,10 @@ export const APPLICATION_STATUS_VALUES = Object.values(APPLICATION_STATUS);
 
 export const ORDER_STATUS = {
   WAITING_CONFIRMATION: 'WAITING_CONFIRMATION',
+  PAID: 'PAID',
+  WAITING_REVIEW: 'WAITING_REVIEW',
+  REJECTED: 'REJECTED',
+  // Legacy states remain readable while existing databases are migrated.
   ACCEPTED: 'ACCEPTED',
   IN_PROGRESS: 'IN_PROGRESS',
   IN_REVIEW: 'IN_REVIEW',
@@ -129,16 +133,31 @@ export const ORDER_TRANSITIONS: Record<
 > = {
   WAITING_CONFIRMATION: {
     buyer: ['CANCELLED'],
-    seller: ['ACCEPTED', 'CANCELLED'],
-    admin: ['CANCELLED', 'DISPUTED'],
+    seller: ['CANCELLED'],
+    admin: ['DISPUTED'],
+  },
+  PAID: {
+    buyer: ['DISPUTED'],
+    seller: ['WAITING_REVIEW'],
+    admin: ['DISPUTED'],
+  },
+  WAITING_REVIEW: {
+    buyer: ['COMPLETED', 'REJECTED', 'DISPUTED'],
+    seller: [],
+    admin: ['DISPUTED'],
+  },
+  REJECTED: {
+    buyer: ['DISPUTED'],
+    seller: ['WAITING_REVIEW'],
+    admin: ['DISPUTED'],
   },
   ACCEPTED: {
     seller: ['IN_PROGRESS', 'CANCELLED'],
-    admin: ['CANCELLED', 'DISPUTED'],
+    admin: ['DISPUTED'],
   },
   IN_PROGRESS: {
     seller: ['IN_REVIEW', 'CANCELLED'],
-    admin: ['CANCELLED', 'DISPUTED'],
+    admin: ['DISPUTED'],
   },
   IN_REVIEW: {
     buyer: ['COMPLETED', 'REVISION_REQUESTED'],

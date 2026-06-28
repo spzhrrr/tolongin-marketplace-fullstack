@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 const ROUNDS = 12;
 
-const AVATAR = (key: string) => `https://i.pravatar.cc/200?u=${key}`;
+const AVATAR = (_key: string): null => null;
 
 // ============================================================
 // GAMBAR VALID DARI PEXELS
@@ -17,6 +17,7 @@ const KULKAS_IMAGES = [
   'https://images.pexels.com/photos/264520/pexels-photo-264520.jpeg',
 ];
 
+<<<<<<< HEAD
 // Untuk Buku / Penulisan / Copywriting
 const BUKU_IMAGES = [
   'https://images.pexels.com/photos/261763/pexels-photo-261763.jpeg',
@@ -228,6 +229,12 @@ function getSpecificImage(
   const fallbackPlaceholder = `https://placehold.co/800x500/0a66c2/ffffff?text=${textForImage}`;
 
   return categoryImages[categorySlug] || fallbackPlaceholder;
+=======
+function getServiceImage(index: number): string {
+  // Pilih gambar berdasarkan index untuk konsistensi (tetapi tetap bervariasi)
+  const imageId = IMAGE_IDS[index % IMAGE_IDS.length];
+  return `https://picsum.photos/id/${imageId}/600/400`;
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 }
 
 const dayMs = 24 * 3600 * 1000;
@@ -845,8 +852,12 @@ async function main() {
     const categoryId = catMap[s.cat];
     if (!sellerId || !categoryId) continue;
 
+<<<<<<< HEAD
     const imageUrl = getSpecificImage(s.cat, s.title, i);
     console.log(`  ✅ [${i + 1}] ${s.title.substring(0, 45)}`);
+=======
+    const imageUrl = getServiceImage(serviceIndex);
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 
     await prisma.service.create({
       data: {
@@ -858,9 +869,15 @@ async function main() {
         deliveryTime: s.deliveryTime,
         revisionCount: s.revisionCount,
         images: JSON.stringify([imageUrl]),
+<<<<<<< HEAD
         rating: s.rating,
         reviewCount: s.reviewCount,
         isFeatured: s.featured,
+=======
+        rating: 4.5 + (serviceIndex % 5) * 0.1,
+        reviewCount: 18 + serviceIndex * 7,
+        isFeatured: svc.featured,
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
       },
     });
   }
@@ -1077,6 +1094,7 @@ async function main() {
     },
     {
       buyer: 'aditya@tolongin.com',
+<<<<<<< HEAD
       seller: 'sari@tolongin.com',
       svcIdx: 7,
       status: 'COMPLETED',
@@ -1094,6 +1112,22 @@ async function main() {
       seller: 'irawan@tolongin.com',
       svcIdx: 15,
       status: 'IN_PROGRESS',
+=======
+      seller: 'citra@tolongin.com',
+      status: 'WAITING_REVIEW',
+      daysAgo: 5,
+    },
+    {
+      buyer: 'rina@tolongin.com',
+      seller: 'budi@tolongin.com',
+      status: 'PAID',
+      daysAgo: 2,
+    },
+    {
+      buyer: 'aditya@tolongin.com',
+      seller: 'maya@tolongin.com',
+      status: 'PAID',
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
       daysAgo: 3,
     },
     {
@@ -1154,6 +1188,7 @@ async function main() {
         amount,
         fee,
         totalAmount: total,
+<<<<<<< HEAD
         status: o.status,
         deliveryType: 'DIGITAL',
         deadline: future(7),
@@ -1161,6 +1196,38 @@ async function main() {
         cancelledAt: o.status === 'CANCELLED' ? past(o.daysAgo - 1) : null,
         cancellationReason:
           o.status === 'CANCELLED' ? 'Buyer membatalkan pesanan' : null,
+=======
+        status: spec.status,
+        escrowStatus:
+          spec.status === 'WAITING_CONFIRMATION'
+            ? 'UNPAID'
+            : spec.status === 'COMPLETED'
+              ? 'RELEASED'
+              : spec.status === 'WAITING_REVIEW'
+                ? 'AWAITING_APPROVAL'
+                : 'FUNDED',
+        deliveryType: 'DIGITAL',
+        workSubmission:
+          ['WAITING_REVIEW', 'COMPLETED'].includes(spec.status)
+            ? JSON.stringify({
+                note: 'Hasil pekerjaan lengkap sesuai brief.',
+                attachments: ['https://demo.tolongin.local/bukti-kerja.pdf'],
+                submittedAt: past(Math.max(0, spec.daysAgo - 1)).toISOString(),
+              })
+            : null,
+        workProof:
+          ['WAITING_REVIEW', 'COMPLETED'].includes(spec.status)
+            ? JSON.stringify(['https://demo.tolongin.local/bukti-kerja.pdf'])
+            : null,
+        workSubmittedAt:
+          ['WAITING_REVIEW', 'COMPLETED'].includes(spec.status)
+            ? past(Math.max(0, spec.daysAgo - 1))
+            : null,
+        fundsReleasedAt:
+          spec.status === 'COMPLETED' ? past(Math.max(0, spec.daysAgo - 2)) : null,
+        workApprovedAt:
+          spec.status === 'COMPLETED' ? past(Math.max(0, spec.daysAgo - 2)) : null,
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
         timeline: JSON.stringify([
           { status: 'WAITING_CONFIRMATION', at: createdAt },
         ]),
@@ -1254,6 +1321,7 @@ async function main() {
   }
   console.log('✓ platform settings');
 
+<<<<<<< HEAD
   console.log('\n✅ SEED COMPLETE!');
   console.log('   ═══════════════════════════════════════════════════');
   console.log('   🔑 LOGIN CREDENTIALS:');
@@ -1268,6 +1336,35 @@ async function main() {
   console.log('      3. Jasa Pasang AC Baru - Free Konsultasi');
   console.log('      4. Jasa Copywriting Professional untuk Deskripsi Produk');
   console.log('   🎯 Semua gambar akan muncul karena keyword sudah generik!');
+=======
+  // ============================================================
+  // SUMMARY
+  // ============================================================
+  console.log('\n' + '═'.repeat(60));
+  console.log('✅ SEEDING COMPLETE!');
+  console.log('═'.repeat(60));
+  console.log('\n📊 SUMMARY:');
+  console.log(`   👥 Users: ${users.length}`);
+  console.log(`   📂 Categories: ${categories.length}`);
+  console.log(`   🛠️ Services: ${serviceList.length}`);
+  console.log(`   💼 Jobs: ${jobList.length}`);
+  console.log(`   📦 Orders: ${orderSpecs.length}`);
+
+  console.log('\n🔑 LOGIN CREDENTIALS:');
+  console.log('═'.repeat(40));
+  console.log('   📧 Admin:  admin@tolongin.com / Admin@123');
+  console.log('   📧 Seller: seller@tolongin.com / Seller@123');
+  console.log('   📧 Buyer:  buyer@tolongin.com / Buyer@123');
+  console.log('   📧 Top:    citra@tolongin.com / Seller@123');
+  console.log('   📧 Top:    andi@tolongin.com / Seller@123');
+  console.log('═'.repeat(40));
+
+  console.log('\n🖼️ IMAGES:');
+  console.log('   ✅ Service images use a deterministic curated catalog');
+  console.log('   ✅ 100% reliable, no broken images');
+
+  console.log('\n' + '═'.repeat(60) + '\n');
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 }
 
 main()

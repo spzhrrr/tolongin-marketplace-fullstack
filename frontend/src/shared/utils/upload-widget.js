@@ -7,27 +7,6 @@ import { api } from "./api.js";
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
-let cloudinaryConfigured = null;
-async function isCloudinaryConfigured() {
-  if (cloudinaryConfigured !== null) return cloudinaryConfigured;
-  try {
-    const s = await api.get("/integrations/status");
-    cloudinaryConfigured = !!s.cloudinary;
-  } catch (_) {
-    cloudinaryConfigured = false;
-  }
-  return cloudinaryConfigured;
-}
-
-function readDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 /**
  * Render a drag-drop image picker inside `containerEl`.
  * options: { folder, initial, name, testid, onChange(url) }
@@ -99,15 +78,10 @@ export function mountImageUpload(containerEl, options = {}) {
       progress.hidden = false;
       progress.querySelector(".bar").style.width = "40%";
       try {
-        let url;
-        if (await isCloudinaryConfigured()) {
-          const r = await uploadFile(file, folder);
-          url = r.url;
-        } else {
-          // Mock fallback — base64 data URL stored client-side
-          url = await readDataUrl(file);
-        }
-        progress.querySelector(".bar").style.width = "100%";
+        const r = await uploadFile(file, folder, (percent) => {
+          progress.querySelector(".bar").style.width = percent + "%";
+        });
+        const url = r.url;        progress.querySelector(".bar").style.width = "100%";
         setTimeout(() => setUrl(url), 200);
       } catch (err) {
         window.dispatchEvent(

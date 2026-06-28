@@ -9,6 +9,7 @@ const statusLabels = {
   not_submitted: { label: "Belum Dikirim", icon: "fa-circle-question" },
   pending: { label: "Menunggu Review", icon: "fa-hourglass-half" },
   approved: { label: "Terverifikasi", icon: "fa-circle-check" },
+  verified: { label: "Terverifikasi", icon: "fa-circle-check" },
   rejected: { label: "Ditolak", icon: "fa-circle-xmark" },
 };
 
@@ -28,10 +29,11 @@ export async function KycPage({ mount }) {
   } catch (e) {
     kyc = { status: "not_submitted", data: {} };
   }
-  const status = kyc.status || "not_submitted";
+  const status = String(kyc.status || "not_submitted").toLowerCase();
   const data = kyc.data || {};
   const meta = statusLabels[status] || statusLabels.not_submitted;
-  const readonly = status === "pending" || status === "approved";
+  const readonly =
+    status === "pending" || status === "approved" || status === "verified";
 
   mount.innerHTML = `
     <div class="container-sm page">

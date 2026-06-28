@@ -1,4 +1,11 @@
+<<<<<<< HEAD
 import { api } from "../../shared/utils/api.js";
+=======
+// frontend/src/features/orders/OrdersPages.js
+
+import { api, resolveAssetUrl } from "../../shared/utils/api.js";
+import { uploadFile } from "../../shared/utils/uploads.js";
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 import {
   escape,
   fmtIDR,
@@ -16,14 +23,104 @@ function getActionLabel(next) {
   const labels = {
     ACCEPTED: "✓ Terima Pesanan",
     IN_PROGRESS: "🔧 Mulai Pengerjaan",
-    IN_REVIEW: "👀 Submit untuk Review",
+    WAITING_REVIEW: "👀 Submit untuk Review",
     COMPLETED: "✅ Selesaikan Pesanan",
     CANCELLED: "✕ Batalkan Pesanan",
   };
   return labels[next] || `Update ke ${String(next).replace("_", " ")}`;
 }
 
+<<<<<<< HEAD
 // Lazy-load Midtrans Snap JS (only when needed)
+=======
+function renderEscrowSteps(status) {
+  const s = String(status || "").toUpperCase();
+  const steps = [
+    ["WAITING_CONFIRMATION", "Menunggu pembayaran"],
+    ["PAID", "Dana di escrow"],
+    ["WAITING_REVIEW", "Review bukti"],
+    ["COMPLETED", "Dana dirilis"],
+  ];
+  const displayStatus = s === "REJECTED" ? "WAITING_REVIEW" : s;
+  const activeIndex = Math.max(
+    0,
+    steps.findIndex(([key]) => key === displayStatus),
+  );
+  return `<div class="escrow-steps">${steps
+    .map(
+      ([key, label], i) =>
+        `<div class="escrow-step ${i <= activeIndex ? "done" : ""} ${key === displayStatus ? "current" : ""}">
+          <span>${i + 1}</span><small>${label}</small>
+        </div>`,
+    )
+    .join("")}</div>`;
+}
+
+function renderWorkSubmission(o, isBuyer, isSeller) {
+  const sub = o.workSubmission;
+  const attachments = sub?.attachments || [];
+  if (!sub && !isSeller) {
+    return `<div class="alert alert-info mt-3"><i class="fa-solid fa-shield-halved"></i> Menunggu pekerja mengirim bukti pengerjaan. Dana tetap ditahan di escrow sampai Anda approve.</div>`;
+  }
+  return `
+    <div class="card card-pad-lg mt-3">
+      <div class="flex-between" style="align-items:flex-start;gap:1rem;flex-wrap:wrap">
+        <div>
+          <h3 style="margin:0"><i class="fa-solid fa-file-circle-check"></i> Bukti Pengerjaan</h3>
+          <p class="text-muted text-sm" style="margin:.35rem 0 0">Upload catatan, link file, foto hasil kerja, atau bukti lapangan. Dana seller hanya cair setelah approve.</p>
+        </div>
+        ${(() => {
+          const st = String(o.status).toUpperCase();
+          if (st === "COMPLETED") return `<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Disetujui</span>`;
+          if (st === "CANCELLED") return `<span class="badge badge-danger"><i class="fa-solid fa-ban"></i> Dibatalkan</span>`;
+          if (o.workSubmittedAt) return `<span class="badge badge-warning">Menunggu approval</span>`;
+          return `<span class="badge">Belum dikirim</span>`;
+        })()}
+      </div>
+      ${
+        sub
+          ? `<div class="work-proof mt-2">
+              <p>${escape(sub.note || "")}</p>
+              ${
+                attachments.length
+                  ? `<div class="proof-links">${attachments.map((a, i) => `<a class="btn btn-secondary btn-sm" href="${escape(resolveAssetUrl(a))}" target="_blank" rel="noopener"><i class="fa-solid fa-paperclip"></i> Bukti ${i + 1}</a>`).join("")}</div>`
+                  : `<div class="text-sm text-muted">Tidak ada lampiran, hanya catatan.</div>`
+              }
+            </div>`
+          : ""
+      }
+      ${
+        isSeller &&
+        ["PAID", "REJECTED"].includes(
+          String(o.status).toUpperCase(),
+        )
+          ? `<form id="work-form" class="mt-3">
+              <div class="form-group">
+                <label class="label">Catatan hasil kerja *</label>
+                <textarea class="textarea" id="work-note" required minlength="10" placeholder="Jelaskan pekerjaan yang sudah selesai, lokasi file, atau bukti lapangan..."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="label">Bukti kerja * (JPG, PNG, WebP, atau PDF)</label>
+                <input class="input" type="file" id="work-files" accept="image/jpeg,image/png,image/webp,application/pdf" multiple required>
+                <div id="work-upload-progress" class="text-sm text-muted mt-1">Maksimal 10 file, masing-masing 10 MB.</div>
+              </div>
+              <button class="btn btn-primary" type="submit"><i class="fa-solid fa-upload"></i> Kirim Bukti untuk Approval</button>
+            </form>`
+          : ""
+      }
+      ${
+        isBuyer && String(o.status).toUpperCase() === "WAITING_REVIEW"
+          ? `<div class="flex gap-sm mt-3 flex-wrap">
+              <button class="btn btn-success" id="approve-work"><i class="fa-solid fa-circle-check"></i> Approve & Rilis Dana</button>
+              <button class="btn btn-secondary" id="reject-work"><i class="fa-solid fa-rotate-left"></i> Minta Revisi</button>
+              <button class="btn btn-danger" id="dispute-work"><i class="fa-solid fa-scale-balanced"></i> Sengketa</button>
+            </div>`
+          : ""
+      }
+    </div>`;
+}
+
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 let _snapLoading = null;
 function loadSnapJs(clientKey, isProduction) {
   if (window.snap) return Promise.resolve();
@@ -112,6 +209,89 @@ export async function OrdersListPage({ mount }) {
   load("all");
 }
 
+<<<<<<< HEAD
+=======
+function renderRevisionBanner(o) {
+  if (String(o.status).toUpperCase() !== "REJECTED") return "";
+  const reason = o.workRejectionReason || o.revisionReason || "";
+  return `
+    <div class="alert alert-warning mt-3">
+      <i class="fa-solid fa-rotate-left"></i>
+      <div>
+        <strong>Revisi diminta oleh pembeli</strong>
+        ${reason ? `<p style="margin:.35rem 0 0">${escape(reason)}</p>` : `<p style="margin:.35rem 0 0">Silakan perbaiki pekerjaan lalu kirim ulang bukti.</p>`}
+      </div>
+    </div>`;
+}
+
+function renderAutoCompleteCountdown() {
+  return "";
+}
+
+function startAutoCompleteCountdown(o) {
+  if (!o.workSubmittedAt) return;
+  const el = document.getElementById("auto-complete-timer");
+  if (!el) return;
+  const deadline =
+    new Date(o.workSubmittedAt).getTime() + 7 * 24 * 60 * 60 * 1000;
+  const tick = () => {
+    const node = document.getElementById("auto-complete-timer");
+    if (!node) {
+      clearInterval(timer);
+      return;
+    }
+    const diff = deadline - Date.now();
+    if (diff <= 0) {
+      node.textContent = "segera";
+      clearInterval(timer);
+      return;
+    }
+    const d = Math.floor(diff / (24 * 60 * 60 * 1000));
+    const h = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    const m = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
+    const s = Math.floor((diff % (60 * 1000)) / 1000);
+    node.textContent = `${d}h ${h}j ${m}m ${s}d`;
+  };
+  tick();
+  const timer = setInterval(tick, 1000);
+}
+
+function renderOrderReviews(o, reviews) {
+  if (!reviews || !reviews.length) return "";
+  const dirLabel = (r) =>
+    r.reviewType === "SELLER_TO_BUYER"
+      ? "Penjual menilai Pembeli"
+      : "Pembeli menilai Penjual";
+  return `
+    <div class="card card-pad-lg mt-3">
+      <h3 style="margin:0 0 .75rem"><i class="fa-solid fa-star"></i> Ulasan (${reviews.length})</h3>
+      <div class="flex-col gap-md">
+        ${reviews
+          .map(
+            (r) => `
+          <div class="review-item" style="border:1px solid var(--border);border-radius:12px;padding:1rem">
+            <div class="flex-between" style="align-items:flex-start;gap:.75rem;flex-wrap:wrap">
+              <div class="flex gap-sm" style="align-items:center">
+                ${avatar(r.isAnonymous ? { name: "Anonim" } : r.reviewer, "sm")}
+                <div>
+                  <strong>${escape(r.isAnonymous ? "Anonim" : r.reviewer?.name || "Pengguna")}</strong>
+                  <div class="text-xs text-muted">${dirLabel(r)}</div>
+                </div>
+              </div>
+              <div style="color:var(--warning);white-space:nowrap">
+                ${[1, 2, 3, 4, 5].map((i) => `<i class="fa-${i <= r.rating ? "solid" : "regular"} fa-star"></i>`).join("")}
+              </div>
+            </div>
+            ${r.comment ? `<p style="margin:.6rem 0 0">${escape(r.comment)}</p>` : ""}
+            <div class="text-xs text-muted mt-1">${fmtDate(r.createdAt, true)}</div>
+          </div>`,
+          )
+          .join("")}
+      </div>
+    </div>`;
+}
+
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 export async function OrderDetailPage({ mount, params }) {
   const u = store.getState().user;
   mount.innerHTML = `<div class="container page"><div class="spinner"></div></div>`;
@@ -119,6 +299,7 @@ export async function OrderDetailPage({ mount, params }) {
     const o = await api.get("/orders/" + params.id);
     const isBuyer = u.id === o.buyerId;
     const isSeller = u.id === o.sellerId;
+<<<<<<< HEAD
     const statusKey = String(o.status || "").toLowerCase();
     const next = {
       pending: isSeller ? "ACCEPTED" : null,
@@ -127,6 +308,38 @@ export async function OrderDetailPage({ mount, params }) {
       in_progress: isSeller ? "IN_REVIEW" : null,
       in_review: isBuyer ? "COMPLETED" : null,
     }[statusKey];
+=======
+    const myReview = reviews.find((r) => r.reviewerId === u.id);
+    const canReview =
+      (isBuyer || isSeller) &&
+      String(o.status).toUpperCase() === "COMPLETED" &&
+      !myReview;
+
+    // ========== PERBAIKAN STATE TRANSITION ==========
+    // Jangan tampilkan tombol "Terima Pesanan" jika status sudah WAITING_REVIEW atau COMPLETED
+    const statusKey = String(o.status || "").toUpperCase();
+    const isCompleted = statusKey === "COMPLETED";
+    const isCancelled = statusKey === "CANCELLED";
+    const isInReview = statusKey === "WAITING_REVIEW";
+    const isInProgress = statusKey === "IN_PROGRESS";
+    const isAccepted = statusKey === "ACCEPTED";
+    const isWaiting = statusKey === "WAITING_CONFIRMATION";
+
+    let next = null;
+    // Hanya tentukan next jika belum selesai dan belum dibatalkan
+    // DAN jangan tampilkan tombol advance jika status sudah WAITING_REVIEW atau COMPLETED
+    if (!isCompleted && !isCancelled && !isInReview) {
+      if (isWaiting && isSeller) next = "ACCEPTED";
+      else if (isAccepted && isSeller) next = "IN_PROGRESS";
+      else if (isInProgress && isSeller) next = "WAITING_REVIEW";
+    }
+
+    // showAdvanceBtn: hanya tampilkan jika next tidak null dan status belum di WAITING_REVIEW atau COMPLETED
+    const showAdvanceBtn =
+      next !== null && !isCompleted && !isCancelled && !isInReview;
+    // ========== END PERBAIKAN ==========
+
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
     mount.innerHTML = `
       <div class="container page">
         <a href="#/orders"><i class="fa-solid fa-arrow-left"></i> Kembali</a>
@@ -148,10 +361,20 @@ export async function OrderDetailPage({ mount, params }) {
               </div>
               ${o.note ? `<div class="mt-2"><div class="text-xs text-muted">Catatan</div><p>${escape(o.note)}</p></div>` : ""}
               <div class="flex gap-sm mt-3 flex-wrap">
+<<<<<<< HEAD
                 ${next ? `<button class="btn btn-primary" id="advance-btn" data-testid="advance-order-btn"><i class="fa-solid fa-arrow-right"></i> ${getActionLabel(next)}</button>` : ""}
                 ${(isBuyer || isSeller) && !["COMPLETED", "CANCELLED", "completed", "cancelled"].includes(o.status) ? `<button class="btn btn-danger" id="cancel-btn" data-testid="cancel-order-btn">Batalkan</button>` : ""}
                 ${isBuyer && (o.status === "COMPLETED" || o.status === "completed") ? `<button class="btn btn-success" id="review-btn" data-testid="review-order-btn"><i class="fa-solid fa-star"></i> Beri Review</button>` : ""}
                 <button class="btn btn-secondary" id="chat-btn" data-testid="chat-order-btn">
+=======
+                ${showAdvanceBtn ? `<button class="btn btn-primary" id="advance-btn"><i class="fa-solid fa-arrow-right"></i> ${getActionLabel(next)}</button>` : ""}
+                ${isBuyer && isWaiting ? `<button class="btn btn-danger" id="cancel-btn">Batalkan</button>` : ""}
+                ${canReview ? `<button class="btn btn-success" id="review-btn"><i class="fa-solid fa-star"></i> Beri Review ${isSeller ? "untuk Pembeli" : "untuk Penjual"}</button>` : ""}
+                ${myReview ? `<span class="badge badge-success" style="align-self:center"><i class="fa-solid fa-circle-check"></i> Anda sudah memberi ulasan</span>` : ""}
+                
+                ${!isCompleted && !isCancelled ? `<button class="btn btn-success" id="demo-auto-btn"><i class="fa-solid fa-wand-magic-sparkles"></i> Demo Auto</button>` : ""}
+                <button class="btn btn-secondary" id="chat-btn">
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
                   <i class="fa-solid fa-comment"></i> Chat dengan ${isBuyer ? "Penjual" : "Pembeli"}
                 </button>
                 <button class="btn btn-secondary" id="dispute-btn" data-testid="dispute-btn"><i class="fa-solid fa-flag"></i> Laporkan</button>
@@ -167,16 +390,22 @@ export async function OrderDetailPage({ mount, params }) {
           <aside class="card card-pad-lg" style="position:sticky;top:calc(var(--header-h) + 1rem);align-self:flex-start">
             <div class="text-center">
               <div class="text-xs text-muted">Total Pembayaran</div>
-              <div style="font-family:var(--font-head);font-size:2rem;font-weight:700;color:var(--primary-dark)">${fmtIDR(o.amount)}</div>
+              <div style="font-family:var(--font-head);font-size:2rem;font-weight:700;color:var(--primary-dark)">${fmtIDR(o.totalAmount || o.amount)}</div>
             </div>
             <div class="divider"></div>
             <div class="text-sm">
-              <div class="flex-between"><span class="text-muted">Subtotal</span><span>${fmtIDR(o.amount * 0.95)}</span></div>
-              <div class="flex-between"><span class="text-muted">Platform fee</span><span>${fmtIDR(o.amount * 0.05)}</span></div>
+              <div class="flex-between"><span class="text-muted">Subtotal</span><span>${fmtIDR(o.amount)}</span></div>
+              <div class="flex-between"><span class="text-muted">Platform fee</span><span>${fmtIDR(o.fee || 0)}</span></div>
               <div class="divider"></div>
-              <div class="flex-between"><strong>Total</strong><strong>${fmtIDR(o.amount)}</strong></div>
+              <div class="flex-between"><strong>Total</strong><strong>${fmtIDR(o.totalAmount || o.amount)}</strong></div>
             </div>
+<<<<<<< HEAD
             <button class="btn btn-primary btn-block mt-2" id="pay-btn" data-testid="pay-now-btn"${o.status === "WAITING_CONFIRMATION" || o.status === "pending" ? "" : " disabled"}><i class="fa-solid fa-credit-card"></i> Bayar Sekarang</button>
+=======
+            ${o.status === "WAITING_CONFIRMATION" && isBuyer ? `<button class="btn btn-primary btn-block mt-2" id="pay-btn"><i class="fa-solid fa-credit-card"></i> Bayar Sekarang</button>` : ""}
+            ${o.status === "COMPLETED" ? `<div class="alert alert-success mt-2" style="margin:0"><i class="fa-solid fa-circle-check"></i> Pembayaran selesai, dana telah dirilis.</div>` : ""}
+            ${o.status === "CANCELLED" ? `<div class="alert alert-danger mt-2" style="margin:0"><i class="fa-solid fa-ban"></i> Pesanan dibatalkan${o.cancellationReason ? ": " + escape(o.cancellationReason) : "."}</div>` : ""}
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
             <div class="text-xs text-muted text-center mt-1"><i class="fa-solid fa-shield-halved"></i> Pembayaran aman dengan escrow</div>
           </aside>
         </div>
@@ -243,9 +472,109 @@ export async function OrderDetailPage({ mount, params }) {
             }
           });
       });
+<<<<<<< HEAD
     const disp = document.getElementById("dispute-btn");
     if (disp)
       disp.addEventListener("click", () => {
+=======
+    }
+
+    const workForm = document.getElementById("work-form");
+    if (workForm) {
+      workForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const note = document.getElementById("work-note")?.value.trim() || "";
+        const files = Array.from(
+          document.getElementById("work-files")?.files || [],
+        );
+        if (!files.length)
+          return toast("Upload minimal satu bukti kerja", "error");
+        if (files.length > 10)
+          return toast("Maksimal 10 lampiran", "error");        if (note.length < 10)
+          return toast("Catatan bukti minimal 10 karakter", "error");
+        try {
+          const attachments = [];
+          const progress = document.getElementById("work-upload-progress");
+          for (let index = 0; index < files.length; index += 1) {
+            const result = await uploadFile(files[index], "work-proofs", (pct) => {
+              if (progress)
+                progress.textContent =
+                  "Mengunggah " + (index + 1) + "/" + files.length + " · " + pct + "%";
+            });
+            attachments.push(result.url);
+          }
+          await api.post(`/orders/${o.id}/work-submission`, {
+            note,
+            attachments,
+          });
+          toast(
+            "Bukti pengerjaan dikirim. Menunggu approval client.",
+            "success",
+          );
+          router.render();
+        } catch (err) {
+          toast(err.message, "error");
+        }
+      });
+    }
+
+    const approveWorkBtn = document.getElementById("approve-work");
+    if (approveWorkBtn) {
+      approveWorkBtn.addEventListener("click", () =>
+        confirmModal(
+          "Approve pekerjaan ini dan rilis dana escrow ke pekerja?",
+          async () => {
+            try {
+              await api.post(`/orders/${o.id}/status`, { status: "COMPLETED" });
+              toast("Pekerjaan disetujui. Dana dirilis ke pekerja.", "success");
+              router.render();
+            } catch (err) {
+              toast(err.message, "error");
+            }
+          },
+        ),
+      );
+    }
+
+    const rejectWorkBtn = document.getElementById("reject-work");
+    if (rejectWorkBtn) {
+      rejectWorkBtn.addEventListener("click", () => {
+        const m = modal({
+          title: "Minta Revisi",
+          body: `<form id="revision-form"><div class="form-group"><label class="label">Alasan revisi yang jelas</label><textarea class="textarea" id="revision-reason" required minlength="5" placeholder="Contoh: bagian X belum sesuai brief, mohon perbaiki..."></textarea></div><button class="btn btn-primary btn-block" type="submit">Kirim Revisi</button></form>`,
+        });
+        m.el
+          .querySelector("#revision-form")
+          .addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const reason = m.el.querySelector("#revision-reason").value.trim();
+            try {
+              await api.post(`/orders/${o.id}/work-revision`, { reason });
+              m.close();
+              toast("Revisi dikirim ke pekerja.", "success");
+              router.render();
+            } catch (err) {
+              toast(err.message, "error");
+            }
+          });
+      });
+    }
+
+    const disputeWorkBtn = document.getElementById("dispute-work");
+    if (disputeWorkBtn) {
+      disputeWorkBtn.addEventListener("click", () => {
+        toast(
+          "Gunakan tombol Laporkan untuk membuka sengketa dengan bukti lengkap.",
+          "info",
+        );
+        document.getElementById("dispute-btn")?.click();
+      });
+    }
+
+    const disputeBtn = document.getElementById("dispute-btn");
+    if (disputeBtn) {
+      disputeBtn.addEventListener("click", () => {
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
         const m = modal({
           title: "Laporkan Masalah",
           body: `
@@ -319,7 +648,28 @@ export async function OrderDetailPage({ mount, params }) {
         }
       });
 
+<<<<<<< HEAD
     // Chat button handler
+=======
+    const demoAutoBtn = document.getElementById("demo-auto-btn");
+    if (demoAutoBtn) {
+      demoAutoBtn.addEventListener("click", async () => {
+        demoAutoBtn.disabled = true;
+        demoAutoBtn.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin"></i> Menjalankan flow...';
+        try {
+          await api.post("/orders/" + o.id + "/demo-auto", {});
+          toast("Demo selesai: bayar, kirim bukti, approve, dana cair.", "success");
+          router.render();
+        } catch (err) {
+          demoAutoBtn.disabled = false;
+          demoAutoBtn.innerHTML =
+            '<i class="fa-solid fa-wand-magic-sparkles"></i> Demo Auto';
+          toast(err.message, "error");
+        }
+      });
+    }
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
     const chatBtn = document.getElementById("chat-btn");
     if (chatBtn) {
       chatBtn.addEventListener("click", async () => {

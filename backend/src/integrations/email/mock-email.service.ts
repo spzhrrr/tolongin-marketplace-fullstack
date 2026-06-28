@@ -10,14 +10,14 @@ export class MockEmailService implements IEmailService {
   }
 
   async sendOtp(to: string, otp: string) {
-    this.logger.log(`📧 [MOCK] OTP -> ${to} : ${otp}`);
+    this.logger.log(`📧 [MOCK] OTP -> ${to} (redacted)`);
   }
 
   async sendPasswordReset(to: string, token: string, link: string) {
-    this.logger.log(`📧 [MOCK] PWD-RESET -> ${to} token=${token} link=${link}`);
+    this.logger.log(`📧 [MOCK] PWD-RESET -> ${to} (redacted)`);
   }
 
   async sendVerificationEmail(to: string, otp: string) {
-    this.logger.log(`📧 [MOCK] VERIFY-EMAIL -> ${to} otp=${otp}`);
+    this.logger.log(`📧 [MOCK] VERIFY-EMAIL -> ${to} (redacted)`);
   }
 }

@@ -2,6 +2,7 @@ import { api } from "../../../shared/utils/api.js";
 import { store } from "../../../app/store.js";
 import { router } from "../../../app/router.js";
 import { toast, isEmail } from "../../../shared/utils/helpers.js";
+import { avatar } from "../../../shared/ui/components.js";
 
 export function LoginPage({ mount }) {
   mount.innerHTML = `
@@ -21,7 +22,7 @@ export function LoginPage({ mount }) {
           </div>
           <p style="font-size:1.1rem;color:#fff">"Tolongin membuat saya bisa menemukan freelancer berkualitas dengan harga yang fair. Sangat membantu!"</p>
           <div class="flex gap-md" style="align-items:center;margin-top:1rem">
-            <img src="https://i.pravatar.cc/60?img=12" class="avatar"/>
+            ${avatar({ name: "Rina Pratiwi" })}
             <div><strong>Rina Pratiwi</strong><div style="font-size:.85rem;opacity:.8">Owner Brand Fashion</div></div>
           </div>
         </div>

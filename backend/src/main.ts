@@ -9,6 +9,12 @@ import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+<<<<<<< HEAD
+=======
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { TrimPipe } from './common/pipes/trim.pipe';
+import { getCorsOrigins } from './common/utils/cors';
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -51,6 +57,21 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('api');
+<<<<<<< HEAD
+=======
+
+  // Static files for uploaded images — served at /api/uploads/* so the
+  // platform ingress (which proxies /api/* to the backend) can reach them.
+  // Use absolute path to avoid CWD ambiguity in different runtime modes.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const nodePath = require('path');
+  const uploadsAbs = nodePath.resolve(process.cwd(), 'uploads');
+  app.use('/api/uploads', express.static(uploadsAbs, { maxAge: '7d' }));
+  app.use('/uploads', express.static(uploadsAbs, { maxAge: '7d' }));
+  const requestIdMiddleware = new RequestIdMiddleware();
+  app.use(requestIdMiddleware.use.bind(requestIdMiddleware));
+  app.useGlobalPipes(new TrimPipe());
+>>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

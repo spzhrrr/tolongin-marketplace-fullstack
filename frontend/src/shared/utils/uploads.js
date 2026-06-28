@@ -1,39 +1,52 @@
-// Cloudinary signed upload helper
-import { api, API } from "./api.js";
+import { API, resolveAssetUrl } from "./api.js";
 import { store } from "../../app/store.js";
 
-export async function uploadFile(file, folder = "chat") {
-  if (!file) throw new Error("No file");
-  if (file.size > 10 * 1024 * 1024) throw new Error("Max 10MB");
-  const isImage = file.type.startsWith("image/");
-  const isVideo = file.type.startsWith("video/");
-  const resource_type = isImage ? "image" : isVideo ? "video" : "raw";
+const ALLOWED_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+]);
 
-  const sig = await api.get(
-    `/uploads/signature?resource_type=${resource_type}&folder=${folder}`,
-  );
+export function uploadFile(file, folder = "general", onProgress) {
+  if (!file) return Promise.reject(new Error("File wajib dipilih"));
+  if (!ALLOWED_TYPES.has(file.type))
+    return Promise.reject(new Error("Format harus JPG, PNG, WebP, atau PDF"));
+  if (file.size > 10 * 1024 * 1024)
+    return Promise.reject(new Error("Ukuran file maksimal 10 MB"));
 
   const form = new FormData();
   form.append("file", file);
-  form.append("api_key", sig.api_key);
-  form.append("timestamp", sig.timestamp);
-  form.append("signature", sig.signature);
-  form.append("folder", sig.folder);
 
-  const url = `https://api.cloudinary.com/v1_1/${sig.cloud_name}/${resource_type}/upload`;
-  const res = await fetch(url, { method: "POST", body: form });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error("Cloudinary upload gagal: " + t.slice(0, 100));
-  }
-  const data = await res.json();
-  return {
-    url: data.secure_url,
-    publicId: data.public_id,
-    type: data.resource_type,
-    format: data.format,
-    name: file.name,
-    size: file.size,
-    bytes: data.bytes,
-  };
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", API + "/uploads?folder=" + encodeURIComponent(folder));
+    xhr.withCredentials = true;
+    const token = store.getState().token;
+    if (token) xhr.setRequestHeader("Authorization", "Bearer " + token);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+    xhr.onerror = () => reject(new Error("Koneksi upload terputus"));
+    xhr.onload = () => {
+      let data;
+      try {
+        data = JSON.parse(xhr.responseText || "{}");
+      } catch {
+        data = {};
+      }
+      if (xhr.status < 200 || xhr.status >= 300) {
+        const message = Array.isArray(data.message)
+          ? data.message.join(", ")
+          : data.message || "Upload gagal";
+        reject(new Error(message));
+        return;
+      }
+      resolve({ ...data, url: resolveAssetUrl(data.url) });
+    };
+    xhr.send(form);
+  });
 }
