@@ -1,4 +1,4 @@
-# Tolongin — Marketplace Jasa & Pekerjaan Indonesia
+<img width="1743" height="675" alt="image" src="https://github.com/user-attachments/assets/320afd63-f574-45ba-beee-df56a98acc71" /># Tolongin — Marketplace Jasa & Pekerjaan Indonesia
 
 Platform full-stack yang menghubungkan **penyedia jasa (seller/freelancer)** dengan **pencari jasa (buyer)**, sekaligus mendukung **marketplace pekerjaan** (posting lowongan & lamaran). Satu akun dapat berperan sebagai buyer maupun seller.
 
@@ -284,6 +284,8 @@ Pastikan MySQL dapat diakses container backend. Untuk cloud (Railway, Vercel, dl
 
 ---
 
+## **DISCLAIMER:** Push ke GitHub pada iterasi terakhir dibantu Cursor Agent karena troubleshooting push yang berulang;
+
 ## Lisensi & Catatan
 
 Proyek akademik / portfolio — **Tolongin**. Integrasi payment, email, dan SMS menggunakan **mock service**; siap diganti implementasi produksi via pattern Strategy di `backend/src/integrations/`.
@@ -291,3 +293,5 @@ Proyek akademik / portfolio — **Tolongin**. Integrasi payment, email, dan SMS 
 ---
 
 **Dibuat sebagai implementasi full-stack marketplace dengan prinsip clean architecture, verifikasi pengguna bertingkat, dan UX modern untuk pasar jasa Indonesia.**
+
+
