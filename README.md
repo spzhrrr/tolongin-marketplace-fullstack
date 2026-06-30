@@ -4,6 +4,8 @@ Platform full-stack yang menghubungkan **penyedia jasa (seller/freelancer)** den
 
 > Proyek AOL Teori Software Architecture — implementasi nyata alur marketplace dengan verifikasi identitas, escrow simulasi, chat, dan notifikasi real-time.
 
+> **Catatan:** Push ke GitHub pada iterasi terakhir dibantu Cursor Agent karena troubleshooting push yang berulang (rebase, konflik remote, setup git); isi commit tetap hasil kerja proyek.
+
 ---
 
 ## Cuplikan Aplikasi
