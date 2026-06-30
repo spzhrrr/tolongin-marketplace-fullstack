@@ -18,11 +18,7 @@ import {
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { ROLE } from '../../../common/constants/enums';
-<<<<<<< HEAD
-import { VerifiedContactGuard } from '../../../common/guards/verification.guards';
-=======
 import { VerifiedTransactionGuard } from '../../../common/guards/verification.guards';
->>>>>>> ec26484 (implementasi demo)
 
 @ApiTags('Applications')
 @ApiBearerAuth('jwt')
@@ -30,17 +26,10 @@ import { VerifiedTransactionGuard } from '../../../common/guards/verification.gu
 export class ApplicationsController {
   constructor(private readonly applicationsService: ApplicationsService) {}
 
-<<<<<<< HEAD
-  @UseGuards(VerifiedContactGuard)
-  @Post()
-  @ApiOperation({
-    summary: 'Apply to a job (requires email+phone verified)',
-=======
   @UseGuards(VerifiedTransactionGuard)
   @Post()
   @ApiOperation({
     summary: 'Apply to a job (requires email+phone+KTP verified)',
->>>>>>> ec26484 (implementasi demo)
   })
   apply(
     @CurrentUser('id') sellerId: string,
@@ -98,8 +87,6 @@ export class ApplicationsController {
   ) {
     return this.applicationsService.reject(id, buyerId, dto);
   }
-<<<<<<< HEAD
-=======
 
   @Roles(ROLE.USER)
   @Post(':id/demo-accept')
@@ -110,5 +97,4 @@ export class ApplicationsController {
   ) {
     return this.applicationsService.accept(id, buyerId);
   }
->>>>>>> ec26484 (implementasi demo)
 }

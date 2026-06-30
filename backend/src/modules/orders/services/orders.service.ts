@@ -3,31 +3,21 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { OrdersRepository } from '../repositories/orders.repository';
 import { ServicesRepository } from '../../services/repositories/services.repository';
 import { ApplicationsService } from '../../applications/services/applications.service';
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import { NotificationsService } from '../../notifications/services/notifications.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { OrderFactory } from '../factories/order.factory';
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
-import { NotificationsService } from '../../notifications/services/notifications.service';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { OrderFactory } from '../factories/order.factory';
->>>>>>> ec26484 (implementasi demo)
 import {
   CreateOrderFromServiceDto,
   CancelOrderDto,
   RevisionRequestDto,
-<<<<<<< HEAD
-=======
   SubmitWorkDto,
   OpenDisputeDto,
->>>>>>> ec26484 (implementasi demo)
 } from '../dto/order.dto';
 import {
   parseJsonField,
@@ -39,20 +29,15 @@ import {
   OrderStatus,
   ROLE,
   APPLICATION_STATUS,
-<<<<<<< HEAD
-} from '../../../common/constants/enums';
-
-const PLATFORM_FEE_RATE = 0.05; // 5%
-=======
   DISPUTE_STATUS,
 } from '../../../common/constants/enums';
+import { DemoFlowService } from '../../simulation/demo-flow.service';
 
 const PLATFORM_FEE_RATE = 0.05; // 5%
 const AUTO_COMPLETE_DAYS = 7;
 const AUTO_CANCEL_DAYS = 14;
 const DISPUTE_AUTO_RESOLVE_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
->>>>>>> ec26484 (implementasi demo)
 
 interface TimelineEntry {
   status: OrderStatus;
@@ -66,22 +51,13 @@ export class OrdersService {
   constructor(
     private readonly repo: OrdersRepository,
     private readonly servicesRepo: ServicesRepository,
+    @Inject(forwardRef(() => ApplicationsService))
     private readonly applicationsService: ApplicationsService,
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
     private readonly notifications: NotificationsService,
     private readonly prisma: PrismaService,
     private readonly factory: OrderFactory,
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-  ) {}
-
-  private toDto(o: any) {
-    return { ...o, timeline: parseJsonField<TimelineEntry[]>(o.timeline, []) };
-=======
-    private readonly notifications: NotificationsService,
-    private readonly prisma: PrismaService,
-    private readonly factory: OrderFactory,
+    @Inject(forwardRef(() => DemoFlowService))
+    private readonly demoFlow: DemoFlowService,
   ) {}
 
   private toDto(o: any) {
@@ -105,7 +81,6 @@ export class OrdersService {
             }
           : null),
     };
->>>>>>> ec26484 (implementasi demo)
   }
 
   private roleFor(
@@ -139,8 +114,6 @@ export class OrdersService {
       );
     }
 
-<<<<<<< HEAD
-=======
     return this.applyStatus(o, nextStatus, userId, note);
   }
 
@@ -150,16 +123,11 @@ export class OrdersService {
     byUserId: string,
     note?: string,
   ) {
->>>>>>> ec26484 (implementasi demo)
     const timeline = parseJsonField<TimelineEntry[]>(o.timeline, []);
     timeline.push({
       status: nextStatus,
       at: new Date().toISOString(),
-<<<<<<< HEAD
-      by: userId,
-=======
       by: byUserId,
->>>>>>> ec26484 (implementasi demo)
       note,
     });
 
@@ -207,6 +175,7 @@ export class OrdersService {
         return tx.order.findUniqueOrThrow({ where: { id: o.id } });
       });
       await this.notifyStatusChange(o, nextStatus, byUserId, note);
+      this.demoFlow.onOrderCompleted(o.id);
       return this.toDto(updated);
     }
 
@@ -214,32 +183,16 @@ export class OrdersService {
       status: nextStatus,
       timeline: stringifyJsonField(timeline),
     };
-<<<<<<< HEAD
-<<<<<<< HEAD
-    if (nextStatus === ORDER_STATUS.COMPLETED) data.completedAt = new Date();
-=======
 
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
-
->>>>>>> ec26484 (implementasi demo)
     if (nextStatus === ORDER_STATUS.CANCELLED) {
       data.cancelledAt = new Date();
       if (note) data.cancellationReason = note;
     }
-<<<<<<< HEAD
-    const updated = await this.repo.update(orderId, data);
-    return this.toDto(updated);
-  }
-<<<<<<< HEAD
-=======
-=======
 
     const updated = await this.repo.update(o.id, data);
     await this.notifyStatusChange(o, nextStatus, byUserId, note);
     return this.toDto(updated);
   }
->>>>>>> ec26484 (implementasi demo)
   private async notifyStatusChange(
     o: any,
     nextStatus: OrderStatus,
@@ -252,17 +205,22 @@ export class OrdersService {
         await this.notifications.notify(
           o.sellerId,
           'ORDER',
-          '💰 Dana Dirilis',
-          `Pesanan "${o.title}" telah selesai. Dana sebesar ${this.formatCurrency(o.amount)} telah masuk ke saldo Anda.`,
+          '💰 Dana Dicairkan',
+          `Buyer menyetujui hasil kerja "${o.title}"! Dana ${this.formatCurrency(o.amount)} telah dicairkan ke akun Anda.`,
           { orderId: o.id, event: 'WORK_APPROVED' },
           url,
         );
         await this.notifications.notify(
           o.buyerId,
           'ORDER',
-          '✅ Pesanan Selesai',
-          `Pesanan "${o.title}" telah selesai. Terima kasih telah menggunakan layanan Tolongin.`,
-          { orderId: o.id, event: 'ORDER_COMPLETED' },
+          '✅ Pekerjaan Selesai',
+          `Pekerjaan selesai! Terima kasih telah menggunakan Tolongin.`,
+          {
+            orderId: o.id,
+            event: 'ORDER_COMPLETED',
+            serviceId: o.serviceId || undefined,
+            jobId: o.jobId || undefined,
+          },
           url,
         );
       } else if (nextStatus === ORDER_STATUS.REVISION_REQUESTED) {
@@ -294,12 +252,37 @@ export class OrdersService {
         );
       } else if (nextStatus === ORDER_STATUS.CANCELLED) {
         const target = byUserId === o.buyerId ? o.sellerId : o.buyerId;
+        const sellerRejected =
+          byUserId === o.sellerId &&
+          o.status === ORDER_STATUS.WAITING_CONFIRMATION;
+        const buyerTitle = sellerRejected ? '❌ Pesanan Ditolak' : '❌ Pesanan Dibatalkan';
+        const buyerMsg = sellerRejected
+          ? `Penjual menolak pesanan "${o.title}".${note ? ' Alasan: ' + note : ''}`
+          : `Pesanan "${o.title}" telah dibatalkan.${note ? ' Alasan: ' + note : ''}`;
         await this.notifications.notify(
           target,
           'ORDER',
-          '❌ Pesanan Dibatalkan',
-          `Pesanan "${o.title}" telah dibatalkan.${note ? ' Alasan: ' + note : ''}`,
-          { orderId: o.id, event: 'ORDER_CANCELLED', reason: note },
+          buyerTitle,
+          buyerMsg,
+          {
+            orderId: o.id,
+            event: sellerRejected ? 'SELLER_REJECTED' : 'ORDER_CANCELLED',
+            reason: note,
+          },
+          url,
+        );
+        await this.notifications.notify(
+          byUserId,
+          'ORDER',
+          sellerRejected ? '❌ Pesanan Ditolak' : '❌ Pesanan Dibatalkan',
+          sellerRejected
+            ? `Anda menolak pesanan "${o.title}".${note ? ' Alasan: ' + note : ''}`
+            : `Anda telah membatalkan pesanan "${o.title}".${note ? ' Alasan: ' + note : ''}`,
+          {
+            orderId: o.id,
+            event: sellerRejected ? 'SELLER_REJECTED_BY_SELF' : 'ORDER_CANCELLED_BY_SELF',
+            reason: note,
+          },
           url,
         );
       }
@@ -311,10 +294,14 @@ export class OrdersService {
   private formatCurrency(amount: number): string {
     return `Rp${amount.toLocaleString('id-ID')}`;
   }
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
+
+  private async userName(userId: string): Promise<string> {
+    const u = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+    return u?.name || 'Pengguna';
+  }
 
   async createFromService(
     buyerId: string,
@@ -326,54 +313,36 @@ export class OrdersService {
     if (!s.isActive) throw new BadRequestException('Service is not active');
     if (s.sellerId === buyerId)
       throw new BadRequestException('Cannot order your own service');
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const fee = +(s.price * PLATFORM_FEE_RATE).toFixed(2);
-    const totalAmount = +(s.price + fee).toFixed(2);
-    const timeline: TimelineEntry[] = [
-      {
-        status: ORDER_STATUS.WAITING_CONFIRMATION,
-        at: new Date().toISOString(),
-        by: buyerId,
-      },
-    ];
-    const created = await this.repo.create({
-      buyer: { connect: { id: buyerId } },
-      seller: { connect: { id: s.sellerId } },
-      service: { connect: { id: s.id } },
-      title: s.title,
-      amount: s.price,
-      fee,
-      totalAmount,
-      status: ORDER_STATUS.WAITING_CONFIRMATION,
-      notes: dto.notes,
-      deliveryType: dto.deliveryType || 'DIGITAL',
-      deliveryAddress: dto.deliveryAddress,
-      timeline: stringifyJsonField(timeline),
-    });
-=======
-=======
->>>>>>> ec26484 (implementasi demo)
 
     const created = await this.repo.create(
       this.factory.fromService(buyerId, s, dto),
     );
 
+    const buyerName = await this.userName(buyerId);
+
     await this.notifications
       .notify(
         s.sellerId,
         'ORDER',
-        '📦 Pesanan Baru',
-        `Anda menerima pesanan baru: "${s.title}" seharga ${this.formatCurrency(s.price)}.`,
-        { orderId: created.id, event: 'ORDER_CREATED' },
+        '📩 Pesanan Baru',
+        `Anda memiliki pesanan baru dari ${buyerName} untuk jasa "${s.title}"!`,
+        { orderId: created.id, event: 'ORDER_CREATED', serviceId },
         `/orders/${created.id}`,
       )
       .catch(() => undefined);
 
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
+    await this.notifications
+      .notify(
+        buyerId,
+        'ORDER',
+        '📩 Pesanan Terkirim',
+        `Pesanan berhasil dikirim! Menunggu konfirmasi penjual untuk "${s.title}".`,
+        { orderId: created.id, event: 'ORDER_CREATED_BUYER', serviceId },
+        `/orders/${created.id}`,
+      )
+      .catch(() => undefined);
+
+    this.demoFlow.onOrderCreated(created.id);
     return this.toDto(created);
   }
 
@@ -383,51 +352,11 @@ export class OrdersService {
     if (app.job.buyerId !== buyerId) throw new ForbiddenException();
     if (app.status !== APPLICATION_STATUS.ACCEPTED)
       throw new BadRequestException('Application not accepted');
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const fee = +(app.proposedPrice * PLATFORM_FEE_RATE).toFixed(2);
-    const totalAmount = +(app.proposedPrice + fee).toFixed(2);
-    const timeline: TimelineEntry[] = [
-      {
-        status: ORDER_STATUS.WAITING_CONFIRMATION,
-        at: new Date().toISOString(),
-        by: buyerId,
-      },
-    ];
-    const created = await this.repo.create({
-      buyer: { connect: { id: buyerId } },
-      seller: { connect: { id: app.sellerId } },
-      application: { connect: { id: app.id } },
-      title: app.job.title,
-      amount: app.proposedPrice,
-      fee,
-      totalAmount,
-      status: ORDER_STATUS.WAITING_CONFIRMATION,
-      timeline: stringifyJsonField(timeline),
-    });
-=======
-=======
->>>>>>> ec26484 (implementasi demo)
 
     const created = await this.repo.create(
       this.factory.fromApplication(buyerId, app),
     );
 
-    await this.notifications
-      .notify(
-        app.sellerId,
-        'ORDER',
-        '📦 Pesanan Baru',
-        `Pekerjaan "${app.job.title}" telah dijadikan pesanan. Silakan tunggu pembayaran dari pembeli.`,
-        { orderId: created.id, event: 'ORDER_CREATED' },
-        `/orders/${created.id}`,
-      )
-      .catch(() => undefined);
-
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
     return this.toDto(created);
   }
 
@@ -457,21 +386,46 @@ export class OrdersService {
   accept(id: string, userId: string, userRole: string) {
     return this.transition(id, userId, userRole, ORDER_STATUS.ACCEPTED);
   }
-<<<<<<< HEAD
-  start(id: string, userId: string, userRole: string) {
-    return this.transition(id, userId, userRole, ORDER_STATUS.IN_PROGRESS);
+
+  async sellerAcceptOrder(id: string, userId: string, userRole: string) {
+    const o = await this.repo.findById(id);
+    if (!o) throw new NotFoundException('Order not found');
+    if (this.roleFor(userId, o, userRole) !== 'seller') {
+      throw new ForbiddenException('Hanya penjual yang dapat menerima pesanan');
+    }
+    if (o.status !== ORDER_STATUS.WAITING_CONFIRMATION) {
+      throw new BadRequestException('Pesanan tidak menunggu konfirmasi penjual');
+    }
+
+    const buyerName = await this.userName(o.buyerId);
+    const sellerName = await this.userName(o.sellerId);
+
+    const updated = await this.applyStatus(o, ORDER_STATUS.ACCEPTED, userId);
+
+    await this.notifications.notify(
+      o.buyerId,
+      'ORDER',
+      '✅ Pesanan Diterima',
+      `Pesanan Anda diterima oleh ${sellerName}! Silakan lakukan pembayaran.`,
+      { orderId: o.id, event: 'SELLER_ACCEPTED' },
+      `/orders/${o.id}`,
+    );
+    await this.notifications.notify(
+      o.sellerId,
+      'ORDER',
+      '✅ Pesanan Diterima',
+      `Pesanan diterima! ${buyerName} akan melakukan pembayaran.`,
+      { orderId: o.id, event: 'SELLER_ACCEPTED' },
+      `/orders/${o.id}`,
+    );
+
+    this.demoFlow.onSellerAcceptedOrder(o.id);
+    return updated;
   }
-<<<<<<< HEAD
-  submitReview(id: string, userId: string, userRole: string) {
-    return this.transition(id, userId, userRole, ORDER_STATUS.IN_REVIEW);
-  }
-=======
-=======
 
   start(id: string, userId: string, userRole: string) {
     return this.transition(id, userId, userRole, ORDER_STATUS.IN_PROGRESS);
   }
->>>>>>> ec26484 (implementasi demo)
 
   submitReview(_id: string, _userId: string, _userRole: string) {
     throw new BadRequestException(
@@ -512,6 +466,10 @@ export class OrdersService {
       note: dto.note,
     });
 
+    const isResubmit =
+      o.status === ORDER_STATUS.REJECTED ||
+      o.status === ORDER_STATUS.REVISION_REQUESTED;
+
     const updated = await this.repo.update(id, {
       status: ORDER_STATUS.WAITING_REVIEW,
       workSubmission: stringifyJsonField({
@@ -536,19 +494,47 @@ export class OrdersService {
 
     await this.notifications
       .notify(
-        o.buyerId,
+        o.sellerId,
         'ORDER',
-        '📦 Hasil Kerja Dikirim',
-        `Penjual telah mengirimkan hasil kerja untuk "${o.title}". Silakan review dan approve.`,
-        { orderId: o.id, event: 'WORK_SUBMITTED' },
+        isResubmit ? '✅ Revisi Terkirim' : '📤 Bukti Terkirim',
+        isResubmit
+          ? `Bukti revisi untuk "${o.title}" berhasil dikirim.`
+          : `Bukti pengerjaan berhasil dikirim!`,
+        {
+          orderId: o.id,
+          event: isResubmit ? 'REVISION_SUBMITTED' : 'WORK_SUBMITTED_SELLER',
+        },
         `/orders/${o.id}`,
       )
       .catch(() => undefined);
 
+    await this.notifications
+      .notify(
+        o.buyerId,
+        'ORDER',
+        isResubmit ? '🔄 Revisi Baru' : '📤 Bukti Pengerjaan',
+        isResubmit
+          ? `Penjual memperbarui bukti kerja untuk "${o.title}". Silakan review kembali.`
+          : `Penjual telah mengupload bukti pengerjaan! Silakan review.`,
+        { orderId: o.id, event: isResubmit ? 'REVISION_READY' : 'WORK_SUBMITTED' },
+        `/orders/${o.id}`,
+      )
+      .catch(() => undefined);
+
+    if (isResubmit) {
+      this.demoFlow.onRevisionSubmitted(id);
+    } else {
+      this.demoFlow.onWorkSubmitted(id);
+    }
     return this.toDto(updated);
   }
 
-  async approveWork(id: string, userId: string, userRole: string) {
+  async approveWork(
+    id: string,
+    userId: string,
+    userRole: string,
+    autoApproved = false,
+  ) {
     const o = await this.repo.findById(id);
     if (!o) throw new NotFoundException('Order not found');
     const role = this.roleFor(userId, o, userRole);
@@ -638,13 +624,20 @@ export class OrdersService {
       )
       .catch(() => undefined);
 
+    await this.notifications
+      .notify(
+        userId,
+        'ORDER',
+        '🔄 Revisi Diminta',
+        `Permintaan revisi untuk "${o.title}" telah dikirim ke penjual.`,
+        { orderId: o.id, event: 'REVISION_REQUESTED_BY_BUYER', reason: dto.reason },
+        `/orders/${o.id}`,
+      )
+      .catch(() => undefined);
+
     return this.toDto(updated);
   }
 
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
   requestRevision(
     id: string,
     userId: string,
@@ -659,13 +652,7 @@ export class OrdersService {
       dto.reason,
     );
   }
-<<<<<<< HEAD
-  complete(id: string, userId: string, userRole: string) {
-    return this.transition(id, userId, userRole, ORDER_STATUS.COMPLETED);
-  }
-=======
 
->>>>>>> ec26484 (implementasi demo)
   cancel(id: string, userId: string, userRole: string, dto: CancelOrderDto) {
     return this.transition(
       id,
@@ -676,8 +663,6 @@ export class OrdersService {
     );
   }
 
-<<<<<<< HEAD
-=======
   async openDispute(
     id: string,
     userId: string,
@@ -739,13 +724,23 @@ export class OrdersService {
       )
       .catch(() => undefined);
 
+    await this.notifications
+      .notify(
+        userId,
+        'DISPUTE',
+        '⚠️ Sengketa Dicatat',
+        `Sengketa untuk pesanan "${o.title}" telah dicatat. Tim akan meninjau dalam 3 hari.`,
+        { orderId: o.id, disputeId: dispute.id, event: 'DISPUTE_OPENED_BY_SELF' },
+        `/orders/${o.id}`,
+      )
+      .catch(() => undefined);
+
     return {
       ...dispute,
       evidence: parseJsonField<string[]>(dispute.evidence, []),
     };
   }
 
->>>>>>> ec26484 (implementasi demo)
   async getTimeline(id: string, userId: string, userRole: string) {
     const o = await this.getById(id, userId, userRole);
     return o.timeline;
@@ -766,11 +761,6 @@ export class OrdersService {
       paidAt: o.completedAt,
     };
   }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> ec26484 (implementasi demo)
 
   async runDemoFlow(id: string, userId: string, userRole: string) {
     const demoEnabled =
@@ -854,14 +844,8 @@ export class OrdersService {
     });
     let count = 0;
     for (const o of candidates) {
-<<<<<<< HEAD
-      await this.applyStatus(
-        o,
-        ORDER_STATUS.CANCELLED,
-=======
       await this.cancelAndRefund(
         o,
->>>>>>> ec26484 (implementasi demo)
         'SYSTEM',
         `Auto-cancel: tidak ada pengumpulan hasil kerja dalam ${AUTO_CANCEL_DAYS} hari`,
       );
@@ -870,8 +854,6 @@ export class OrdersService {
     return count;
   }
 
-<<<<<<< HEAD
-=======
   /**
    * Membatalkan order dan, jika pembeli sudah membayar, mengembalikan dana
    * ke saldo pembeli serta menandai payment terkait sebagai REFUNDED. Semua
@@ -944,7 +926,6 @@ export class OrdersService {
       .catch(() => undefined);
   }
 
->>>>>>> ec26484 (implementasi demo)
   async runAutoResolveDisputes(): Promise<number> {
     const now = new Date();
     const disputes = await this.prisma.dispute.findMany({
@@ -992,8 +973,4 @@ export class OrdersService {
     }
     return count;
   }
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
 }

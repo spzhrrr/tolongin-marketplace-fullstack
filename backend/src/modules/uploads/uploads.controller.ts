@@ -18,12 +18,16 @@ const ALLOWED_FOLDERS = new Set([
   'services',
   'work-proofs',
   'kyc',
+  'ktp',
+  'bank',
   'chat',
   'portfolio',
+  'jobs',
   'general',
 ]);
 const EXTENSIONS: Record<string, string> = {
   'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
   'image/png': '.png',
   'image/webp': '.webp',
   'application/pdf': '.pdf',
@@ -32,7 +36,8 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
 
 function hasValidSignature(buffer: Buffer, mime: string): boolean {
-  if (mime === 'image/jpeg') return buffer[0] === 0xff && buffer[1] === 0xd8;
+  if (mime === 'image/jpeg' || mime === 'image/jpg')
+    return buffer[0] === 0xff && buffer[1] === 0xd8;
   if (mime === 'image/png')
     return buffer.subarray(0, 8).equals(
       Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),

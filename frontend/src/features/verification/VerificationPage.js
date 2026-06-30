@@ -1,11 +1,41 @@
-import { api } from "../../shared/utils/api.js";
-import { toast, modal, escape } from "../../shared/utils/helpers.js";
+import { api, resolveAssetUrl } from "../../shared/utils/api.js";
+import { uploadFile } from "../../shared/utils/uploads.js";
+import { toast, escape } from "../../shared/utils/helpers.js";
 import { store } from "../../app/store.js";
 import { router } from "../../app/router.js";
-<<<<<<< HEAD
-=======
-import { uploadFile } from "../../shared/utils/uploads.js";
->>>>>>> ec26484 (implementasi demo)
+
+async function refreshSessionUser() {
+  try {
+    const me = await api.get("/auth/me");
+    if (me) {
+      const prev = store.getState().user || {};
+      store.setState({ user: { ...prev, ...me } });
+    }
+    return me;
+  } catch {
+    return null;
+  }
+}
+
+async function waitForVerification(field, maxMs = 20000) {
+  const start = Date.now();
+  while (Date.now() - start < maxMs) {
+    await new Promise((r) => setTimeout(r, 1200));
+    try {
+      const vs = await api.get("/verification/status");
+      if (field === "ktp" && vs.ktp?.status === "VERIFIED") return true;
+      if (field === "bank" && vs.bank?.status === "VERIFIED") return true;
+    } catch (_) {}
+  }
+  return false;
+}
+
+function pendingAlert(label) {
+  return `<div class="alert alert-info mt-3 verification-pending" data-pending="${escape(label)}">
+    <i class="fa-solid fa-spinner fa-spin"></i> ${escape(label)} sedang diverifikasi otomatis…
+    <div class="text-xs text-muted mt-1">Halaman akan diperbarui segera setelah selesai.</div>
+  </div>`;
+}
 
 function getStatusLabel(status) {
   const labels = {
@@ -23,8 +53,67 @@ function getStatusLabel(status) {
 
 function stepIcon(done) {
   return done
-    ? '<i class="fa-solid fa-circle-check" style="color:var(--success);font-size:1.5rem"></i>'
-    : '<i class="fa-regular fa-circle" style="color:var(--text-2);font-size:1.5rem"></i>';
+    ? '<i class="fa-solid fa-circle-check verification-step-icon verification-step-icon--done"></i>'
+    : '<i class="fa-regular fa-circle verification-step-icon"></i>';
+}
+
+function previewHtml(url, alt) {
+  if (!url) {
+    return `<div class="upload-placeholder verification-upload-placeholder">
+      <i class="fa-solid fa-image"></i>
+      Belum ada foto
+    </div>`;
+  }
+  return `<img src="${escape(url)}" class="upload-preview" alt="${escape(alt)}"/>`;
+}
+
+function bindImagePicker({ inputEl, previewEl, folder, onChange }) {
+  if (!inputEl || !previewEl) return;
+
+  inputEl.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast("File harus berupa gambar (JPG/PNG/WebP)", "error");
+      inputEl.value = "";
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast("Ukuran file maksimal 5MB", "error");
+      inputEl.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      previewEl.innerHTML = `<img src="${escape(ev.target.result)}" class="upload-preview" alt="preview"/>`;
+    };
+    reader.readAsDataURL(file);
+
+    let statusEl = previewEl.nextElementSibling;
+    if (!statusEl?.dataset?.uploadStatus) {
+      statusEl = document.createElement("div");
+      statusEl.dataset.uploadStatus = "1";
+      statusEl.className = "text-xs text-muted mt-1";
+      previewEl.after(statusEl);
+    }
+    statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengunggah...';
+
+    try {
+      const result = await uploadFile(file, folder);
+      const url = resolveAssetUrl(result.url);
+      previewEl.innerHTML = `<img src="${escape(url)}" class="upload-preview" alt="preview"/>`;
+      statusEl.remove();
+      onChange(url);
+    } catch (err) {
+      statusEl.remove();
+      previewEl.innerHTML = previewHtml("", "preview");
+      inputEl.value = "";
+      onChange("");
+      toast(err.message || "Gagal mengunggah foto", "error");
+    }
+  });
 }
 
 export async function VerificationPage({ mount }) {
@@ -34,12 +123,11 @@ export async function VerificationPage({ mount }) {
     return;
   }
 
-  // Load status
   let vs = {};
   try {
     vs = await api.get("/verification/status");
   } catch (_) {
-    // ignore — defaults will be used
+    // defaults used below
   }
 
   const emailDone = vs.emailVerified ?? user.emailVerified ?? false;
@@ -47,44 +135,46 @@ export async function VerificationPage({ mount }) {
   const ktpStatus = vs.ktp?.status || user.ktpStatus || "NOT_SUBMITTED";
   const bankStatus = vs.bank?.status || user.bankStatus || "NOT_SUBMITTED";
 
-  // Render halaman
-  mount.innerHTML = `
-    <div class="container page">
-      <h1 class="page-title">Verifikasi Identitas</h1>
-      <p class="page-subtitle">Selesaikan verifikasi bertahap untuk membuka semua fitur Tolongin</p>
+  const existingKtpPhoto = resolveAssetUrl(vs.ktp?.photo || "");
+  const existingKtpSelfie = resolveAssetUrl(vs.ktp?.selfie || "");
 
-      <!-- Progress Bar -->
-      <div class="card card-pad-lg mb-4">
-        <div class="flex gap-md" style="align-items:flex-start;flex-wrap:wrap">
-          <div style="flex:1;text-align:center;min-width:100px">
+  mount.innerHTML = `
+    <div class="container page verification-page">
+      <header class="verification-page-head">
+        <h1 class="page-title">Verifikasi Identitas</h1>
+        <p class="page-subtitle">Selesaikan verifikasi bertahap untuk membuka semua fitur Tolongin</p>
+      </header>
+
+      <div class="card card-pad-lg mb-4 verification-steps">
+        <div class="verification-step-track">
+          <div class="verification-step-node">
             ${stepIcon(emailDone)}
-            <div class="text-sm mt-1" style="font-weight:600">Email</div>
-            <div class="text-xs text-muted">Level 1</div>
+            <div class="verification-step-label">Email</div>
+            <div class="verification-step-num">Langkah 1</div>
           </div>
-          <div style="flex:none;padding-top:.7rem;color:var(--border)">→</div>
-          <div style="flex:1;text-align:center;min-width:100px">
+          <div class="verification-step-arrow" aria-hidden="true">→</div>
+          <div class="verification-step-node">
             ${stepIcon(phoneDone)}
-            <div class="text-sm mt-1" style="font-weight:600">Telepon</div>
-            <div class="text-xs text-muted">Level 1</div>
+            <div class="verification-step-label">Telepon</div>
+            <div class="verification-step-num">Langkah 2</div>
           </div>
-          <div style="flex:none;padding-top:.7rem;color:var(--border)">→</div>
-          <div style="flex:1;text-align:center;min-width:100px">
+          <div class="verification-step-arrow" aria-hidden="true">→</div>
+          <div class="verification-step-node">
             ${stepIcon(ktpStatus === "VERIFIED")}
-            <div class="text-sm mt-1" style="font-weight:600">KTP</div>
-            <div class="text-xs text-muted">Level 2</div>
+            <div class="verification-step-label">KTP</div>
+            <div class="verification-step-num">Langkah 3</div>
           </div>
-          <div style="flex:none;padding-top:.7rem;color:var(--border)">→</div>
-          <div style="flex:1;text-align:center;min-width:100px">
+          <div class="verification-step-arrow" aria-hidden="true">→</div>
+          <div class="verification-step-node">
             ${stepIcon(bankStatus === "VERIFIED")}
-            <div class="text-sm mt-1" style="font-weight:600">Rekening Bank</div>
-            <div class="text-xs text-muted">Level 3</div>
+            <div class="verification-step-label">Rekening Bank</div>
+            <div class="verification-step-num">Langkah 4</div>
           </div>
         </div>
       </div>
 
-      <!-- STEP 1: EMAIL VERIFICATION -->
-      <div class="card card-pad-lg mb-4" id="email-step">
-        <div class="flex-between" style="align-items:center;flex-wrap:wrap;gap:1rem">
+      <div class="card card-pad-lg mb-4 verification-step-card" id="email-step">
+        <div class="verification-step-head flex-between">
           <div>
             <h2 style="margin:0"><i class="fa-solid fa-envelope"></i> Verifikasi Email</h2>
             <p class="text-muted" style="margin:.25rem 0 0">Masukkan kode OTP yang dikirim ke ${escape(user.email)}</p>
@@ -95,11 +185,9 @@ export async function VerificationPage({ mount }) {
           emailDone
             ? `<div class="alert alert-success mt-3"><i class="fa-solid fa-circle-check"></i> Email <strong>${escape(user.email)}</strong> sudah terverifikasi.</div>`
             : `<div class="mt-3" id="email-form-wrap">
-              <div class="flex gap-sm" style="flex-wrap:wrap">
-                <button class="btn btn-primary" id="send-email-otp" data-testid="send-email-otp-btn">
-                  <i class="fa-solid fa-paper-plane"></i> Kirim Kode OTP ke Email
-                </button>
-              </div>
+              <button class="btn btn-primary" id="send-email-otp" data-testid="send-email-otp-btn">
+                <i class="fa-solid fa-paper-plane"></i> Kirim Kode OTP ke Email
+              </button>
               <div id="email-otp-row" style="display:none;margin-top:1rem">
                 <div class="form-group">
                   <label class="label">Kode OTP (6 digit)</label>
@@ -116,9 +204,8 @@ export async function VerificationPage({ mount }) {
         }
       </div>
 
-      <!-- STEP 2: PHONE VERIFICATION -->
-      <div class="card card-pad-lg mb-4" id="phone-step">
-        <div class="flex-between" style="align-items:center;flex-wrap:wrap;gap:1rem">
+      <div class="card card-pad-lg mb-4 verification-step-card" id="phone-step">
+        <div class="verification-step-head flex-between">
           <div>
             <h2 style="margin:0"><i class="fa-solid fa-mobile-screen"></i> Verifikasi Nomor Telepon</h2>
             <p class="text-muted" style="margin:.25rem 0 0">Verifikasi nomor HP untuk melamar pekerjaan</p>
@@ -153,9 +240,8 @@ export async function VerificationPage({ mount }) {
         }
       </div>
 
-      <!-- STEP 3: KTP VERIFICATION -->
-      <div class="card card-pad-lg mb-4">
-        <div class="flex-between" style="align-items:center;flex-wrap:wrap;gap:1rem">
+      <div class="card card-pad-lg mb-4 verification-step-card" id="ktp-step">
+        <div class="verification-step-head flex-between">
           <div>
             <h2 style="margin:0"><i class="fa-solid fa-id-card"></i> Verifikasi KTP</h2>
             <p class="text-muted" style="margin:.25rem 0 0">Diperlukan untuk menjual jasa (Level 2)</p>
@@ -165,62 +251,39 @@ export async function VerificationPage({ mount }) {
         ${
           ktpStatus === "VERIFIED"
             ? `<div class="alert alert-success mt-3"><i class="fa-solid fa-circle-check"></i> KTP Anda sudah terverifikasi!</div>`
-            : ktpStatus === "REJECTED"
-              ? `<div class="alert alert-danger mt-3">
+            : ktpStatus === "PENDING"
+              ? pendingAlert("KTP")
+              : `${ktpStatus === "REJECTED" ? `<div class="alert alert-danger mt-3">
               <i class="fa-solid fa-circle-exclamation"></i> KTP ditolak: ${escape(vs.ktp?.rejectionReason || "Data tidak jelas")}
-            </div>`
-              : ktpStatus === "PENDING"
-                ? `<div class="alert alert-warning mt-3">
-              <i class="fa-solid fa-clock"></i> KTP sedang diproses oleh admin
-            </div>`
-                : `<form id="ktp-form" class="mt-3">
-<<<<<<< HEAD
-              <div class="alert alert-info mb-3">
-                <i class="fa-solid fa-flask"></i> <strong>Mode Demo:</strong> Klik "Demo Instan" untuk verifikasi otomatis tanpa upload file.
-              </div>
-              <div class="form-group">
-                <label class="label">Foto KTP (depan, maks 5MB)</label>
-                <input type="file" id="ktp-file" accept="image/jpeg,image/png,image/jpg" class="input" data-testid="ktp-input">
-                <div class="text-xs text-muted mt-1">Format JPG/PNG, pastikan foto jelas dan terbaca</div>
-              </div>
-              <div class="flex gap-sm mt-2" style="flex-wrap:wrap">
-                <button type="submit" class="btn btn-primary" data-testid="ktp-submit-btn">
-                  <i class="fa-solid fa-upload"></i> Upload KTP
-                </button>
-                <button type="button" class="btn btn-success" id="demo-ktp-btn" data-testid="demo-ktp-btn">
-                  <i class="fa-solid fa-bolt"></i> Demo Instan
-=======
+            </div>` : ""}<form id="ktp-form" class="mt-3">
               <div class="form-group">
                 <label class="label">Nomor KTP (16 digit)</label>
-                <input class="input" id="ktp-number" inputmode="numeric" maxlength="16" placeholder="3273xxxxxxxxxxxx" required>
+                <input type="text" id="ktp-number" class="input" placeholder="3201xxxxxxxxxxxx" maxlength="16"
+                  value="${escape(vs.ktp?.number || "")}" required data-testid="ktp-number-input">
               </div>
-              <div class="grid grid-2 verification-upload-grid">
-              <div class="form-group">
-                <label class="label">Foto KTP (depan, maks 5MB)</label>
-                <input type="file" id="ktp-file" accept="image/jpeg,image/png,image/jpg" class="input" data-testid="ktp-input">
-                <img id="ktp-preview" class="verification-file-preview" alt="Preview foto KTP" hidden>
-                <div class="text-xs text-muted mt-1">Format JPG/PNG, pastikan foto jelas dan terbaca</div>
+              <div class="grid grid-2">
+                <div class="form-group">
+                  <label class="label">Foto KTP (depan)</label>
+                  <div id="ktp-photo-preview">${previewHtml(existingKtpPhoto, "Foto KTP")}</div>
+                  <input type="file" id="ktp-photo-input" accept="image/jpeg,image/png,image/webp,image/jpg" class="input mt-2" data-testid="ktp-photo-input">
+                  <div class="text-xs text-muted mt-1">Format JPG/PNG, maks 5MB, pastikan foto jelas</div>
+                </div>
+                <div class="form-group">
+                  <label class="label">Selfie dengan KTP</label>
+                  <div id="ktp-selfie-preview">${previewHtml(existingKtpSelfie, "Selfie KTP")}</div>
+                  <input type="file" id="ktp-selfie-input" accept="image/jpeg,image/png,image/webp,image/jpg" class="input mt-2" data-testid="ktp-selfie-input">
+                  <div class="text-xs text-muted mt-1">Wajah dan KTP terlihat jelas dalam satu foto</div>
+                </div>
               </div>
-              <div class="form-group">
-                <label class="label">Selfie sambil memegang KTP</label>
-                <input type="file" id="ktp-selfie-file" accept="image/jpeg,image/png,image/jpg" class="input" data-testid="ktp-selfie-input">
-                <img id="ktp-selfie-preview" class="verification-file-preview" alt="Preview selfie dengan KTP" hidden>
-                <div class="text-xs text-muted mt-1">Pastikan wajah dan informasi KTP terlihat jelas</div>
-              </div>
-              </div>
-              <div class="flex gap-sm mt-2" style="flex-wrap:wrap">
-                <button type="submit" class="btn btn-primary" data-testid="ktp-submit-btn">
-                  <i class="fa-solid fa-upload"></i> Kirim Verifikasi
->>>>>>> ec26484 (implementasi demo)
-                </button>
-              </div>
+              <button type="submit" class="btn btn-primary mt-2" data-testid="ktp-submit-btn">
+                <i class="fa-solid fa-paper-plane"></i> ${ktpStatus === "REJECTED" ? "Kirim Ulang Verifikasi KTP" : "Kirim Verifikasi KTP"}
+              </button>
             </form>`
         }
       </div>
 
-      <!-- STEP 4: BANK VERIFICATION -->
-      <div class="card card-pad-lg mb-4">
-        <div class="flex-between" style="align-items:center;flex-wrap:wrap;gap:1rem">
+      <div class="card card-pad-lg mb-4 verification-step-card" id="bank-step">
+        <div class="verification-step-head flex-between">
           <div>
             <h2 style="margin:0"><i class="fa-solid fa-building-columns"></i> Verifikasi Rekening Bank</h2>
             <p class="text-muted" style="margin:.25rem 0 0">Diperlukan untuk menarik saldo (Level 3)</p>
@@ -237,21 +300,11 @@ export async function VerificationPage({ mount }) {
                 <strong>Atas Nama:</strong> ${escape(vs.bank?.accountName || user.accountName || "-")}
               </div>
             </div>`
-            : bankStatus === "REJECTED"
-              ? `<div class="alert alert-danger mt-3">
+            : bankStatus === "PENDING"
+              ? pendingAlert("Rekening bank")
+              : `${bankStatus === "REJECTED" ? `<div class="alert alert-danger mt-3">
               <i class="fa-solid fa-circle-exclamation"></i> Rekening ditolak: ${escape(vs.bank?.rejectionReason || "Data tidak valid")}
-            </div>`
-              : bankStatus === "PENDING"
-                ? `<div class="alert alert-warning mt-3">
-              <i class="fa-solid fa-clock"></i> Rekening bank sedang diproses oleh admin
-            </div>`
-                : `<form id="bank-form" class="mt-3">
-<<<<<<< HEAD
-              <div class="alert alert-info mb-3">
-                <i class="fa-solid fa-flask"></i> <strong>Mode Demo:</strong> Isi form lalu klik "Demo Instan".
-              </div>
-=======
->>>>>>> ec26484 (implementasi demo)
+            </div>` : ""}<form id="bank-form" class="mt-3">
               <div class="grid grid-2">
                 <div class="form-group">
                   <label class="label">Nama Bank</label>
@@ -278,52 +331,27 @@ export async function VerificationPage({ mount }) {
                 <input type="text" id="account-name" class="input" placeholder="Sesuai KTP" required data-testid="account-name">
               </div>
               <div class="form-group">
-                <label class="label">Foto Buku Tabungan / Kartu ATM (opsional)</label>
-                <input type="file" id="bank-file" accept="image/jpeg,image/png,image/jpg" class="input" data-testid="bank-file-input">
-<<<<<<< HEAD
-                <div class="text-xs text-muted mt-1">Bukti kepemilikan rekening (opsional di mode demo)</div>
-              </div>
-              <div class="flex gap-sm mt-2" style="flex-wrap:wrap">
-                <button type="submit" class="btn btn-primary" data-testid="bank-submit-btn">
-                  <i class="fa-solid fa-upload"></i> Submit Verifikasi Bank
-                </button>
-                <button type="button" class="btn btn-success" id="demo-bank-btn" data-testid="demo-bank-btn">
-                  <i class="fa-solid fa-bolt"></i> Demo Instan
-=======
-                <img id="bank-preview" class="verification-file-preview" alt="Preview bukti rekening" hidden>
+                <label class="label">Foto Buku Tabungan / Kartu ATM <span class="text-muted">(opsional)</span></label>
+                <div id="bank-proof-preview">${previewHtml("", "Bukti rekening")}</div>
+                <input type="file" id="bank-proof-input" accept="image/jpeg,image/png,image/webp,image/jpg" class="input mt-2" data-testid="bank-file-input">
                 <div class="text-xs text-muted mt-1">Bukti kepemilikan rekening (opsional)</div>
               </div>
-              <div class="flex gap-sm mt-2" style="flex-wrap:wrap">
-                <button type="submit" class="btn btn-primary" data-testid="bank-submit-btn">
-                  <i class="fa-solid fa-upload"></i> Kirim Verifikasi
->>>>>>> ec26484 (implementasi demo)
-                </button>
-              </div>
+              <button type="submit" class="btn btn-primary mt-2" data-testid="bank-submit-btn">
+                <i class="fa-solid fa-paper-plane"></i> ${bankStatus === "REJECTED" ? "Kirim Ulang Verifikasi Bank" : "Kirim Verifikasi Bank"}
+              </button>
             </form>`
         }
       </div>
     </div>`;
 
-<<<<<<< HEAD
-  // =================== EMAIL OTP HANDLERS ===================
-=======
-  // ===== EMAIL OTP HANDLERS =====
->>>>>>> ec26484 (implementasi demo)
   if (!emailDone) {
-    const sendEmailBtn = document.getElementById("send-email-otp");
-    const resendEmailBtn = document.getElementById("resend-email-otp");
     const otpRow = document.getElementById("email-otp-row");
 
     const requestEmailOtp = async () => {
       try {
         const r = await api.post("/verification/email/request", {});
         if (r.demoOtp) {
-<<<<<<< HEAD
-          toast(`Demo OTP: ${r.demoOtp} (berlaku 10 menit)`, "info", 12000);
-          console.log(`[DEMO] Email OTP: ${r.demoOtp}`);
-=======
           toast(`Kode OTP: ${r.demoOtp} (berlaku 10 menit)`, "info", 12000);
->>>>>>> ec26484 (implementasi demo)
         } else {
           toast("OTP dikirim ke email Anda", "success");
         }
@@ -333,259 +361,177 @@ export async function VerificationPage({ mount }) {
       }
     };
 
-    sendEmailBtn?.addEventListener("click", requestEmailOtp);
-    resendEmailBtn?.addEventListener("click", requestEmailOtp);
+    document.getElementById("send-email-otp")?.addEventListener("click", requestEmailOtp);
+    document.getElementById("resend-email-otp")?.addEventListener("click", requestEmailOtp);
 
-    document
-      .getElementById("verify-email-otp")
-      ?.addEventListener("click", async () => {
-        const otp = document.getElementById("email-otp-input")?.value.trim();
-        if (!otp || otp.length < 6)
-          return toast("Masukkan kode OTP 6 digit", "error");
-        try {
-          await api.post("/verification/email/verify", { otp });
-          const u = store.getState().user;
-          if (u) store.setState({ user: { ...u, emailVerified: true } });
-          toast("Email berhasil diverifikasi!", "success");
-          setTimeout(() => router.render(), 1000);
-        } catch (err) {
-          toast(err.message, "error");
-        }
-      });
+    document.getElementById("verify-email-otp")?.addEventListener("click", async () => {
+      const otp = document.getElementById("email-otp-input")?.value.trim();
+      if (!otp || otp.length < 6) return toast("Masukkan kode OTP 6 digit", "error");
+      try {
+        await api.post("/verification/email/verify", { otp });
+        await refreshSessionUser();
+        toast("Email berhasil diverifikasi!", "success");
+        setTimeout(() => router.render(), 800);
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    });
   }
 
-<<<<<<< HEAD
-  // =================== PHONE OTP HANDLERS ===================
-=======
-  // ===== PHONE OTP HANDLERS =====
->>>>>>> ec26484 (implementasi demo)
   if (!phoneDone) {
-    document
-      .getElementById("send-phone-otp")
-      ?.addEventListener("click", async () => {
-        const phone = document.getElementById("phone-input")?.value.trim();
-        if (!phone || phone.length < 9)
-          return toast("Masukkan nomor telepon yang valid", "error");
-        try {
-          const r = await api.post("/verification/phone/request", { phone });
-          if (r.demoOtp) {
-<<<<<<< HEAD
-            toast(`Demo OTP: ${r.demoOtp} (berlaku 10 menit)`, "info", 12000);
-            console.log(`[DEMO] Phone OTP: ${r.demoOtp}`);
-=======
-            toast(`Kode OTP: ${r.demoOtp} (berlaku 10 menit)`, "info", 12000);
->>>>>>> ec26484 (implementasi demo)
-          } else {
-            toast("OTP dikirim via SMS", "success");
-          }
-          const phoneOtpRow = document.getElementById("phone-otp-row");
-          if (phoneOtpRow) phoneOtpRow.style.display = "";
-        } catch (err) {
-          toast(err.message, "error");
+    document.getElementById("send-phone-otp")?.addEventListener("click", async () => {
+      const phone = document.getElementById("phone-input")?.value.trim();
+      if (!phone || phone.length < 9) return toast("Masukkan nomor telepon yang valid", "error");
+      try {
+        const r = await api.post("/verification/phone/request", { phone });
+        if (r.demoOtp) {
+          toast(`Kode OTP: ${r.demoOtp} (berlaku 10 menit)`, "info", 12000);
+        } else {
+          toast("OTP dikirim via SMS", "success");
         }
-      });
+        const phoneOtpRow = document.getElementById("phone-otp-row");
+        if (phoneOtpRow) phoneOtpRow.style.display = "";
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    });
 
-    document
-      .getElementById("verify-phone-otp")
-      ?.addEventListener("click", async () => {
-        const otp = document.getElementById("phone-otp-input")?.value.trim();
-        if (!otp || otp.length < 6)
-          return toast("Masukkan kode OTP 6 digit", "error");
-        const phone = document.getElementById("phone-input")?.value.trim();
-        try {
-          await api.post("/verification/phone/verify", { otp, phone });
-          const u = store.getState().user;
-          if (u) store.setState({ user: { ...u, phoneVerified: true, phone } });
-          toast("Nomor telepon berhasil diverifikasi!", "success");
-          setTimeout(() => router.render(), 1000);
-        } catch (err) {
-          toast(err.message, "error");
-        }
-      });
+    document.getElementById("verify-phone-otp")?.addEventListener("click", async () => {
+      const otp = document.getElementById("phone-otp-input")?.value.trim();
+      if (!otp || otp.length < 6) return toast("Masukkan kode OTP 6 digit", "error");
+      const phone = document.getElementById("phone-input")?.value.trim();
+      try {
+        await api.post("/verification/phone/verify", { otp, phone });
+        await refreshSessionUser();
+        toast("Nomor telepon berhasil diverifikasi!", "success");
+        setTimeout(() => router.render(), 800);
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    });
   }
-
-<<<<<<< HEAD
-  // =================== DEMO KTP ===================
-  document
-    .getElementById("demo-ktp-btn")
-    ?.addEventListener("click", async () => {
-      try {
-        await api.post("/verification/demo/ktp", {});
-        toast("✅ KTP berhasil diverifikasi (mode demo)!", "success");
-        setTimeout(() => router.render(), 1200);
-      } catch (err) {
-        toast(err.message, "error");
-      }
-    });
-
-  // =================== DEMO BANK ===================
-  document
-    .getElementById("demo-bank-btn")
-    ?.addEventListener("click", async () => {
-      const bankName = document.getElementById("bank-name")?.value;
-      const accountNumber = document.getElementById("account-number")?.value;
-      const accountName = document.getElementById("account-name")?.value;
-      if (!bankName) return toast("Pilih nama bank dulu", "error");
-      if (!accountNumber || accountNumber.length < 5)
-        return toast("Nomor rekening minimal 5 digit", "error");
-      if (!accountName || accountName.length < 3)
-        return toast("Nama pemilik minimal 3 karakter", "error");
-      try {
-        await api.post("/verification/demo/bank", {
-          bankName,
-          accountNumber,
-          accountName,
-        });
-        toast("✅ Rekening bank berhasil diverifikasi (mode demo)!", "success");
-        setTimeout(() => router.render(), 1200);
-      } catch (err) {
-        toast(err.message, "error");
-      }
-    });
-
-  // =================== REAL KTP UPLOAD ===================
-  document.getElementById("ktp-form")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const file = document.getElementById("ktp-file")?.files[0];
-    if (!file) return toast("Pilih file KTP terlebih dahulu", "error");
-    if (file.size > 5 * 1024 * 1024)
-      return toast("Ukuran file maksimal 5MB", "error");
-    const btn = e.target.querySelector("button[type=submit]");
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
-    const fd = new FormData();
-    fd.append("ktpImage", file);
-    try {
-      await api.post("/verification/ktp", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      toast("KTP diupload, menunggu verifikasi admin", "success");
-      setTimeout(() => router.render(), 1500);
-    } catch (err) {
-      toast(err.message, "error");
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload KTP';
-    }
-  });
-
-  // =================== REAL BANK SUBMIT ===================
-  document
-    .getElementById("bank-form")
-    ?.addEventListener("submit", async (e) => {
-=======
-  const bindPreview = (inputId, previewId) => {
-    const input = document.getElementById(inputId);
-    const preview = document.getElementById(previewId);
-    input?.addEventListener("change", () => {
-      const file = input.files?.[0];
-      if (!file || !preview) return;
-      if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) {
-        input.value = "";
-        return toast("Gunakan gambar JPG/PNG maksimal 5MB", "error");
-      }
-      preview.src = URL.createObjectURL(file);
-      preview.hidden = false;
-    });
-  };
-  bindPreview("ktp-file", "ktp-preview");
-  bindPreview("ktp-selfie-file", "ktp-selfie-preview");
-  bindPreview("bank-file", "bank-preview");
 
   const ktpForm = document.getElementById("ktp-form");
   if (ktpForm) {
+    let ktpPhotoUrl = existingKtpPhoto;
+    let ktpSelfieUrl = existingKtpSelfie;
+
+    bindImagePicker({
+      inputEl: document.getElementById("ktp-photo-input"),
+      previewEl: document.getElementById("ktp-photo-preview"),
+      folder: "ktp",
+      onChange: (url) => {
+        ktpPhotoUrl = url;
+      },
+    });
+
+    bindImagePicker({
+      inputEl: document.getElementById("ktp-selfie-input"),
+      previewEl: document.getElementById("ktp-selfie-preview"),
+      folder: "ktp",
+      onChange: (url) => {
+        ktpSelfieUrl = url;
+      },
+    });
+
     ktpForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const file = document.getElementById("ktp-file")?.files[0];
-      const selfie = document.getElementById("ktp-selfie-file")?.files[0];
       const ktpNumber = document.getElementById("ktp-number")?.value.trim();
-      if (!/^\d{16}$/.test(ktpNumber || ""))
-        return toast("Nomor KTP harus 16 digit", "error");
-      if (!file || !selfie)
-        return toast("Foto KTP dan selfie dengan KTP wajib dipilih", "error");
-      const btn = e.target.querySelector("button[type=submit]");
+      if (!ktpNumber || ktpNumber.length < 10) {
+        return toast("Masukkan nomor KTP yang valid (min 10 digit)", "error");
+      }
+      if (!ktpPhotoUrl) return toast("Unggah foto KTP terlebih dahulu", "error");
+      if (!ktpSelfieUrl) return toast("Unggah selfie dengan KTP terlebih dahulu", "error");
+
+      const btn = ktpForm.querySelector("button[type=submit]");
       btn.disabled = true;
-      btn.innerHTML =
-        '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
+
       try {
-        const [ktpUpload, selfieUpload] = await Promise.all([
-          uploadFile(file, "kyc", (pct) => {
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> KTP ${pct}%`;
-          }),
-          uploadFile(selfie, "kyc"),
-        ]);
         await api.post("/verification/ktp/submit", {
           ktpNumber,
-          ktpPhoto: ktpUpload.url,
-          ktpSelfie: selfieUpload.url,
+          ktpPhoto: ktpPhotoUrl,
+          ktpSelfie: ktpSelfieUrl,
         });
-        toast("📤 Dokumen KTP berhasil dikirim! Menunggu verifikasi admin.", "success");
-        setTimeout(() => router.render(), 1500);
+        toast("Dokumen KTP dikirim, sedang diverifikasi...", "success");
+        const verified = await waitForVerification("ktp", 20000);
+        await refreshSessionUser();
+        if (verified) {
+          toast("KTP terverifikasi! Anda dapat bertransaksi.", "success");
+        }
+        router.render();
       } catch (err) {
         toast(err.message, "error");
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload KTP';
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Verifikasi KTP';
       }
     });
   }
 
-  // ===== REAL BANK SUBMIT =====
   const bankForm = document.getElementById("bank-form");
   if (bankForm) {
+    let bankProofUrl = "";
+
+    bindImagePicker({
+      inputEl: document.getElementById("bank-proof-input"),
+      previewEl: document.getElementById("bank-proof-preview"),
+      folder: "bank",
+      onChange: (url) => {
+        bankProofUrl = url;
+      },
+    });
+
     bankForm.addEventListener("submit", async (e) => {
->>>>>>> ec26484 (implementasi demo)
       e.preventDefault();
       const bankName = document.getElementById("bank-name")?.value;
-      const accountNumber = document.getElementById("account-number")?.value;
-      const accountName = document.getElementById("account-name")?.value;
-      const file = document.getElementById("bank-file")?.files[0];
-<<<<<<< HEAD
-=======
+      const accountNumber = document.getElementById("account-number")?.value.trim();
+      const accountName = document.getElementById("account-name")?.value.trim();
 
->>>>>>> ec26484 (implementasi demo)
       if (!bankName) return toast("Pilih nama bank", "error");
-      if (!accountNumber || accountNumber.length < 5)
+      if (!accountNumber || accountNumber.length < 5) {
         return toast("Nomor rekening minimal 5 digit", "error");
-      if (!accountName || accountName.length < 3)
+      }
+      if (!accountName || accountName.length < 3) {
         return toast("Nama pemilik minimal 3 karakter", "error");
-<<<<<<< HEAD
-=======
+      }
 
->>>>>>> ec26484 (implementasi demo)
-      const btn = e.target.querySelector("button[type=submit]");
+      const btn = bankForm.querySelector("button[type=submit]");
       btn.disabled = true;
-      btn.innerHTML =
-        '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
-<<<<<<< HEAD
-      const fd = new FormData();
-      fd.append("bankName", bankName);
-      fd.append("accountNumber", accountNumber);
-      fd.append("accountName", accountName);
-      if (file) fd.append("bankProof", file);
-      try {
-        await api.post("/verification/bank", fd, {
-          headers: { "Content-Type": "multipart/form-data" },
-=======
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
+
+      const payload = { bankName, accountNumber, accountName };
+      if (bankProofUrl) payload.bankProof = bankProofUrl;
 
       try {
-        const bankProof = file ? (await uploadFile(file, "kyc")).url : undefined;
-        await api.post("/verification/bank", {
-          bankName,
-          accountNumber,
-          accountName,
-          bankProof,
->>>>>>> ec26484 (implementasi demo)
-        });
-        toast("Verifikasi bank submitted, menunggu admin", "success");
-        setTimeout(() => router.render(), 1500);
+        await api.post("/verification/bank", payload);
+        toast("Data bank dikirim, sedang diverifikasi...", "success");
+        const verified = await waitForVerification("bank", 20000);
+        await refreshSessionUser();
+        if (verified) {
+          toast("Rekening bank terverifikasi! Anda dapat posting jasa.", "success");
+        }
+        router.render();
       } catch (err) {
         toast(err.message, "error");
         btn.disabled = false;
-        btn.innerHTML =
-          '<i class="fa-solid fa-upload"></i> Submit Verifikasi Bank';
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Verifikasi Bank';
       }
     });
-<<<<<<< HEAD
-=======
   }
->>>>>>> ec26484 (implementasi demo)
+
+  if (ktpStatus === "PENDING") {
+    waitForVerification("ktp", 20000).then(async (ok) => {
+      if (!ok) return;
+      await refreshSessionUser();
+      toast("KTP terverifikasi! Anda dapat bertransaksi.", "success");
+      router.render();
+    });
+  } else if (bankStatus === "PENDING") {
+    waitForVerification("bank", 20000).then(async (ok) => {
+      if (!ok) return;
+      await refreshSessionUser();
+      toast("Rekening bank terverifikasi! Anda dapat posting jasa.", "success");
+      router.render();
+    });
+  }
 }

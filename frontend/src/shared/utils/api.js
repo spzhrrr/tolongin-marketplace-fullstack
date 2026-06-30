@@ -20,7 +20,7 @@ export function resolveAssetUrl(url) {
 
 let refreshPromise = null;
 
-async function tryRefresh() {
+export async function tryRefresh() {
   if (!refreshPromise) {
     refreshPromise = fetch(`${API}/auth/refresh`, {
       method: "POST",
@@ -44,8 +44,6 @@ async function tryRefresh() {
   return refreshPromise;
 }
 
-<<<<<<< HEAD
-=======
 // Jeda sederhana untuk retry dengan backoff.
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -53,7 +51,6 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const MAX_RETRIES = 3;
 const RETRYABLE_STATUS = [502, 503, 504];
 
->>>>>>> ec26484 (implementasi demo)
 async function rawRequest(
   path,
   { method = "GET", body, auth = true, token } = {},
@@ -71,34 +68,12 @@ async function rawRequest(
   }
 
   const url = `${API}${path}`;
-<<<<<<< HEAD
-  console.log("📡 API Request:", method, url);
-
-  const res = await fetch(url, {
-    method,
-    headers,
-    credentials: "include",
-    body: isFormData
-      ? body
-      : body !== undefined
-        ? JSON.stringify(body)
-        : undefined,
-  });
-
-<<<<<<< HEAD
-  let data;
-  const ct = res.headers.get("content-type") || "";
-  data = ct.includes("application/json") ? await res.json() : await res.text();
-  return { ok: res.ok, status: res.status, data };
-=======
-=======
   if (import.meta.env.DEV) console.log("📡 API Request:", method, url);
 
   // Hanya GET yang aman di-retry otomatis tanpa efek samping ganda.
   const canRetry = method === "GET";
   let lastErr = null;
 
->>>>>>> ec26484 (implementasi demo)
   for (let attempt = 0; attempt <= (canRetry ? MAX_RETRIES : 0); attempt++) {
     try {
       const res = await fetch(url, {
@@ -139,10 +114,6 @@ async function rawRequest(
     }
   }
   throw lastErr || new Error("Request gagal");
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
 }
 
 async function request(path, opts = {}) {
@@ -163,7 +134,9 @@ async function request(path, opts = {}) {
       const newToken = await tryRefresh();
       result = await rawRequest(path, { ...opts, token: newToken });
     } catch (_) {
-      store.setState({ token: null, refreshToken: null, user: null });
+      if (store.getState().token) {
+        store.setState({ token: null, refreshToken: null });
+      }
     }
   }
 
@@ -187,22 +160,10 @@ async function request(path, opts = {}) {
 
 export const api = {
   get: (p) => request(p),
-<<<<<<< HEAD
-<<<<<<< HEAD
-  post: (p, body, _opts) => request(p, { method: "POST", body }),
-  put: (p, body, _opts) => request(p, { method: "PUT", body }),
-  del: (p) => request(p, { method: "DELETE" }),
-=======
-=======
->>>>>>> ec26484 (implementasi demo)
   post: (p, body, opts = {}) => request(p, { ...opts, method: "POST", body }),
   put: (p, body, opts = {}) => request(p, { ...opts, method: "PUT", body }),
   patch: (p, body, opts = {}) => request(p, { ...opts, method: "PATCH", body }),
   del: (p, opts = {}) => request(p, { ...opts, method: "DELETE" }),
   upload: (p, formData, opts = {}) =>
     request(p, { ...opts, method: "POST", body: formData }),
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
 };

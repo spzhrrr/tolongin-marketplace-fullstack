@@ -1,22 +1,18 @@
-<<<<<<< HEAD
-=======
 // backend/src/modules/reviews/reviews.module.ts
->>>>>>> ec26484 (implementasi demo)
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ReviewsController } from './controllers/reviews.controller';
 import { ReviewsService } from './services/reviews.service';
 import { ReviewsRepository } from './repositories/reviews.repository';
 import { OrdersModule } from '../orders/orders.module';
-<<<<<<< HEAD
+import { NotificationsModule } from '../notifications/notifications.module';
+import { SimulationModule } from '../simulation/simulation.module';
 
 @Module({
-  imports: [OrdersModule],
-=======
-import { NotificationsModule } from '../notifications/notifications.module'; // ✅ TAMBAHKAN
-
-@Module({
-  imports: [OrdersModule, NotificationsModule], // ✅ TAMBAHKAN
->>>>>>> ec26484 (implementasi demo)
+  imports: [
+    OrdersModule,
+    NotificationsModule,
+    forwardRef(() => SimulationModule),
+  ],
   controllers: [ReviewsController],
   providers: [ReviewsService, ReviewsRepository],
   exports: [ReviewsService],

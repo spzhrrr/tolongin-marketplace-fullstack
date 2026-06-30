@@ -13,17 +13,11 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ChatService } from '../services/chat.service';
 import { JwtPayload } from '../../auth/interfaces/auth.interface';
-<<<<<<< HEAD
-
-@WebSocketGateway({
-  cors: { origin: '*', credentials: true },
-=======
 import { getCorsOrigins } from '../../../common/utils/cors';
 
 @WebSocketGateway({
   // Pakai daftar origin terpusat (tidak lagi wildcard '*' bersama credentials)
   cors: { origin: getCorsOrigins(), credentials: true },
->>>>>>> ec26484 (implementasi demo)
   namespace: '/chat',
   path: '/api/socket.io',
   transports: ['websocket', 'polling'],
@@ -80,25 +74,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('join')
-<<<<<<< HEAD
-  handleJoin(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() body: { conversationId: string },
-  ) {
-    if (body?.conversationId) client.join(`conv:${body.conversationId}`);
-    return { ok: true };
-  }
-
-  @SubscribeMessage('typing')
-  handleTyping(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() body: { conversationId: string },
-  ) {
-    if (!body?.conversationId) return;
-    client.to(`conv:${body.conversationId}`).emit('typing', {
-      conversationId: body.conversationId,
-      userId: client.data.userId,
-=======
   async handleJoin(
     @ConnectedSocket() client: Socket,
     @MessageBody() body: { conversationId: string },
@@ -129,7 +104,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.to(`conv:${body.conversationId}`).emit('typing', {
       conversationId: body.conversationId,
       userId,
->>>>>>> ec26484 (implementasi demo)
     });
   }
 

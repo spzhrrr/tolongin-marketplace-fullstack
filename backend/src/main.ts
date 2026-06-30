@@ -9,18 +9,9 @@ import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { TrimPipe } from './common/pipes/trim.pipe';
 import { getCorsOrigins } from './common/utils/cors';
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
-import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
-import { TrimPipe } from './common/pipes/trim.pipe';
-import { getCorsOrigins } from './common/utils/cors';
->>>>>>> ec26484 (implementasi demo)
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -39,18 +30,6 @@ async function bootstrap() {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-<<<<<<< HEAD
-  // ✅ CORS - Allow Render and Vercel domains
-  app.enableCors({
-    origin: [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://tolongin-marketplace-fullstack.vercel.app',
-      'https://tolongin.vercel.app',
-      /\.vercel\.app$/,
-      /\.onrender\.com$/,
-    ],
-=======
   const isProduction = process.env.NODE_ENV === 'production';
 
   // Konfigurasi CORS terpusat (lihat common/utils/cors.ts)
@@ -58,7 +37,6 @@ async function bootstrap() {
 
   app.enableCors({
     origin: corsOptions,
->>>>>>> ec26484 (implementasi demo)
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     allowedHeaders: [
@@ -73,11 +51,6 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('api');
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> ec26484 (implementasi demo)
 
   // Static files for uploaded images — served at /api/uploads/* so the
   // platform ingress (which proxies /api/* to the backend) can reach them.
@@ -90,10 +63,6 @@ async function bootstrap() {
   const requestIdMiddleware = new RequestIdMiddleware();
   app.use(requestIdMiddleware.use.bind(requestIdMiddleware));
   app.useGlobalPipes(new TrimPipe());
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -108,41 +77,6 @@ async function bootstrap() {
   const reflector = app.get(Reflector);
   app.useGlobalGuards(new JwtAuthGuard(reflector), new RolesGuard(reflector));
 
-<<<<<<< HEAD
-  // Swagger
-  const config = new DocumentBuilder()
-    .setTitle('Tolongin API')
-    .setDescription(
-      'Marketplace jasa & pekerjaan Indonesia — REST + WebSocket API',
-    )
-    .setVersion('2.0.0')
-    .addBearerAuth(
-      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      'jwt',
-    )
-    .addTag('Auth', 'Registration, login, refresh, logout & password reset')
-    .addTag('Users', 'Public user profiles & seller info')
-    .addTag('Categories', 'Service & job categories')
-    .addTag('Services', 'Marketplace service listings')
-    .addTag('Jobs', 'Job postings from buyers')
-    .addTag('Applications', 'Seller applications to jobs')
-    .addTag('Orders', 'Order lifecycle & state machine')
-    .addTag('Reviews', 'Service & seller reviews')
-    .addTag('Payments', 'Order payments & webhooks')
-    .addTag('Withdrawals', 'Seller withdrawals & bank accounts')
-    .addTag('Chat', 'Real-time chat (REST + WebSocket)')
-    .addTag('Notifications', 'User notifications')
-    .addTag('Disputes', 'Order disputes')
-    .addTag('Admin', 'Admin dashboard & management')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document, {
-    swaggerOptions: { persistAuthorization: true },
-  });
-
-  // ✅ Port untuk production (Render)
-  const port = process.env.PORT || 8001;
-=======
   // Swagger - Always enabled for dev/testing, check SWAGGER_ENABLED in production
   if (!isProduction || process.env.SWAGGER_ENABLED === 'true') {
     const config = new DocumentBuilder()
@@ -179,7 +113,6 @@ async function bootstrap() {
   const port = process.env.PORT
     ? parseInt(process.env.PORT as string, 10)
     : 8001;
->>>>>>> ec26484 (implementasi demo)
 
   await app.listen(port, '0.0.0.0');
 

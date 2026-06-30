@@ -5,6 +5,8 @@ import {
   BadRequestException,
   UnauthorizedException,
   ServiceUnavailableException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { timingSafeEqual } from 'crypto';
@@ -19,6 +21,7 @@ import {
   PAYMENT_METHOD_VALUES,
 } from '../../../common/constants/enums';
 import { parseJsonField, stringifyJsonField } from '../../../common/utils/helpers';
+import { DemoFlowService } from '../../simulation/demo-flow.service';
 
 @Injectable()
 export class PaymentsService {
@@ -28,14 +31,18 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly notifications: NotificationsService,
+    @Inject(forwardRef(() => DemoFlowService))
+    private readonly demoFlow: DemoFlowService,
   ) {}
 
   async create(userId: string, dto: CreatePaymentDto) {
     const order = await this.ordersRepo.findById(dto.orderId);
     if (!order) throw new NotFoundException('Order not found');
     if (order.buyerId !== userId) throw new ForbiddenException();
-    if (order.status !== ORDER_STATUS.WAITING_CONFIRMATION) {
-      throw new BadRequestException('Order is not awaiting payment');
+    if (order.status !== ORDER_STATUS.ACCEPTED) {
+      throw new BadRequestException(
+        'Pesanan belum siap dibayar. Tunggu konfirmasi penjual terlebih dahulu.',
+      );
     }
 
     const existing = await this.prisma.payment.findFirst({
@@ -47,7 +54,7 @@ export class PaymentsService {
     });
     if (existing) return existing;
 
-    return this.repo.create({
+    const payment = await this.repo.create({
       order: { connect: { id: order.id } },
       user: { connect: { id: userId } },
       amount: order.amount,
@@ -59,6 +66,19 @@ export class PaymentsService {
       paymentUrl: null,
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
+
+    await this.notifications
+      .notify(
+        userId,
+        'PAYMENT',
+        '💳 Menunggu Pembayaran',
+        `Pembayaran untuk "${order.title}" siap diproses. Selesaikan pembayaran untuk melanjutkan.`,
+        { orderId: order.id, paymentId: payment.id, event: 'PAYMENT_PENDING' },
+        `/orders/${order.id}`,
+      )
+      .catch(() => undefined);
+
+    return payment;
   }
 
   async checkStatus(id: string, userId: string) {
@@ -115,8 +135,8 @@ export class PaymentsService {
       if (order.status === ORDER_STATUS.PAID) {
         return { payment, order, changed: false };
       }
-      if (order.status !== ORDER_STATUS.WAITING_CONFIRMATION) {
-        throw new BadRequestException('Order is no longer awaiting payment');
+      if (order.status !== ORDER_STATUS.ACCEPTED) {
+        throw new BadRequestException('Pesanan belum siap dibayar');
       }
 
       const paidAt = new Date();
@@ -144,16 +164,28 @@ export class PaymentsService {
     });
 
     if (result.changed) {
+      const orderUrl = '/orders/' + result.order.id;
+      await this.notifications
+        .notify(
+          result.order.buyerId,
+          'PAYMENT',
+          '💳 Pembayaran Berhasil',
+          `Pembayaran berhasil! Dana ${result.order.totalAmount.toLocaleString('id-ID')} masuk escrow untuk "${result.order.title}".`,
+          { orderId: result.order.id, event: 'PAYMENT_SUCCESS' },
+          orderUrl,
+        )
+        .catch(() => undefined);
       await this.notifications
         .notify(
           result.order.sellerId,
           'PAYMENT',
-          'Pembayaran Masuk Escrow',
-          'Pembayaran pesanan telah diterima dan ditahan sampai bukti kerja disetujui.',
+          '💳 Pembayaran Dikonfirmasi',
+          `Pembayaran telah dikonfirmasi! Silakan mulai mengerjakan pesanan "${result.order.title}".`,
           { orderId: result.order.id, event: 'ORDER_PAID' },
-          '/orders/' + result.order.id,
+          orderUrl,
         )
         .catch(() => undefined);
+      this.demoFlow.onPaymentCompleted(result.order.id);
     }
     return {
       ok: true,

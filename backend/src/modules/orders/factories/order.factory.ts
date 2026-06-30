@@ -29,17 +29,38 @@ export class OrderFactory {
       id: string;
       sellerId: string;
       proposedPrice: number;
-      job: { title: string };
+      job: { id: string; title: string };
     },
   ): Prisma.OrderCreateInput {
-    return this.createBase(
-      buyerId,
-      application.sellerId,
-      application.job.title,
-      application.proposedPrice,
-      {},
-      { application: { connect: { id: application.id } } },
-    );
+    const fee = Math.round(application.proposedPrice * PLATFORM_FEE_RATE);
+    const now = new Date().toISOString();
+    const timeline = [
+      {
+        status: ORDER_STATUS.WAITING_CONFIRMATION,
+        at: now,
+        by: buyerId,
+        note: 'Pesanan dibuat dari lamaran diterima',
+      },
+      {
+        status: ORDER_STATUS.ACCEPTED,
+        at: now,
+        by: buyerId,
+        note: 'Lamaran diterima — menunggu pembayaran',
+      },
+    ];
+    return {
+      buyer: { connect: { id: buyerId } },
+      seller: { connect: { id: application.sellerId } },
+      title: application.job.title,
+      amount: application.proposedPrice,
+      fee,
+      totalAmount: application.proposedPrice + fee,
+      status: ORDER_STATUS.ACCEPTED,
+      escrowStatus: 'UNPAID',
+      timeline: stringifyJsonField(timeline),
+      application: { connect: { id: application.id } },
+      jobId: application.job.id,
+    };
   }
 
   private createBase(

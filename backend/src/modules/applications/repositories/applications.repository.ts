@@ -10,8 +10,6 @@ export class ApplicationsRepository {
     return this.prisma.application.create({ data });
   }
 
-<<<<<<< HEAD
-=======
   async getUserById(userId: string) {
     return this.prisma.user.findUnique({
       where: { id: userId },
@@ -19,7 +17,6 @@ export class ApplicationsRepository {
     });
   }
 
->>>>>>> ec26484 (implementasi demo)
   findById(id: string) {
     return this.prisma.application.findUnique({
       where: { id },

@@ -8,11 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const rootDir = __dirname;
 
-<<<<<<< HEAD
-// ==================== STRUKTUR FOLDER ====================
-=======
 //       ====== STRUKTUR FOLDER       ======
->>>>>>> ec26484 (implementasi demo)
 const folders = [
   "src/app",
   "src/features/auth/pages",
@@ -29,11 +25,7 @@ const folders = [
   "src/styles",
 ];
 
-<<<<<<< HEAD
-// ==================== TEMPLATE FILES ====================
-=======
 //       ====== TEMPLATE FILES       ======
->>>>>>> ec26484 (implementasi demo)
 
 // src/app/App.js
 const appJs = `import React from 'react';
@@ -1126,11 +1118,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 );
 `;
 
-<<<<<<< HEAD
-// ==================== EKSEKUSI ====================
-=======
 //       ====== EKSEKUSI       ======
->>>>>>> ec26484 (implementasi demo)
 console.log("🚀 Starting folder structure generation...\n");
 
 // 1. Buat folder

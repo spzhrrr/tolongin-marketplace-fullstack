@@ -42,7 +42,7 @@ const dict = {
     "sdg.sub":
       "Tolongin berkomitmen mendukung tujuan pembangunan berkelanjutan dengan menciptakan lapangan kerja digital yang inklusif untuk semua.",
     "footer.tag":
-      "Marketplace jasa & pekerjaan terpercaya untuk semua kebutuhan Anda.",
+      "Marketplace jasa & pekerjaan untuk Indonesia — escrow aman, seller lokal, satu akun untuk semua.",
   },
   en: {
     "nav.home": "Home",

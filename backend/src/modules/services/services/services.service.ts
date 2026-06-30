@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { ServicesRepository } from '../repositories/services.repository';
 import { CategoriesRepository } from '../../categories/repositories/categories.repository';
@@ -19,10 +21,8 @@ import {
 import { Prisma } from '@prisma/client';
 import { ROLE } from '../../../common/constants/enums';
 import { ServiceFactory } from '../factories/service.factory';
-<<<<<<< HEAD
-=======
 import { NotificationsService } from '../../notifications/services/notifications.service';
->>>>>>> ec26484 (implementasi demo)
+import { DemoFlowService } from '../../simulation/demo-flow.service';
 
 @Injectable()
 export class ServicesService {
@@ -30,18 +30,27 @@ export class ServicesService {
     private readonly repo: ServicesRepository,
     private readonly categoriesRepo: CategoriesRepository,
     private readonly factory: ServiceFactory,
-<<<<<<< HEAD
-=======
     private readonly notifications: NotificationsService,
->>>>>>> ec26484 (implementasi demo)
+    @Inject(forwardRef(() => DemoFlowService))
+    private readonly demoFlow: DemoFlowService,
   ) {}
 
   private toDto(s: any) {
-    return { ...s, images: parseJsonField<string[]>(s.images, []) };
+    const images = parseJsonField<string[]>(s.images, []);
+    const isRemote = s.isRemote !== false;
+    const city = isRemote
+      ? 'Remote'
+      : s.location || s.seller?.city || '';
+    return {
+      ...s,
+      images,
+      image: images[0] || null,
+      isRemote,
+      city,
+      location: isRemote ? 'Remote' : s.location || s.seller?.city || '',
+    };
   }
 
-<<<<<<< HEAD
-=======
   // Konversi parameter sortBy (termasuk alias frontend) menjadi orderBy Prisma
   private resolveSort(
     sortBy?: string,
@@ -65,7 +74,6 @@ export class ServicesService {
     }
   }
 
->>>>>>> ec26484 (implementasi demo)
   async findAll(query: ServiceQueryDto) {
     const page = query.page || 1;
     const limit = query.limit || 20;
@@ -73,9 +81,6 @@ export class ServicesService {
     const { skip, take } = paginate(page, limit);
 
     const where: Prisma.ServiceWhereInput = { isActive: true };
-<<<<<<< HEAD
-    if (query.q) where.title = { contains: query.q };
-=======
     if (query.q) {
       // Cari di judul DAN deskripsi (case-insensitive bergantung collation MySQL —
       // default utf8mb4_general_ci sudah case-insensitive).
@@ -84,8 +89,10 @@ export class ServicesService {
         { description: { contains: query.q } },
       ];
     }
->>>>>>> ec26484 (implementasi demo)
     if (query.categoryId) where.categoryId = query.categoryId;
+    else if (query.serviceType) {
+      where.category = { serviceType: query.serviceType };
+    }
     if (query.sellerId) where.sellerId = query.sellerId;
     if (query.minPrice !== undefined || query.maxPrice !== undefined) {
       where.price = {};
@@ -94,13 +101,6 @@ export class ServicesService {
       if (query.maxPrice !== undefined)
         (where.price as any).lte = query.maxPrice;
     }
-<<<<<<< HEAD
-    const sortBy = query.sortBy || 'createdAt';
-    const sortOrder = query.sortOrder || 'desc';
-    const orderBy: Prisma.ServiceOrderByWithRelationInput = {
-      [sortBy]: sortOrder,
-    } as any;
-=======
     // Filter rating minimum
     if (query.minRating !== undefined) {
       where.rating = { gte: query.minRating };
@@ -109,10 +109,20 @@ export class ServicesService {
     if (query.maxDeliveryDays !== undefined) {
       where.deliveryTime = { lte: query.maxDeliveryDays };
     }
+    if (query.location && query.serviceType !== 'DIGITAL') {
+      where.AND = [
+        ...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []),
+        {
+          OR: [
+            { location: { contains: query.location } },
+            { seller: { city: { contains: query.location } } },
+          ],
+        },
+      ];
+    }
 
     // Dukung alias pengurutan dari frontend selain field mentah
     const orderBy = this.resolveSort(query.sortBy, query.sortOrder);
->>>>>>> ec26484 (implementasi demo)
     const { items, total } = await this.repo.findMany(
       where,
       skip,
@@ -135,20 +145,27 @@ export class ServicesService {
   async create(sellerId: string, dto: CreateServiceDto) {
     const cat = await this.categoriesRepo.findById(dto.categoryId);
     if (!cat) throw new NotFoundException('Category not found');
-    const created = await this.repo.create(this.factory.create(sellerId, dto));
-<<<<<<< HEAD
-=======
+    const seller = await this.repo.findSellerCity(sellerId);
+    const isRemote = cat.serviceType === 'DIGITAL';
+    const location = isRemote
+      ? 'Remote'
+      : dto.location || seller?.city || 'Indonesia';
+    const created = await this.repo.create(
+      this.factory.create(sellerId, dto, { isRemote, location }),
+    );
+
     await this.notifications
       .notify(
         sellerId,
         'SYSTEM',
-        '📢 Jasa Anda telah dipublikasikan!',
-        `"${created.title}" sudah live di marketplace dan siap dipesan.`,
+        '🎉 Jasa Dipublikasikan!',
+        `Jasa Anda berhasil dipublikasikan! "${created.title}" sudah live di marketplace.`,
         { serviceId: created.id },
         `/services/${created.id}`,
       )
       .catch(() => undefined);
->>>>>>> ec26484 (implementasi demo)
+
+    this.demoFlow.onServiceCreated(created.id);
     return this.toDto(created);
   }
 

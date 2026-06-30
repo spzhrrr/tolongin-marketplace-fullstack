@@ -1,455 +1,239 @@
-<<<<<<< HEAD
-import { api } from "../../shared/utils/api.js";
-import { serviceCard } from "../../shared/ui/components.js";
-import { debounce, toast, escape, fmtIDR } from "../../shared/utils/helpers.js";
-import { store } from "../../app/store.js";
-import { router } from "../../app/router.js";
-import { avatar } from "../../shared/ui/components.js";
-
-export async function MarketplacePage({ mount, query }) {
-=======
 // frontend/src/features/marketplace/MarketplacePages.js
 
-import { api } from "../../shared/utils/api.js";
+import { api, resolveAssetUrl } from "../../shared/utils/api.js";
 import {
-  debounce,
   toast,
   escape,
   fmtIDR,
   timeAgo,
+  bindRupiahInput,
+  parseIDRInput,
 } from "../../shared/utils/helpers.js";
 import { store } from "../../app/store.js";
 import { router } from "../../app/router.js";
-import { avatar, serviceCard } from "../../shared/ui/components.js";
+import { avatar, serviceCard, empty, bindFavoriteButtons, categoryPlaceholder, serviceTypeBadge, parseServiceImages, resolveServiceImageUrl, serviceGalleryHtml, initServiceGallery, discoverPageHero } from "../../shared/ui/components.js";
+import { initSearchFilterBar, getAdvSelectValue } from "../../shared/utils/search-filter-bar.js";
+
+function interleaveByKey(items, keyFn) {
+  const buckets = new Map();
+  for (const item of items) {
+    const k = keyFn(item) || "x";
+    if (!buckets.has(k)) buckets.set(k, []);
+    buckets.get(k).push(item);
+  }
+  const queues = [...buckets.values()];
+  const out = [];
+  while (queues.some((q) => q.length)) {
+    for (const q of queues) {
+      if (q.length) out.push(q.shift());
+    }
+  }
+  return out;
+}
 
 export async function MarketplacePage({ mount, query }) {
   const u = store.getState().user;
 
->>>>>>> ec26484 (implementasi demo)
   mount.innerHTML = `
-    <div class="container page">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">Cari Jasa</h1>
-          <p class="page-subtitle">Temukan jasa terbaik dari freelancer profesional</p>
+    <div class="discover-page discover-page--services">
+      <div class="discover-head discover-head--services">
+        ${discoverPageHero({
+          variant: "services",
+          title: "Cari Jasa",
+          subtitle:
+            "Temukan jasa terbaik dari freelancer profesional terverifikasi — dari proyek digital hingga layanan fisik di kotamu.",
+          eyebrowIcon: "fa-store",
+          eyebrowLabel: "Marketplace Tolongin",
+          ctaHtml:
+            u && u.role !== "ADMIN"
+              ? `<a href="#/post-service" class="btn btn-light discover-hero__cta" id="post-service-btn" data-testid="post-service-btn"><i class="fa-solid fa-plus"></i> Posting Jasa</a>`
+              : "",
+        })}
+        <div class="container discover-head__bar">
+          <div class="filter-sticky-shell" id="filter-sticky-shell"></div>
         </div>
-<<<<<<< HEAD
-=======
-        ${
-          u && u.role !== "ADMIN"
-            ? `
-          <a href="#/post-service" class="btn btn-primary" id="post-service-btn" data-testid="post-service-btn" style="display:flex; align-items:center; gap:8px;">
-            <i class="fa-solid fa-plus"></i> Posting Jasa
-          </a>
-        `
-            : ""
-        }
->>>>>>> ec26484 (implementasi demo)
       </div>
-      <div class="filters" data-testid="filters-bar" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;">
-        <div class="input-icon" style="flex: 1; min-width: 200px; max-width: 300px;">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input class="input" id="q" placeholder="Cari jasa..." value="${escape(query.q || "")}" data-testid="search-input" style="padding-left: 2.5rem; width: 100%;">
-        </div>
-        <select class="select" id="cat" data-testid="filter-category" style="width: 150px;">
-          <option value="all">Semua Kategori</option>
-        </select>
-        <div class="price-filter" style="display: flex; align-items: center; gap: 8px;">
-          <input class="input" id="min" type="number" placeholder="Min Rp" style="width: 100px;">
-          <span class="text-muted">—</span>
-          <input class="input" id="max" type="number" placeholder="Max Rp" style="width: 100px;">
-        </div>
-<<<<<<< HEAD
-=======
-        <select class="select" id="min-rating" data-testid="filter-rating" style="width: 140px;">
-          <option value="">Semua Rating</option>
-          <option value="4.5">4.5★ ke atas</option>
-          <option value="4">4★ ke atas</option>
-          <option value="3">3★ ke atas</option>
-        </select>
-        <select class="select" id="delivery" data-testid="filter-delivery" style="width: 150px;">
-          <option value="">Semua Pengerjaan</option>
-          <option value="1">≤ 1 hari</option>
-          <option value="3">≤ 3 hari</option>
-          <option value="7">≤ 7 hari</option>
-          <option value="14">≤ 14 hari</option>
-        </select>
-        <select class="select" id="sort-by" data-testid="filter-sort" style="width: 160px;">
-          <option value="newest">Terbaru</option>
-          <option value="rating_desc">Rating Tertinggi</option>
-          <option value="price_asc">Harga Terendah</option>
-          <option value="price_desc">Harga Tertinggi</option>
-        </select>
->>>>>>> ec26484 (implementasi demo)
-        <button class="btn btn-secondary btn-sm" id="reset-filters" style="white-space: nowrap; padding: 8px 16px;">
-          <i class="fa-solid fa-rotate-left"></i> Reset
-        </button>
-        <div id="results-count" class="text-sm text-muted" style="margin-left: auto; white-space: nowrap;"></div>
+      <div class="container page discover-page__main">
+        <div id="results" class="marketplace-grid" data-testid="services-grid"></div>
       </div>
-      <div id="results" class="services-grid" data-testid="services-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 24px;"></div>
     </div>`;
 
-<<<<<<< HEAD
-  const cats = await api.get("/categories");
-  const sel = document.getElementById("cat");
-  sel.innerHTML =
-    `<option value="all">Semua Kategori</option>` +
-    cats
-      .map(
-        (c) =>
-          `<option value="${c.slug}" ${query.category === c.slug ? "selected" : ""}>${c.name}</option>`,
-      )
-      .join("");
-=======
-  const postServiceBtn = document.getElementById("post-service-btn");
-  if (postServiceBtn) {
-    postServiceBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      if (!store.getState().user) {
-        toast("Silakan login dulu", "warning");
-        return router.navigate("/login");
-      }
-      router.navigate("/post-service");
-    });
-  }
+  document.getElementById("post-service-btn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (!store.getState().user) {
+      toast("Silakan login dulu", "warning");
+      return router.navigate("/login");
+    }
+    router.navigate("/post-service");
+  });
 
   const cats = await api.get("/categories");
-  const sel = document.getElementById("cat");
-  if (sel) {
-    sel.innerHTML =
-      `<option value="all">Semua Kategori</option>` +
-      cats.map((c) => `<option value="${c.slug}">${c.name}</option>`).join("");
-  }
->>>>>>> ec26484 (implementasi demo)
+  const filterShell = document.getElementById("filter-sticky-shell");
+
+  const filterBar = initSearchFilterBar({
+    shellEl: filterShell,
+    categories: cats,
+    context: "services",
+    initial: query,
+    sortDefault: "newest",
+    sortOptions: [
+      { value: "newest", icon: "fa-clock", label: "Terbaru" },
+      { value: "rating_desc", icon: "fa-star", label: "Rating tertinggi" },
+      { value: "price_asc", icon: "fa-arrow-up-wide-short", label: "Harga terendah" },
+      { value: "price_desc", icon: "fa-arrow-down-wide-short", label: "Harga tertinggi" },
+    ],
+    advancedHtml: `
+      <div class="filter-advanced">
+        <div class="filter-advanced-field">
+          <label class="label" for="min">Harga (Rp)</label>
+          <div class="filter-advanced-range">
+            <input class="input" id="min" type="text" placeholder="Min" inputmode="numeric">
+            <span>—</span>
+            <input class="input" id="max" type="text" placeholder="Max" inputmode="numeric">
+          </div>
+        </div>
+        <div class="filter-advanced-field">
+          <label class="label" for="adv-min-rating">Rating min</label>
+          <select class="select" id="adv-min-rating">
+            <option value="">Semua</option>
+            <option value="4.5">4.5★ ke atas</option>
+            <option value="4">4★ ke atas</option>
+            <option value="3">3★ ke atas</option>
+          </select>
+        </div>
+        <div class="filter-advanced-field">
+          <label class="label" for="adv-delivery">Pengerjaan max</label>
+          <select class="select" id="adv-delivery">
+            <option value="">Semua</option>
+            <option value="1">≤ 1 hari</option>
+            <option value="3">≤ 3 hari</option>
+            <option value="7">≤ 7 hari</option>
+          </select>
+        </div>
+      </div>`,
+    getExtraTags: () => {
+      const tags = [];
+      const min = parseIDRInput(document.getElementById("min")?.value);
+      const max = parseIDRInput(document.getElementById("max")?.value);
+      const minRating = getAdvSelectValue("adv-min-rating");
+      const delivery = getAdvSelectValue("adv-delivery");
+      if (min) tags.push({ key: "min", label: `Min ${fmtIDR(min)}`, icon: "fa-coins" });
+      if (max) tags.push({ key: "max", label: `Max ${fmtIDR(max)}`, icon: "fa-coins" });
+      if (minRating) tags.push({ key: "minRating", label: `Rating ${minRating}★+`, icon: "fa-star" });
+      if (delivery) tags.push({ key: "delivery", label: `≤${delivery} hari`, icon: "fa-clock" });
+      return tags;
+    },
+    onClearTag: (key) => {
+      if (key === "min") document.getElementById("min").value = "";
+      if (key === "max") document.getElementById("max").value = "";
+      if (key === "minRating") document.getElementById("adv-min-rating").value = "";
+      if (key === "delivery") document.getElementById("adv-delivery").value = "";
+    },
+    onClearExtra: () => {
+      ["min", "max"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+      document.getElementById("adv-min-rating").value = "";
+      document.getElementById("adv-delivery").value = "";
+    },
+    onChange: () => load(),
+  });
+
+  bindRupiahInput(document.getElementById("min"));
+  bindRupiahInput(document.getElementById("max"));
 
   let favs = [];
   try {
     if (store.getState().token) {
       const favResponse = await api.get("/favorites");
       favs = favResponse.map((s) => s.id);
-<<<<<<< HEAD
-      console.log("Loaded favorites:", favs);
-    }
-  } catch (err) {
-    if (import.meta.env.DEV)
-      console.warn("[marketplace] favorites load failed", err);
-=======
     }
   } catch (err) {
     console.warn("[marketplace] favorites load failed", err);
->>>>>>> ec26484 (implementasi demo)
   }
+
+  const bindCardEvents = (container) => bindFavoriteButtons(container, favs);
 
   const load = async () => {
     const params = new URLSearchParams();
     params.set("limit", "100");
-    const q = document.getElementById("q")?.value.trim() || "";
-    const cat = document.getElementById("cat")?.value || "all";
-    const min = document.getElementById("min")?.value || "";
-    const max = document.getElementById("max")?.value || "";
+    const q = filterBar.getQueryEl()?.value.trim() || "";
+    const min = parseIDRInput(document.getElementById("min")?.value);
+    const max = parseIDRInput(document.getElementById("max")?.value);
     if (q) params.set("q", q);
-    if (cat && cat !== "all") {
-      const c = cats.find((x) => x.slug === cat);
-      if (c) params.set("categoryId", c.id);
-    }
+    const typeParams = filterBar.getParams();
+    if (typeParams.serviceType) params.set("serviceType", typeParams.serviceType);
+    if (typeParams.categoryId) params.set("categoryId", typeParams.categoryId);
+    if (typeParams.location) params.set("location", typeParams.location);
     if (min) params.set("minPrice", min);
     if (max) params.set("maxPrice", max);
-<<<<<<< HEAD
-=======
-    const minRating = document.getElementById("min-rating")?.value || "";
-    const delivery = document.getElementById("delivery")?.value || "";
-    const sortBy = document.getElementById("sort-by")?.value || "";
+    const minRating = getAdvSelectValue("adv-min-rating");
+    const delivery = getAdvSelectValue("adv-delivery");
+    const sortBy = filterBar.getSort() || "";
     if (minRating) params.set("minRating", minRating);
     if (delivery) params.set("maxDeliveryDays", delivery);
     if (sortBy) params.set("sortBy", sortBy);
->>>>>>> ec26484 (implementasi demo)
 
     const res = document.getElementById("results");
     if (!res) return;
-    res.innerHTML =
-      '<div class="spinner" style="grid-column:1/-1; text-align:center; padding:40px;"></div>';
+    filterBar.setResultBadge("Memuat…");
+    res.innerHTML = '<div class="spinner" style="grid-column:1/-1"></div>';
 
     try {
       const resp = await api.get("/services?" + params.toString());
-      const items = Array.isArray(resp) ? resp : resp.data || [];
+      const raw = Array.isArray(resp) ? resp : resp.data || [];
+      const items = interleaveByKey(raw, (s) => s.sellerId || s.seller?.id);
+
       if (!items.length) {
-        res.innerHTML = `<div class="empty" style="grid-column:1/-1; text-align:center; padding:40px;">
-          <i class="fa-solid fa-search"></i>
-          <h3>Tidak ada hasil</h3>
-          <p>Coba kata kunci lain atau ubah filter</p>
-        </div>`;
-        const countEl = document.getElementById("results-count");
-        if (countEl) countEl.textContent = `0 jasa ditemukan`;
+        res.innerHTML = empty(
+          "Tidak ada jasa ditemukan",
+          "Coba kata kunci lain atau ubah filter pencarian",
+          "fa-magnifying-glass",
+          '<button class="btn btn-primary mt-2" id="reset-empty">Reset Filter</button>',
+        );
+        document.getElementById("reset-empty")?.addEventListener("click", () => {
+          filterBar.reset();
+          ["min", "max"].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+          });
+          document.getElementById("adv-min-rating").value = "";
+          document.getElementById("adv-delivery").value = "";
+          load();
+        });
+        filterBar.setResultBadge("0 jasa", "empty");
+        filterBar.refreshTags();
         return;
       }
 
       res.innerHTML = items
-<<<<<<< HEAD
-        .map((s) => {
-          const rating = s.rating || 0;
-          const reviewCount = s.reviewCount || 0;
-          const imageUrl =
-            s.image ||
-            (s.images && s.images[0]) ||
-            "https://placehold.co/400x300/0a66c2/ffffff?text=No+Image";
-          const isFav = favs.includes(s.id);
-
-          return `
-            <div class="service-card" data-service-id="${s.id}" style="background:var(--surface);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);transition:transform .2s,box-shadow .2s;cursor:pointer;display:flex;flex-direction:column;">
-              <div class="service-image" style="height:200px;overflow:hidden;background:#f0f0f0;">
-                <img src="${imageUrl}" 
-                     alt="${escape(s.title)}" 
-                     style="width:100%;height:100%;object-fit:cover;"
-                     onerror="this.src='https://placehold.co/400x300/0a66c2/ffffff?text=No+Image'">
-              </div>
-              <div class="service-content" style="padding:1rem; flex:1; display:flex; flex-direction:column; position:relative;">
-                <div class="seller-link" data-user-id="${s.sellerId}" style="cursor:pointer; display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-                  <img src="${s.seller?.avatar || "https://i.pravatar.cc/50"}" class="avatar avatar-sm" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
-                  <span style="font-weight:500; color:var(--primary);">${escape(s.seller?.name || "Seller")}</span>
-                  ${s.seller?.verified ? '<i class="fa-solid fa-circle-check" style="color:var(--primary); font-size:12px;"></i>' : ""}
-                </div>
-                <h3 style="font-size:1rem;margin:0 0 8px 0;line-height:1.4; min-height:44px;">${escape(s.title)}</h3>
-                <div class="flex gap-sm mb-2" style="align-items:center; gap:12px; margin-bottom:12px;">
-                  <span style="display:flex;align-items:center;gap:4px;">
-                    <i class="fa-solid fa-star" style="color:var(--warning);font-size:12px;"></i>
-                    <strong>${rating.toFixed(1)}</strong>
-                    <span class="text-muted" style="font-size:12px;">(${reviewCount})</span>
-                  </span>
-                  <span class="text-muted" style="font-size:12px;">
-                    <i class="fa-regular fa-clock"></i> ${s.deliveryTime || "Fleksibel"}
-                  </span>
-                </div>
-                <div style="font-family:var(--font-head);font-weight:700;color:var(--primary-dark);font-size:1.25rem; margin-top:auto;">
-                  ${fmtIDR(s.price || 0)}
-                </div>
-                <button class="btn-fav" data-fav="${s.id}" style="position:absolute;top:12px;right:12px;background:white;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-                  <i class="fa-${isFav ? "solid" : "regular"} fa-heart" style="color:${isFav ? "#dc3545" : "#999"};"></i>
-                </button>
-              </div>
-            </div>
-          `;
-        })
-=======
         .map((s) => serviceCard(s, { favorited: favs.includes(s.id) }))
->>>>>>> ec26484 (implementasi demo)
         .join("");
 
-      const countEl = document.getElementById("results-count");
-      if (countEl) countEl.textContent = `${items.length} jasa ditemukan`;
+      filterBar.setResultBadge(`${items.length} jasa ditemukan`);
 
-      res.querySelectorAll(".service-card").forEach((card) => {
-        card.addEventListener("click", (e) => {
-<<<<<<< HEAD
-          if (e.target.closest(".seller-link") || e.target.closest(".btn-fav"))
-            return;
-          const serviceId = card.dataset.serviceId;
-          if (serviceId) router.navigate("/services/" + serviceId);
-=======
-          if (e.target.closest(".seller-link") || e.target.closest(".fav-btn"))
-            return;
-          const href = card.getAttribute("href");
-          if (href) router.navigate(href.replace("#", ""));
->>>>>>> ec26484 (implementasi demo)
-        });
-      });
-
-      res.querySelectorAll(".seller-link").forEach((el) =>
-        el.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const uid = el.dataset.userId;
-<<<<<<< HEAD
-          if (uid) {
-            router.navigate("/users/" + uid);
-          }
-        }),
-      );
-
-      // ========== PERBAIKAN FAVORIT YANG BENAR ==========
-      res.querySelectorAll(".btn-fav").forEach((btn) =>
-        btn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-=======
-          if (uid) router.navigate("/users/" + uid);
-        }),
-      );
-
-      res.querySelectorAll(".fav-btn").forEach((btn) =>
-        btn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
->>>>>>> ec26484 (implementasi demo)
-          if (!store.getState().token) {
-            toast("Login dulu untuk menyimpan favorit", "warning");
-            return;
-          }
-<<<<<<< HEAD
-
-          const serviceId = btn.dataset.fav;
-          const icon = btn.querySelector("i");
-
-          // Cek status saat ini dari icon (lebih akurat)
-          const isCurrentlyFavorited = icon.classList.contains("fa-solid");
-
-          console.log("=== FAVORITE CLICK ===");
-          console.log("Service ID:", serviceId);
-          console.log("Currently favorited (by icon):", isCurrentlyFavorited);
-
-          // Disable button
-          btn.disabled = true;
-          btn.style.opacity = "0.6";
-
-          try {
-            const response = await api.post("/favorites/" + serviceId);
-            console.log("API Response:", response);
-
-            // Tentukan status baru berdasarkan response
-            let newStatus;
-
-            if (response.favorited !== undefined) {
-              newStatus = response.favorited === true;
-            } else if (response.message) {
-              // Cek pesan: "Added to favorites" atau "Removed from favorites"
-              const msg = response.message.toLowerCase();
-              if (msg.includes("added")) {
-                newStatus = true;
-              } else if (msg.includes("removed")) {
-                newStatus = false;
-              } else {
-                // Toggle berdasarkan status sebelumnya
-                newStatus = !isCurrentlyFavorited;
-              }
-            } else {
-              // Toggle berdasarkan status sebelumnya
-              newStatus = !isCurrentlyFavorited;
-            }
-
-            console.log("New status:", newStatus);
-
-            // Update UI
-            if (newStatus) {
-              icon.classList.remove("fa-regular");
-              icon.classList.add("fa-solid");
-              icon.style.color = "#dc3545";
-              if (!favs.includes(serviceId)) favs.push(serviceId);
-              toast("❤️ Ditambahkan ke favorit", "success");
-            } else {
-              icon.classList.remove("fa-solid");
-              icon.classList.add("fa-regular");
-              icon.style.color = "#999";
-=======
-          const serviceId = btn.dataset.fav;
-          const icon = btn.querySelector("i");
-          const isCurrentlyFavorited = btn.classList.contains("active");
-          btn.disabled = true;
-          btn.style.opacity = "0.6";
-          try {
-            const response = await api.post("/favorites/" + serviceId);
-            let newStatus = !isCurrentlyFavorited;
-            if (response.favorited !== undefined)
-              newStatus = response.favorited;
-            else if (response.message?.toLowerCase().includes("added"))
-              newStatus = true;
-            else if (response.message?.toLowerCase().includes("removed"))
-              newStatus = false;
-
-            if (newStatus) {
-              btn.classList.add("active");
-              if (icon) {
-                icon.classList.remove("fa-regular");
-                icon.classList.add("fa-solid");
-              }
-              if (!favs.includes(serviceId)) favs.push(serviceId);
-              toast("❤️ Ditambahkan ke favorit", "success");
-            } else {
-              btn.classList.remove("active");
-              if (icon) {
-                icon.classList.remove("fa-solid");
-                icon.classList.add("fa-regular");
-              }
->>>>>>> ec26484 (implementasi demo)
-              const idx = favs.indexOf(serviceId);
-              if (idx > -1) favs.splice(idx, 1);
-              toast("💔 Dihapus dari favorit", "success");
-            }
-          } catch (err) {
-<<<<<<< HEAD
-            console.error("Favorite error:", err);
-=======
->>>>>>> ec26484 (implementasi demo)
-            toast(err.message || "Gagal mengubah favorit", "error");
-          } finally {
-            btn.disabled = false;
-            btn.style.opacity = "";
-          }
-        }),
-      );
-<<<<<<< HEAD
-      // ========== END PERBAIKAN FAVORIT ==========
-=======
->>>>>>> ec26484 (implementasi demo)
+      bindCardEvents(res);
+      filterBar.refreshTags();
     } catch (err) {
       console.error("Load error:", err);
-      res.innerHTML = `<div class="empty" style="grid-column:1/-1; text-align:center; padding:40px;">
-        <i class="fa-solid fa-circle-exclamation"></i>
-        <h3>Gagal memuat</h3>
-        <p>${escape(err.message)}</p>
-        <button class="btn btn-primary mt-2" onclick="location.reload()">Coba Lagi</button>
-      </div>`;
+      filterBar.setResultBadge("Gagal memuat", "empty");
+      res.innerHTML = empty(
+        "Gagal memuat jasa",
+        err.message || "Periksa koneksi Anda",
+        "fa-circle-exclamation",
+        '<button class="btn btn-primary mt-2" id="retry-load">Coba Lagi</button>',
+      );
+      document.getElementById("retry-load")?.addEventListener("click", load);
     }
   };
 
-  const d = debounce(load, 300);
-  ["q", "min", "max"].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener("input", d);
-  });
-<<<<<<< HEAD
-  document.getElementById("cat")?.addEventListener("change", load);
-  document.getElementById("reset-filters")?.addEventListener("click", () => {
-    document.getElementById("q").value = "";
-    document.getElementById("cat").value = "all";
-    document.getElementById("min").value = "";
-    document.getElementById("max").value = "";
-=======
-  ["cat", "min-rating", "delivery", "sort-by"].forEach((id) => {
-    document.getElementById(id)?.addEventListener("change", load);
-  });
-  document.getElementById("reset-filters")?.addEventListener("click", () => {
-    const q = document.getElementById("q");
-    if (q) q.value = "";
-    const cat = document.getElementById("cat");
-    if (cat) cat.value = "all";
-    ["min", "max"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.value = "";
-    });
-    const minRating = document.getElementById("min-rating");
-    if (minRating) minRating.value = "";
-    const delivery = document.getElementById("delivery");
-    if (delivery) delivery.value = "";
-    const sortBy = document.getElementById("sort-by");
-    if (sortBy) sortBy.value = "newest";
->>>>>>> ec26484 (implementasi demo)
-    load();
-  });
   load();
 }
-<<<<<<< HEAD
-export async function ServiceDetailPage({ mount, params }) {
-  mount.innerHTML = `<div class="container page"><div class="spinner" style="text-align:center; padding:40px;"></div></div>`;
-=======
-
-// frontend/src/features/marketplace/MarketplacePages.js
-
-// Ganti fungsi ServiceDetailPage dengan ini:
 
 export async function ServiceDetailPage({ mount, params }) {
-  mount.innerHTML = `<div class="container page"><div class="spinner" style="text-align:center; padding:40px;"></div></div>`;
+  mount.innerHTML = `<div class="container page"><div class="spinner"></div></div>`;
 
->>>>>>> ec26484 (implementasi demo)
   try {
     const s = await api.get("/services/" + params.id);
     const u = store.getState().user;
@@ -457,435 +241,255 @@ export async function ServiceDetailPage({ mount, params }) {
     const deliveryTime = s.deliveryTime
       ? `${s.deliveryTime} hari pengerjaan`
       : "Fleksibel";
-<<<<<<< HEAD
-
-=======
->>>>>>> ec26484 (implementasi demo)
     const rating = s.rating || 0;
     const reviewCount = s.reviewCount || 0;
-    const imageUrl =
-      s.image ||
-      (s.images && s.images[0]) ||
-      "https://placehold.co/600x800/0a66c2/ffffff?text=No+Image";
+    const imageUrls = parseServiceImages(s).map(resolveServiceImageUrl).filter(Boolean);
+    const catName = s.category?.name || s.category || "Umum";
+    const catObj = s.category && typeof s.category === "object" ? s.category : { name: catName };
+    const placeholderHtml = categoryPlaceholder(catObj, {
+      serviceType: s.isRemote === false ? "PHYSICAL" : "DIGITAL",
+    });
+    const galleryInner = serviceGalleryHtml(parseServiceImages(s), {
+      alt: s.title,
+      placeholderHtml,
+    });
+    const isRemote = s.isRemote === true || s.location === "Remote";
+
+    let serviceOrders = [];
+    if (u) {
+      try {
+        const endpoint = isOwner ? "/orders?role=SELLER" : "/orders/buyer";
+        const raw = await api.get(endpoint);
+        const list = Array.isArray(raw) ? raw : raw.data || [];
+        serviceOrders = list.filter((ord) => ord.serviceId === s.id);
+      } catch (_) {
+        serviceOrders = [];
+      }
+    }
+    const completedOrders = serviceOrders.filter(
+      (ord) => String(ord.status).toUpperCase() === "COMPLETED",
+    );
+    const activeOrder = serviceOrders.find(
+      (ord) => !["COMPLETED", "CANCELLED"].includes(String(ord.status).toUpperCase()),
+    );
+    const pendingDemoOrder =
+      isOwner &&
+      activeOrder &&
+      String(activeOrder.status).toUpperCase() === "WAITING_CONFIRMATION";
 
     mount.innerHTML = `
-      <div class="container page" style="max-width:1200px; margin:0 auto; padding:20px;">
-        <a href="#/marketplace" class="text-sm" data-testid="back-marketplace" style="display:inline-block; margin-bottom:20px; text-decoration:none; color:#0a66c2;">
+      <div class="container page service-detail-page">
+        <a href="#/marketplace" class="back-link" data-testid="back-marketplace">
           <i class="fa-solid fa-arrow-left"></i> Kembali ke Cari Jasa
         </a>
-        
-<<<<<<< HEAD
-        <div style="display:flex; gap:24px; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08);">
-          
-          <!-- KOLOM KIRI: GAMBAR VERTIKAL -->
-          <div style="flex: 0.8; min-width:0; background:#f5f5f5;">
-            <img src="${imageUrl}" 
-                 alt="${escape(s.title)}" 
-                 style="width:100%; height:100%; min-height:500px; object-fit:cover; display:block;"
-=======
-        <div class="service-detail-shell">
-          
-          <!-- KOLOM KIRI: GAMBAR VERTIKAL -->
-          <div class="service-detail-media">
-            <img src="${imageUrl}" 
-                 alt="${escape(s.title)}" 
-                 style="width:100%; height:100%; object-fit:cover; display:block;"
->>>>>>> ec26484 (implementasi demo)
-                 onerror="this.src='https://placehold.co/600x800/0a66c2/ffffff?text=No+Image'" />
-          </div>
-          
-          <!-- KOLOM KANAN: KONTEN -->
-<<<<<<< HEAD
-          <div style="flex: 1.2; padding:24px; display:flex; flex-direction:column;">
-=======
-          <div class="service-detail-content">
->>>>>>> ec26484 (implementasi demo)
-            
-            <span class="badge" style="display:inline-block; background:#e8f0fe; color:#0a66c2; padding:4px 12px; border-radius:20px; font-size:12px; width:fit-content; margin-bottom:16px;">
-              ${escape(s.category?.name || s.category || "Umum")}
-            </span>
-            
-            <h1 style="margin:0 0 12px 0; font-size:1.8rem; line-height:1.3;">${escape(s.title)}</h1>
-            
-            <div style="display:flex; flex-wrap:wrap; gap:20px; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid #eee;">
-              <span style="display:flex; align-items:center; gap:6px; font-size:14px;">
-                <i class="fa-solid fa-star" style="color:#f5b042;"></i>
-                <strong>${rating.toFixed(1)}</strong>
-                <span style="color:#666;">(${reviewCount} ulasan)</span>
-              </span>
-              <span style="display:flex; align-items:center; gap:6px; font-size:14px; color:#666;">
-                <i class="fa-solid fa-location-dot"></i> ${escape(s.city || "Remote")}
-              </span>
-              <span style="display:flex; align-items:center; gap:6px; font-size:14px; color:#666;">
-                <i class="fa-solid fa-clock"></i> ${escape(deliveryTime)}
-              </span>
+        ${
+          pendingDemoOrder
+            ? `<div class="alert alert-info mt-2" style="display:flex;align-items:center;gap:10px"><i class="fa-solid fa-bell"></i><span><strong>Pelanggan demo akan pesan ±3–5 detik.</strong> Refresh halaman, lalu klik <strong>Terima Pesanan</strong> di halaman pesanan.</span></div>`
+            : isOwner && activeOrder
+              ? `<div class="alert alert-warning mt-2"><i class="fa-solid fa-receipt"></i> Ada pesanan aktif untuk jasa ini — <a href="#/orders/${activeOrder.id}">Kelola pesanan</a></div>`
+              : ""
+        }
+
+        <div class="service-detail-top card">
+          <aside class="service-detail-media">
+            <div class="service-detail-gallery${!imageUrls.length ? " service-detail-gallery--placeholder" : ""}" id="service-detail-gallery">
+              ${galleryInner || placeholderHtml}
             </div>
-            
-            <div style="margin-bottom:24px;">
-              <h3 style="font-size:1rem; margin:0 0 12px 0; color:#333;">Deskripsi</h3>
-              <p style="font-size:0.95rem; line-height:1.6; color:#555; margin:0;">${escape(s.description || "Tidak ada deskripsi")}</p>
-            </div>
-            
-            <div style="background:#f8f9fa; border-radius:12px; padding:16px; margin-bottom:24px;">
-              <h3 style="font-size:0.8rem; margin:0 0 12px 0; color:#666;">TENTANG PENJUAL</h3>
-              <div class="seller-link" data-user-id="${s.sellerId}" style="cursor:pointer; display:flex; align-items:center; gap:12px;">
-                ${avatar(s.seller, "")}
-                <div>
-                  <div style="font-weight:700; display:flex; align-items:center; gap:6px;">
-                    ${escape(s.seller?.name || "Penjual")}
-                    ${s.seller?.verified ? '<i class="fa-solid fa-circle-check" style="color:#0a66c2; font-size:14px;"></i>' : ""}
+          </aside>
+
+          <div class="service-detail-info">
+            <header class="service-detail-head">
+              <div class="service-detail-badges">
+                ${serviceTypeBadge(s, "service")}
+                <span class="service-cat-chip service-cat-chip--lg">${escape(catName)}</span>
+              </div>
+              <h1 class="service-detail-title">${escape(s.title)}</h1>
+              <div class="trust-chips-row">
+                <span class="trust-chip"><i class="fa-solid fa-shield-halved"></i> Escrow aman</span>
+                <span class="trust-chip"><i class="fa-solid fa-rotate-left"></i> Revisi ${s.revisionCount ?? 1}x</span>
+                <span class="trust-chip"><i class="fa-solid ${isRemote ? "fa-wifi" : "fa-location-dot"}"></i> ${escape(isRemote ? "Remote" : s.city || s.location || "On-site")}</span>
+              </div>
+              <div class="service-detail-meta">
+                <span>${starsHtml(rating)} <strong>${rating.toFixed(1)}</strong> (${reviewCount} ulasan)</span>
+                <span><i class="fa-solid fa-clock"></i> ${escape(deliveryTime)}</span>
+              </div>
+            </header>
+
+            <section class="service-detail-bento service-detail-desc">
+              <h3>Deskripsi</h3>
+              <p>${escape(s.description || "Tidak ada deskripsi")}</p>
+            </section>
+
+            <section class="service-detail-bento service-detail-seller">
+              <h4>Tentang Penjual</h4>
+              <div class="profile-link service-seller-row" data-user-id="${s.sellerId}" role="link" tabindex="0">
+                ${avatar(s.seller, "lg")}
+                <div class="service-seller-info">
+                  <div class="service-seller-name">${escape(s.seller?.name || "Penjual")}
+                    ${s.seller?.verified ? '<i class="fa-solid fa-circle-check verified-icon"></i>' : ""}
                   </div>
-                  <div style="font-size:0.8rem; color:#666;">⭐ ${(s.seller?.rating || 0).toFixed(1)} (${s.seller?.reviewCount || 0} ulasan)</div>
+                  <div class="text-sm text-muted">⭐ ${(s.seller?.rating || rating || 0).toFixed(1)} · ${s.seller?.reviewCount ?? reviewCount ?? 0} ulasan</div>
                 </div>
               </div>
-            </div>
-            
-            <div style="background:linear-gradient(135deg, #0a66c2 0%, #004182 100%); border-radius:12px; padding:20px; margin-bottom:16px; color:#fff;">
-              <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
-                <div>
-                  <div style="font-size:12px; opacity:0.8;">Mulai dari harga ini</div>
-                  <div style="font-size:2rem; font-weight:700;">${fmtIDR(s.price || 0)}</div>
-                </div>
-                ${
-                  !isOwner && u
-                    ? `
-                  <div style="display:flex; gap:12px;">
-                    <button class="order-btn" id="order-btn" style="background:#fff; color:#0a66c2; border:none; padding:10px 20px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">
-                      <i class="fa-solid fa-bag-shopping"></i> Pesan
-                    </button>
-                    <button class="chat-btn" id="chat-btn" style="background:transparent; color:#fff; border:1px solid #fff; padding:10px 20px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">
-                      <i class="fa-solid fa-comment"></i> Chat
-                    </button>
-                  </div>
-                `
+            </section>
+
+            <footer class="service-detail-cta">
+              <div class="service-detail-cta-price">
+                <div class="text-xs">Mulai dari</div>
+                <div class="service-detail-price">${fmtIDR(s.price || 0)}</div>
+              </div>
+              ${
+                activeOrder
+                  ? `<div class="flex-col gap-sm" style="align-items:flex-end">
+                      <span class="badge badge-warning"><i class="fa-solid fa-hourglass-half"></i> Pesanan aktif</span>
+                      <a class="btn btn-light" href="#/orders/${activeOrder.id}"><i class="fa-solid fa-arrow-right"></i> Lanjutkan Pesanan</a>
+                    </div>`
+                  : !isOwner && u
+                    ? `<div class="flex-col gap-sm" style="align-items:flex-end">
+                        ${completedOrders.length ? `<span class="badge badge-success"><i class="fa-solid fa-rotate"></i> Pernah pesan ${completedOrders.length}x</span>` : ""}
+                        <div class="flex gap-sm">
+                          <button class="btn btn-light" id="order-btn"><i class="fa-solid fa-bag-shopping"></i> ${completedOrders.length ? "Pesan Lagi" : "Pesan Sekarang"}</button>
+                          <button class="btn btn-outline-light" id="chat-btn"><i class="fa-solid fa-comment"></i> Chat</button>
+                        </div>
+                      </div>`
                     : isOwner
-                      ? `
-                  <div style="background:rgba(255,255,255,0.2); padding:10px 20px; border-radius:8px;">Jasa Anda</div>
-                `
-                      : `
-                  <a href="#/login" style="background:#fff; color:#0a66c2; text-decoration:none; padding:10px 20px; border-radius:8px; font-size:14px; font-weight:600;">
-                    Login
-                  </a>
-                `
-                }
-              </div>
-            </div>
-            
-            <div style="text-align:center; font-size:11px; color:#999;">
-              <i class="fa-solid fa-shield-halved"></i> Pembayaran aman dengan escrow protection
-            </div>
-            
-            <div style="margin-top:24px;">
-              <h3 style="font-size:1rem; margin:0 0 16px 0;">Ulasan (${reviewCount})</h3>
-              <div id="reviews-list" style="max-height:300px; overflow-y:auto;"></div>
-            </div>
+                      ? activeOrder
+                        ? `<a class="btn btn-primary" href="#/orders/${activeOrder.id}"><i class="fa-solid fa-receipt"></i> Kelola Pesanan</a>`
+                        : `<span class="badge badge-light">Jasa Anda — tunggu pelanggan demo</span>`
+                      : `<a href="#/login" class="btn btn-light">Login untuk Pesan</a>`
+              }
+            </footer>
           </div>
         </div>
-      </div>
-<<<<<<< HEAD
-      
-      <style>
-        .order-btn:hover { background:#f0f0f0 !important; transform:translateY(-1px); transition:all 0.2s; }
-        .chat-btn:hover { background:rgba(255,255,255,0.2) !important; transform:translateY(-1px); transition:all 0.2s; }
-        .seller-link:hover { opacity:0.8; }
-      </style>
-=======
->>>>>>> ec26484 (implementasi demo)
-    `;
 
-    // Load reviews
+        <div class="service-detail-reviews-section card card-pad-lg">
+          <h3>Ulasan Pembeli (${reviewCount})</h3>
+          <div id="reviews-list" class="service-reviews-list"></div>
+        </div>
+      </div>`;
+
+    initServiceGallery(document.getElementById("service-detail-gallery"), parseServiceImages(s));
+
     try {
-<<<<<<< HEAD
-      const reviewsRes = await api.get(`/services/${s.id}/reviews`);
-=======
       const reviewsRes = await api.get(`/reviews/service/${s.id}`);
->>>>>>> ec26484 (implementasi demo)
-      const reviews = Array.isArray(reviewsRes)
-        ? reviewsRes
-        : reviewsRes?.data || [];
+      const reviews = Array.isArray(reviewsRes) ? reviewsRes : reviewsRes?.data || [];
       const reviewsList = document.getElementById("reviews-list");
-      if (reviews && reviews.length > 0) {
+      if (reviews.length && reviewsList) {
         reviewsList.innerHTML = reviews
-          .map(
-            (r) => `
-          <div style="padding:12px 0; border-bottom:1px solid #eee;">
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-              ${avatar(r.reviewer || { name: "Pengguna", avatar: r.buyerAvatar }, "sm")}
+          .map((r) => {
+            const reviewer = r.reviewer || { name: r.buyerName || "Pengguna", id: r.reviewerId };
+            const rid = reviewer.id || r.reviewerId;
+            const headClass = rid && !r.isAnonymous ? "review-item-head profile-link" : "review-item-head";
+            const headAttrs = rid && !r.isAnonymous ? ` data-user-id="${escape(String(rid))}" role="link" tabindex="0"` : "";
+            return `
+          <div class="review-item">
+            <div class="${headClass}"${headAttrs}>
+              ${avatar(r.isAnonymous ? { name: "Anonim" } : reviewer, "sm")}
               <div>
-                <div style="font-weight:600; font-size:0.85rem;">${escape(r.reviewer?.name || r.buyerName || "User")}</div>
-                <div style="font-size:0.7rem; color:#f5b042;">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</div>
+                <div class="review-item-name">${escape(r.isAnonymous ? "Anonim" : reviewer.name || "Pengguna")}</div>
+                <div class="review-item-stars">${starsHtml(r.rating)}</div>
               </div>
-              <div style="font-size:0.7rem; color:#999; margin-left:auto;">${timeAgo(r.createdAt)}</div>
+              <span class="text-xs text-muted">${timeAgo(r.createdAt)}</span>
             </div>
-            <p style="font-size:0.85rem; color:#555; margin:0;">${escape(r.comment || "")}</p>
-          </div>
-        `,
-          )
-          .join("");
-      } else {
-        reviewsList.innerHTML =
-          '<div style="text-align:center; padding:30px; color:#999;">Belum ada ulasan</div>';
-      }
-    } catch (e) {
-      const reviewsList = document.getElementById("reviews-list");
-      if (reviewsList)
-        reviewsList.innerHTML =
-          '<div style="text-align:center; padding:30px; color:#999;">Belum ada ulasan</div>';
-    }
-
-    // Seller link click
-    const sellerLink = document.querySelector(".seller-link");
-    if (sellerLink) {
-      sellerLink.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        router.navigate("/users/" + s.sellerId);
-      });
-    }
-
-<<<<<<< HEAD
-    // Order button dengan MODAL KONFIRMASI
-=======
-    // ✅ ORDER BUTTON - LENGKAP DENGAN KONFIRMASI
->>>>>>> ec26484 (implementasi demo)
-    const orderBtn = document.getElementById("order-btn");
-    if (orderBtn) {
-      orderBtn.addEventListener("click", async () => {
-        if (!u) {
-          toast("Silakan login dulu", "warning");
-          return router.navigate("/login");
-        }
-
-<<<<<<< HEAD
-        try {
-          const me = await api.get("/auth/me");
-          if (!me.emailVerified || !me.phoneVerified) {
-            toast(
-              "Verifikasi email & nomor telepon dulu sebelum memesan",
-=======
-        // Cek verifikasi
-        try {
-          const me = await api.get("/auth/me");
-          if (!me.emailVerified || !me.phoneVerified || !me.ktpVerified) {
-            toast(
-              "Verifikasi email, telepon, dan KTP dulu sebelum memesan",
->>>>>>> ec26484 (implementasi demo)
-              "warning",
-              6000,
-            );
-            return router.navigate("/verification");
-          }
-        } catch (_) {}
-
-        const fee = Math.round((s.price || 0) * 0.05);
-        const total = (s.price || 0) + fee;
-
-<<<<<<< HEAD
-=======
-        // Buat modal overlay
->>>>>>> ec26484 (implementasi demo)
-        const overlay = document.createElement("div");
-        overlay.className = "modal-backdrop";
-        overlay.style.cssText =
-          "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;";
-        overlay.innerHTML = `
-          <div style="background:white;border-radius:12px;max-width:500px;width:90%;">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid #eee;">
-              <h3 style="margin:0;">Konfirmasi Pesanan</h3>
-              <button id="mc-close" style="background:none;border:none;font-size:24px;cursor:pointer;">✕</button>
-            </div>
-            <div style="padding:16px;">
-              <div style="background:#f5f5f5;border-radius:10px;padding:1rem;margin-bottom:1rem">
-                <strong>${escape(s.title)}</strong>
-                <div class="text-muted text-sm">oleh ${escape(s.seller?.name || "Penjual")}</div>
-              </div>
-              <textarea id="order-notes" rows="3" placeholder="Catatan untuk penjual (opsional)" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;"></textarea>
-              <div style="margin-top:16px;background:#f5f5f5;border-radius:10px;padding:1rem">
-                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                  <span>Harga Jasa</span>
-                  <span>${fmtIDR(s.price)}</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                  <span>Biaya Layanan (5%)</span>
-                  <span>${fmtIDR(fee)}</span>
-                </div>
-                <div style="border-top:1px solid #ddd;margin:8px 0;"></div>
-                <div style="display:flex;justify-content:space-between;">
-                  <strong>Total</strong>
-                  <strong style="color:#0a66c2;">${fmtIDR(total)}</strong>
-                </div>
-              </div>
-            </div>
-            <div style="display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid #eee;">
-              <button id="mc-cancel" style="padding:8px 16px;background:#f0f0f0;border:none;border-radius:8px;cursor:pointer;">Batal</button>
-              <button id="mc-confirm" style="padding:8px 16px;background:#0a66c2;color:#fff;border:none;border-radius:8px;cursor:pointer;">
-                <i class="fa-solid fa-credit-card"></i> Lanjutkan
-              </button>
-            </div>
+            <p class="review-item-comment">${escape(r.comment || "")}</p>
           </div>`;
-        document.body.appendChild(overlay);
-
-        const closeModal = () => overlay.remove();
-        overlay
-          .querySelector("#mc-close")
-          .addEventListener("click", closeModal);
-        overlay
-          .querySelector("#mc-cancel")
-          .addEventListener("click", closeModal);
-        overlay.addEventListener("click", (e) => {
-          if (e.target === overlay) closeModal();
-        });
-
-        overlay
-          .querySelector("#mc-confirm")
-          .addEventListener("click", async () => {
-            const note = document.getElementById("order-notes")?.value || "";
-            const confirmBtn = overlay.querySelector("#mc-confirm");
-            confirmBtn.disabled = true;
-            confirmBtn.innerHTML =
-              '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
-            try {
-<<<<<<< HEAD
-              const o = await api.post("/orders", { serviceId: s.id, note });
-              closeModal();
-              toast("Pesanan dibuat! Silakan bayar.", "success");
-              router.navigate("/orders/" + o.id);
-=======
-              const order = await api.post("/orders", {
-                serviceId: s.id,
-                note,
-              });
-              closeModal();
-              toast("Pesanan dibuat! Silakan bayar.", "success");
-              router.navigate("/orders/" + order.id);
->>>>>>> ec26484 (implementasi demo)
-            } catch (err) {
-              toast(err.message, "error");
-              confirmBtn.disabled = false;
-              confirmBtn.innerHTML =
-                '<i class="fa-solid fa-credit-card"></i> Lanjutkan';
-            }
-          });
-      });
+          })
+          .join("");
+      } else if (reviewsList) {
+        reviewsList.innerHTML = '<p class="text-muted text-sm">Belum ada ulasan</p>';
+      }
+    } catch {
+      document.getElementById("reviews-list").innerHTML =
+        '<p class="text-muted text-sm">Belum ada ulasan</p>';
     }
 
-<<<<<<< HEAD
-    // ========== CHAT BUTTON - PERBAIKAN LENGKAP ==========
-=======
-    // ✅ CHAT BUTTON - LENGKAP
->>>>>>> ec26484 (implementasi demo)
-    const chatBtn = document.getElementById("chat-btn");
-    if (chatBtn) {
-      chatBtn.addEventListener("click", async () => {
-        if (!u) {
-          toast("Silakan login dulu", "warning");
-          return router.navigate("/login");
+    document.getElementById("order-btn")?.addEventListener("click", async () => {
+      if (!u) return router.navigate("/login");
+      try {
+        const me = await api.get("/auth/me");
+        if (!me.emailVerified || !me.phoneVerified || !me.ktpVerified) {
+          toast("Selesaikan verifikasi identitas dulu", "warning", 6000);
+          return router.navigate("/verification");
         }
-<<<<<<< HEAD
+      } catch (_) {}
 
-        // Cek jangan chat dengan diri sendiri
-=======
->>>>>>> ec26484 (implementasi demo)
-        if (u.id === s.sellerId) {
-          toast("Anda tidak bisa chat dengan diri sendiri", "warning");
-          return;
-        }
-
-<<<<<<< HEAD
-        console.log("=== CHAT BUTTON CLICKED ===");
-        console.log("Current user ID:", u.id);
-        console.log("Current user name:", u.name);
-        console.log("Seller ID:", s.sellerId);
-        console.log("Seller name:", s.seller?.name);
-
-        // Disable button sementara
-=======
->>>>>>> ec26484 (implementasi demo)
-        chatBtn.disabled = true;
-        chatBtn.innerHTML =
-          '<i class="fa-solid fa-spinner fa-spin"></i> Memuat...';
-
+      const fee = Math.round((s.price || 0) * 0.05);
+      const total = (s.price || 0) + fee;
+      const overlay = document.createElement("div");
+      overlay.className = "modal-backdrop";
+      overlay.innerHTML = `
+        <div class="modal card card-pad-lg" style="max-width:480px;width:92%">
+          <div class="flex-between mb-3">
+            <h3 style="margin:0">Konfirmasi Pesanan</h3>
+            <button class="btn btn-ghost btn-sm" id="mc-close" type="button">✕</button>
+          </div>
+          <div class="card card-pad mb-3" style="background:var(--surface-2)">
+            <strong>${escape(s.title)}</strong>
+            <div class="text-sm text-muted">oleh ${escape(s.seller?.name || "Penjual")}</div>
+          </div>
+          <textarea id="order-notes" class="textarea mb-3" rows="3" placeholder="Catatan untuk penjual (opsional)"></textarea>
+          <div class="card card-pad mb-3" style="background:var(--surface-2)">
+            <div class="flex-between text-sm mb-1"><span>Harga</span><span>${fmtIDR(s.price)}</span></div>
+            <div class="flex-between text-sm mb-1"><span>Biaya (5%)</span><span>${fmtIDR(fee)}</span></div>
+            <div class="flex-between"><strong>Total</strong><strong class="text-primary">${fmtIDR(total)}</strong></div>
+          </div>
+          <div class="flex gap-sm justify-end">
+            <button class="btn btn-secondary" id="mc-cancel" type="button">Batal</button>
+            <button class="btn btn-primary" id="mc-confirm" type="button"><i class="fa-solid fa-paper-plane"></i> Kirim Pesanan</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+      const close = () => overlay.remove();
+      overlay.querySelector("#mc-close").addEventListener("click", close);
+      overlay.querySelector("#mc-cancel").addEventListener("click", close);
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) close();
+      });
+      overlay.querySelector("#mc-confirm").addEventListener("click", async () => {
+        const btn = overlay.querySelector("#mc-confirm");
+        btn.disabled = true;
         try {
-<<<<<<< HEAD
-          // Kirim request ke API untuk membuat atau mendapatkan conversation
-          const response = await api.post("/chat/conversations", {
-            recipientId: s.sellerId,
+          const order = await api.post("/orders", {
+            serviceId: s.id,
+            note: document.getElementById("order-notes")?.value || "",
           });
-
-          console.log("Conversation API Response:", response);
-
-          // Response bisa berupa { id, other } atau langsung conversation object
-          let conversationId = null;
-
-          if (response && response.id) {
-            conversationId = response.id;
-          } else if (
-            response &&
-            response.conversation &&
-            response.conversation.id
-          ) {
-            conversationId = response.conversation.id;
-          }
-
-          console.log("Conversation ID:", conversationId);
-=======
-          const response = await api.post("/chat/conversations", {
-            recipientId: s.sellerId,
-          });
-          let conversationId = null;
-          if (response && response.id) conversationId = response.id;
-          else if (
-            response &&
-            response.conversation &&
-            response.conversation.id
-          )
-            conversationId = response.conversation.id;
->>>>>>> ec26484 (implementasi demo)
-
-          if (conversationId) {
-            toast("Membuka chat...", "info", 1000);
-            router.navigate("/chat/" + conversationId);
-          } else {
-<<<<<<< HEAD
-            console.error("No conversation ID in response:", response);
-            toast("Gagal memulai chat: response tidak valid", "error");
-          }
+          close();
+          toast("📩 Pesanan terkirim! Penjual merespons ±3–5 detik — lalu Anda bayar via escrow.", "success");
+          router.navigate("/orders/" + order.id);
         } catch (err) {
-          console.error("Chat error:", err);
-          console.error("Error details:", {
-            message: err.message,
-            status: err.status,
-            data: err.data,
-          });
-          toast(
-            err.message || "Gagal memulai chat. Silakan coba lagi.",
-            "error",
-          );
-=======
-            toast("Gagal memulai chat", "error");
-          }
-        } catch (err) {
-          console.error("Chat error:", err);
-          toast(err.message || "Gagal memulai chat", "error");
->>>>>>> ec26484 (implementasi demo)
-        } finally {
-          chatBtn.disabled = false;
-          chatBtn.innerHTML =
-            '<i class="fa-solid fa-comment"></i> Chat Penjual';
+          toast(err.message, "error");
+          btn.disabled = false;
         }
       });
-    }
-<<<<<<< HEAD
-    // ========== END CHAT BUTTON ==========
-=======
->>>>>>> ec26484 (implementasi demo)
+    });
+
+    document.getElementById("chat-btn")?.addEventListener("click", async () => {
+      if (!u) return router.navigate("/login");
+      if (u.id === s.sellerId) return toast("Tidak bisa chat dengan diri sendiri", "warning");
+      try {
+        const response = await api.post("/chat/conversations", { recipientId: s.sellerId });
+        const conversationId = response?.id || response?.conversation?.id;
+        if (conversationId) router.navigate("/chat/" + conversationId);
+        else toast("Gagal memulai chat", "error");
+      } catch (err) {
+        toast(err.message || "Gagal memulai chat", "error");
+      }
+    });
   } catch (err) {
-    console.error("Detail error:", err);
-    mount.innerHTML = `<div class="container"><div class="empty" style="text-align:center; padding:40px;">
-      <i class="fa-solid fa-circle-exclamation"></i>
-      <h3>Jasa tidak ditemukan</h3>
-      <p>${escape(err.message)}</p>
-      <a href="#/marketplace" class="btn btn-primary mt-2">Kembali ke Cari Jasa</a>
-    </div></div>`;
+    mount.innerHTML = `<div class="container page">${empty(
+      "Jasa tidak ditemukan",
+      err.message,
+      "fa-circle-exclamation",
+      '<a href="#/marketplace" class="btn btn-primary mt-2">Kembali</a>',
+    )}</div>`;
   }
+}
+
+function starsHtml(rating) {
+  const r = Math.round(Number(rating) || 0);
+  let out = "";
+  for (let i = 1; i <= 5; i++) {
+    out += `<i class="fa-${i <= r ? "solid" : "regular"} fa-star" style="color:var(--warning)"></i>`;
+  }
+  return out;
 }

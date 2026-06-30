@@ -7,11 +7,8 @@ import {
   Patch,
   Post,
   Query,
-  BadRequestException,
-<<<<<<< HEAD
-=======
   UseGuards,
->>>>>>> ec26484 (implementasi demo)
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OrdersService } from '../services/orders.service';
@@ -19,12 +16,6 @@ import {
   CancelOrderDto,
   CreateOrderFromServiceDto,
   RevisionRequestDto,
-<<<<<<< HEAD
-} from '../dto/order.dto';
-import { Roles } from '../../../common/decorators/roles.decorator';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-import { ROLE, ORDER_STATUS, OrderStatus } from '../../../common/constants/enums';
-=======
   SubmitWorkDto,
   OpenDisputeDto,
 } from '../dto/order.dto';
@@ -36,7 +27,6 @@ import {
   OrderStatus,
 } from '../../../common/constants/enums';
 import { VerifiedTransactionGuard } from '../../../common/guards/verification.guards';
->>>>>>> ec26484 (implementasi demo)
 
 @ApiTags('Orders')
 @ApiBearerAuth('jwt')
@@ -44,11 +34,8 @@ import { VerifiedTransactionGuard } from '../../../common/guards/verification.gu
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  @Roles(ROLE.USER)
-<<<<<<< HEAD
-=======
   @UseGuards(VerifiedTransactionGuard)
->>>>>>> ec26484 (implementasi demo)
+  @Roles(ROLE.USER)
   @Post('service/:serviceId')
   @ApiOperation({ summary: '[Buyer] Create order from a service' })
   fromService(
@@ -65,11 +52,8 @@ export class OrdersController {
     return this.ordersService.createFromService(buyerId, serviceId, dto);
   }
 
-  @Roles(ROLE.USER)
-<<<<<<< HEAD
-=======
   @UseGuards(VerifiedTransactionGuard)
->>>>>>> ec26484 (implementasi demo)
+  @Roles(ROLE.USER)
   @Post('application/:applicationId')
   @ApiOperation({
     summary: '[Buyer] Create order from an accepted application',
@@ -172,8 +156,6 @@ export class OrdersController {
   }
 
   @Roles(ROLE.USER)
-<<<<<<< HEAD
-=======
   @Post(':id/work-submission')
   @ApiOperation({ summary: '[Seller] Submit work proof for buyer approval' })
   submitWork(
@@ -251,7 +233,6 @@ export class OrdersController {
   }
 
   @Roles(ROLE.USER)
->>>>>>> ec26484 (implementasi demo)
   @Post(':id/revision')
   @ApiOperation({ summary: '[Buyer] Request revision' })
   revision(
@@ -290,6 +271,16 @@ export class OrdersController {
    * Body: { status: 'ACCEPTED'|'IN_PROGRESS'|'IN_REVIEW'|'COMPLETED'|'CANCELLED'|'REVISION_REQUESTED', reason?: string }
    * Convenience for the frontend.
    */
+  @Post(':id/seller-accept')
+  @ApiOperation({ summary: 'Seller accepts incoming order (triggers demo payment flow)' })
+  sellerAccept(
+    @Param('id') id: string,
+    @CurrentUser('id') uid: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.ordersService.sellerAcceptOrder(id, uid, role);
+  }
+
   @Post(':id/status')
   @ApiOperation({ summary: 'Generic state transition (frontend-friendly)' })
   async setStatus(
@@ -341,11 +332,6 @@ export class OrdersController {
   ) {
     return this.ordersService.getInvoice(id, uid, role);
   }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> ec26484 (implementasi demo)
 
   @Roles(ROLE.USER)
   @Post(':id/demo-auto')
@@ -405,8 +391,4 @@ export class OrdersController {
   ) {
     return this.ordersService.complete(id, uid, role);
   }
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
 }

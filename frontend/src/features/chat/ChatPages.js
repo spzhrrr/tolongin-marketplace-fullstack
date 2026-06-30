@@ -117,7 +117,7 @@ export async function ChatPage({ mount, params }) {
 
   const room = document.getElementById("chat-room");
   room.innerHTML = `
-    <div class="chat-header">
+    <div class="chat-header profile-link" data-user-id="${conv.other?.id || ""}" role="link" tabindex="0">
       ${avatar(conv.other)}
       <div style="flex:1"><strong>${escape(conv.other?.name || "")}</strong><div class="text-xs text-muted" id="typing-ind">${escape(conv.other?.bio || "")}</div></div>
     </div>

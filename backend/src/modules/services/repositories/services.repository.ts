@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { parseJsonField } from '../../../common/utils/helpers';
 
 @Injectable()
 export class ServicesRepository {
@@ -24,7 +25,8 @@ export class ServicesRepository {
               id: true,
               name: true,
               avatar: true,
-              verified: true, // ✅ TAMBAHKAN verified
+              verified: true,
+              city: true,
             },
           },
           category: true,
@@ -147,6 +149,13 @@ export class ServicesRepository {
 
   delete(id: string) {
     return this.prisma.service.delete({ where: { id } });
+  }
+
+  findSellerCity(sellerId: string) {
+    return this.prisma.user.findUnique({
+      where: { id: sellerId },
+      select: { city: true },
+    });
   }
 
   async findFeatured() {

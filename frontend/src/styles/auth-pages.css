@@ -1,0 +1,363 @@
+/**
+ * Auth pages — login & register visual polish
+ * Design-only overrides (loaded after main.css)
+ */
+
+/* ── Left panel: richer mesh + no overlap ── */
+.auth-panel {
+  background:
+    radial-gradient(ellipse 90% 70% at 100% 0%, rgba(96, 165, 250, 0.42) 0%, transparent 52%),
+    radial-gradient(ellipse 55% 50% at 0% 100%, rgba(14, 165, 233, 0.32) 0%, transparent 54%),
+    radial-gradient(ellipse 45% 38% at 72% 58%, rgba(99, 102, 241, 0.28) 0%, transparent 50%),
+    radial-gradient(ellipse 35% 30% at 20% 30%, rgba(16, 185, 129, 0.12) 0%, transparent 50%),
+    linear-gradient(148deg, #042f5a 0%, #0a66c2 38%, #1e40af 72%, #312e81 100%);
+}
+
+.auth-panel__content {
+  max-width: min(440px, 54%);
+  width: 100%;
+  z-index: 4;
+}
+
+.auth-panel__brand {
+  margin-bottom: 1.35rem;
+}
+
+.auth-panel__brand-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.15);
+}
+
+.auth-panel__brand-name {
+  font-size: 1.45rem;
+  text-shadow: 0 2px 12px rgba(15, 23, 42, 0.2);
+}
+
+.auth-panel__brand-name span {
+  color: #93c5fd;
+  text-shadow: 0 0 20px rgba(147, 197, 253, 0.45);
+}
+
+.auth-panel__title {
+  font-size: clamp(1.5rem, 2.8vw, 2.15rem);
+  text-shadow: 0 2px 16px rgba(15, 23, 42, 0.18);
+}
+
+.auth-panel__sub {
+  margin-bottom: 1.5rem;
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+/* Floats confined to right decorative column — no overlap with copy */
+.auth-panel__floats {
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 0.9rem;
+  padding: 10% 6% 10% min(56%, 460px);
+}
+
+.auth-panel__floats > .auth-panel__chip,
+.auth-panel__floats > .auth-panel__mini {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  left: auto !important;
+  bottom: auto !important;
+  margin: 0;
+  animation: auth-deco-float 7.5s ease-in-out infinite !important;
+}
+
+.auth-panel__chip--a {
+  --auth-tilt: -2deg;
+  align-self: flex-end;
+}
+
+.auth-panel__chip--b {
+  --auth-tilt: 1.5deg;
+  align-self: flex-start;
+  margin-right: 18%;
+  animation-delay: -2.2s !important;
+}
+
+.auth-panel__mini--service {
+  --auth-tilt: -3deg;
+  align-self: flex-end;
+  animation-delay: -1s !important;
+}
+
+.auth-panel__mini--job {
+  --auth-tilt: 2.5deg;
+  align-self: flex-start;
+  margin-right: 10%;
+  animation-delay: -3.5s !important;
+}
+
+@keyframes auth-deco-float {
+  0%,
+  100% {
+    transform: rotate(var(--auth-tilt, 0deg)) translateY(0);
+  }
+  50% {
+    transform: rotate(var(--auth-tilt, 0deg)) translateY(-6px);
+  }
+}
+
+.auth-panel__chip {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14);
+  font-size: 0.74rem;
+}
+
+.auth-panel__mini {
+  min-width: 128px;
+  padding: 0.7rem 0.95rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.16);
+  border-radius: 16px 20px 14px 18px;
+}
+
+.auth-panel__quote {
+  padding: 1.1rem 1.2rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+}
+
+.auth-panel__quote p {
+  font-size: 0.92rem;
+  line-height: 1.58;
+}
+
+.auth-panel__features {
+  gap: 0.72rem;
+}
+
+.auth-panel__features li {
+  padding: 0.35rem 0;
+  font-size: 0.9rem;
+}
+
+.auth-panel__feat-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+}
+
+/* ── Right side: colorful canvas + premium glass form ── */
+#app .auth-form-wrap {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse 75% 55% at 12% 18%, rgba(96, 165, 250, 0.22) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 48% at 88% 22%, rgba(167, 139, 250, 0.16) 0%, transparent 52%),
+    radial-gradient(ellipse 55% 45% at 75% 88%, rgba(10, 102, 194, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 35% at 30% 72%, rgba(245, 158, 11, 0.08) 0%, transparent 48%),
+    linear-gradient(165deg, #e8f2fc 0%, #f4f7fb 38%, #f5f3ff 72%, #fff8f0 100%);
+}
+
+#app .auth-form-wrap::before,
+#app .auth-form-wrap::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(56px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#app .auth-form-wrap::before {
+  width: min(320px, 45vw);
+  height: min(320px, 45vw);
+  top: 8%;
+  right: 4%;
+  background: rgba(99, 102, 241, 0.18);
+}
+
+#app .auth-form-wrap::after {
+  width: min(260px, 38vw);
+  height: min(260px, 38vw);
+  bottom: 12%;
+  left: 6%;
+  background: rgba(10, 102, 194, 0.14);
+}
+
+#app .auth-form {
+  position: relative;
+  z-index: 1;
+  max-width: 420px;
+  padding: clamp(1.15rem, 2.5vw, 1.55rem) clamp(1.15rem, 2.5vw, 1.65rem);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(22px) saturate(168%);
+  -webkit-backdrop-filter: blur(22px) saturate(168%);
+  border: 1px solid rgba(255, 255, 255, 0.96) !important;
+  border-radius: 22px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 1) inset,
+    0 22px 50px rgba(10, 102, 194, 0.14),
+    0 8px 24px rgba(15, 23, 42, 0.06) !important;
+}
+
+#app .auth-form h1 {
+  font-family: var(--font-head);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+}
+
+#app .auth-form .sub {
+  font-size: 0.86rem;
+  margin-bottom: 1rem;
+  color: var(--text-2);
+}
+
+#app .auth-form .sub a {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+#app .auth-form--compact .label {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+#app .auth-form--compact .input {
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid rgba(10, 102, 194, 0.1) !important;
+  border-radius: 12px;
+  box-shadow: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+#app .auth-form--compact .input:focus {
+  background: #fff;
+  border-color: rgba(10, 102, 194, 0.38) !important;
+  box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.12) !important;
+}
+
+#app .auth-form--compact .input-icon i {
+  color: var(--primary);
+  opacity: 0.75;
+}
+
+#app .auth-pw-hint {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  margin: 0.35rem 0 0.65rem;
+}
+
+#app .auth-tnc {
+  font-size: 0.8rem;
+  color: var(--text-2);
+  margin: 0.65rem 0 0.85rem;
+}
+
+#app .auth-tnc a {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+#app .auth-form-meta {
+  margin: 0.35rem 0 0.85rem;
+}
+
+#app .auth-form-meta__hint {
+  font-size: 0.74rem;
+  color: var(--text-3);
+}
+
+#app .auth-form-meta a {
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+#app .auth-submit {
+  padding: 0.72rem 1rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  border-radius: 14px;
+  box-shadow: 0 8px 26px rgba(10, 102, 194, 0.3);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+#app .auth-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(10, 102, 194, 0.36);
+}
+
+#app .auth-wrap--register .auth-form {
+  max-width: 440px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .auth-panel__content {
+    max-width: min(400px, 58%);
+  }
+
+  .auth-panel__floats {
+    padding-left: min(52%, 380px);
+    opacity: 0.92;
+  }
+}
+
+@media (max-width: 900px) {
+  .auth-panel__content {
+    max-width: 100%;
+  }
+
+  .auth-panel__floats {
+    display: none;
+  }
+
+  .auth-panel {
+    min-height: 240px;
+    padding: 1.75rem 1.35rem;
+  }
+
+  #app .auth-form-wrap::before,
+  #app .auth-form-wrap::after {
+    opacity: 0.65;
+  }
+}
+
+@media (max-width: 480px) {
+  #app .auth-form {
+    border-radius: 18px;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 1) inset,
+      0 16px 40px rgba(10, 102, 194, 0.12) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-panel__floats > .auth-panel__chip,
+  .auth-panel__floats > .auth-panel__mini {
+    animation: none !important;
+  }
+
+  #app .auth-submit:hover:not(:disabled) {
+    transform: none;
+  }
+}

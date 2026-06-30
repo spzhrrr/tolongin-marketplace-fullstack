@@ -9,16 +9,10 @@ export class NotificationsRepository {
   create(data: Prisma.NotificationCreateInput) {
     return this.prisma.notification.create({ data });
   }
-<<<<<<< HEAD
-  findByUser(userId: string) {
-    return this.prisma.notification.findMany({
-      where: { userId },
-=======
   findByUser(userId: string, unreadOnly = false) {
     return this.prisma.notification.findMany({
       // Jika unreadOnly true, hanya ambil notifikasi yang belum dibaca
       where: { userId, ...(unreadOnly ? { isRead: false } : {}) },
->>>>>>> ec26484 (implementasi demo)
       orderBy: { createdAt: 'desc' },
       take: 100,
     });

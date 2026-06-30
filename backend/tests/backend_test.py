@@ -7,8 +7,8 @@ import uuid
 import pytest
 import requests
 
-# Use internal port for backend-only tests (per request)
-BASE_URL = "http://localhost:8001/api"
+# Use preview URL (proxies /api to backend port 8001)
+BASE_URL = os.environ.get("BACKEND_BASE_URL", "https://a98cf157-f260-4857-a561-a6de99fc5d38.preview.emergentagent.com").rstrip("/") + "/api"
 
 BUYER = {"email": "buyer@tolongin.com", "password": "Buyer@123"}
 SELLER = {"email": "seller@tolongin.com", "password": "Seller@123"}

@@ -1,14 +1,10 @@
-<<<<<<< HEAD
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-=======
 // backend/src/app.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
->>>>>>> ec26484 (implementasi demo)
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
 import appConfig from './config/app.config';
 import { validateEnvironment } from './config/environment.validation';
 import { PrismaModule } from './prisma/prisma.module';
@@ -19,7 +15,7 @@ import { UsersModule } from './modules/users/users.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { ServicesModule } from './modules/services/services.module';
 import { JobsModule } from './modules/jobs/jobs.module';
-import { ApplicationsModule } from './modules/applications/applications.module';
+import { ApplicationsModule } from './modules/applications/applications.module'; // ✅ PASTIKAN PATH BENAR
 import { OrdersModule } from './modules/orders/orders.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { PaymentsModule } from './modules/payments/payments.module';
@@ -28,40 +24,41 @@ import { ChatModule } from './modules/chat/chat.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { DisputesModule } from './modules/disputes/disputes.module';
 import { AdminModule } from './modules/admin/admin.module';
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import { SimulationModule } from './modules/simulation/simulation.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
-import { SimulationModule } from './modules/simulation/simulation.module';
-import { UploadsModule } from './modules/uploads/uploads.module';
->>>>>>> ec26484 (implementasi demo)
 import { CompatModule } from './compat/compat.module';
+import {
+  VerifiedContactGuard,
+  VerifiedKtpGuard,
+  VerifiedWithdrawalGuard,
+  VerifiedTransactionGuard,
+  VerifiedSellerGuard,
+} from './common/guards/verification.guards';
 
 @Module({
   imports: [
-<<<<<<< HEAD
-<<<<<<< HEAD
-    ConfigModule.forRoot({ isGlobal: true, load: [appConfig] }),
-=======
-=======
->>>>>>> ec26484 (implementasi demo)
     ConfigModule.forRoot({
       isGlobal: true,
       load: [appConfig],
       validate: validateEnvironment,
     }),
     ScheduleModule.forRoot(),
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
     ThrottlerModule.forRoot([
-      { name: 'short', ttl: 1000, limit: 5 },
-      { name: 'medium', ttl: 10_000, limit: 30 },
-      { name: 'long', ttl: 60_000, limit: 120 },
+      {
+        name: 'short',
+        ttl: 1000,
+        limit: process.env.NODE_ENV === 'production' ? 15 : 80,
+      },
+      {
+        name: 'medium',
+        ttl: 10_000,
+        limit: process.env.NODE_ENV === 'production' ? 80 : 400,
+      },
+      {
+        name: 'long',
+        ttl: 60_000,
+        limit: process.env.NODE_ENV === 'production' ? 300 : 1200,
+      },
     ]),
     PrismaModule,
     CommonModule,
@@ -80,18 +77,17 @@ import { CompatModule } from './compat/compat.module';
     NotificationsModule,
     DisputesModule,
     AdminModule,
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
     SimulationModule,
     UploadsModule,
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
-    SimulationModule,
-    UploadsModule,
->>>>>>> ec26484 (implementasi demo)
     CompatModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: AppThrottlerGuard },
+    VerifiedContactGuard,
+    VerifiedKtpGuard,
+    VerifiedWithdrawalGuard,
+    VerifiedTransactionGuard,
+    VerifiedSellerGuard,
+  ],
 })
 export class AppModule {}

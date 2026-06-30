@@ -1,8 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-<<<<<<< HEAD
-=======
 import { Transform } from 'class-transformer';
->>>>>>> ec26484 (implementasi demo)
 import {
   IsEmail,
   IsOptional,
@@ -14,34 +11,6 @@ import {
 
 export class RegisterDto {
   @ApiProperty({ example: 'Andi Pratama', minLength: 3, maxLength: 100 })
-<<<<<<< HEAD
-  @IsString()
-  @MinLength(3)
-  @MaxLength(100)
-  name!: string;
-
-  @ApiProperty({ example: 'andi@tolongin.com' })
-  @IsEmail()
-  email!: string;
-
-  @ApiProperty({
-    example: 'StrongPass1!',
-    minLength: 8,
-    description: 'Min 8 chars, 1 number, 1 special char',
-  })
-  @IsString()
-  @MinLength(8)
-  @Matches(/^(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).+$/, {
-    message: 'password must contain at least 1 number and 1 special character',
-  })
-  password!: string;
-
-  @ApiProperty({ example: '+6281234567890', required: false })
-  @IsOptional()
-  @IsString()
-  @Matches(/^(\+62|62|0)8[1-9][0-9]{7,11}$/, {
-    message: 'phone must be a valid Indonesia phone number',
-=======
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString({ message: 'Nama harus berupa teks' })
   @MinLength(3, { message: 'Nama minimal 3 karakter' })
@@ -84,7 +53,6 @@ export class RegisterDto {
   @Matches(/^(\+62|62|0)8[1-9][0-9]{6,11}$/, {
     message:
       'Nomor telepon tidak valid. Gunakan format Indonesia, contoh: 081234567890, +6281234567890, atau 6281234567890',
->>>>>>> ec26484 (implementasi demo)
   })
   phone?: string;
 }

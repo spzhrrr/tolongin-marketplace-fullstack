@@ -34,13 +34,9 @@ Thumbs.db
 *.launch
 .settings/
 *.sublime-workspace
-<<<<<<< HEAD
-.vscode/
-=======
 
 # IDE - VSCode
 .vscode/*
->>>>>>> ec26484 (implementasi demo)
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
@@ -65,18 +61,11 @@ pids
 *.seed
 *.pid.lock
 
-<<<<<<< HEAD
-# Diagnostic reports
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
-
-# Generated files
-=======
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Generated files
 /generated/prisma
->>>>>>> ec26484 (implementasi demo)
 /generated
 prisma/generated/
 
@@ -93,9 +82,5 @@ package-lock.json
 # npm install akan generate ulang package-lock.json
 
 # Railway specific
-<<<<<<< HEAD
-.railway/
-=======
 .railway/
   
->>>>>>> ec26484 (implementasi demo)

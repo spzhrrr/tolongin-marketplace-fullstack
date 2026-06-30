@@ -14,6 +14,33 @@ export function sanitize(html) {
 export function fmtIDR(n) {
   return "Rp " + (Number(n) || 0).toLocaleString("id-ID");
 }
+
+/** Parse typed/display Rupiah input to integer (empty → ""). */
+export function parseIDRInput(v) {
+  const digits = String(v ?? "").replace(/\D/g, "");
+  return digits ? parseInt(digits, 10) : "";
+}
+
+/** Format number or digit string for budget filter inputs. */
+export function formatIDRInput(v) {
+  const digits = String(v ?? "").replace(/\D/g, "");
+  if (!digits) return "";
+  return "Rp " + Number(digits).toLocaleString("id-ID");
+}
+
+/** Bind Rupiah auto-format to a text input; optional onChange(digits). */
+export function bindRupiahInput(el, onChange) {
+  if (!el) return;
+  el.setAttribute("inputmode", "numeric");
+  el.setAttribute("autocomplete", "off");
+  const sync = () => {
+    const raw = parseIDRInput(el.value);
+    el.value = raw === "" ? "" : formatIDRInput(raw);
+    onChange?.(raw);
+  };
+  el.addEventListener("input", sync);
+  el.addEventListener("blur", sync);
+}
 export function fmtDate(iso, withTime = false) {
   if (!iso) return "-";
   const d = new Date(iso);
@@ -61,30 +88,41 @@ export function $$(sel, root = document) {
 }
 
 // Toast
+const TOAST_ICONS = {
+  success: "fa-circle-check",
+  error: "fa-circle-xmark",
+  warning: "fa-triangle-exclamation",
+  info: "fa-circle-info",
+};
+
+function buildToastMarkup(text, icon) {
+  if (typeof text === "object" && text && text.html) {
+    return `<div class="toast__inner"><span class="toast__icon" aria-hidden="true"><i class="fa-solid ${icon}"></i></span><div class="toast__content"><span class="toast__body">${sanitize(text.html)}</span></div></div>`;
+  }
+
+  const raw = String(text ?? "");
+  const splitAt = raw.indexOf(" — ");
+  if (splitAt > 0) {
+    const title = raw.slice(0, splitAt);
+    const body = raw.slice(splitAt + 3);
+    return `<div class="toast__inner"><span class="toast__icon" aria-hidden="true"><i class="fa-solid ${icon}"></i></span><div class="toast__content"><span class="toast__title">${escape(title)}</span><span class="toast__body">${escape(body)}</span></div></div>`;
+  }
+
+  return `<div class="toast__inner"><span class="toast__icon" aria-hidden="true"><i class="fa-solid ${icon}"></i></span><div class="toast__content"><span class="toast__body">${escape(raw)}</span></div></div>`;
+}
+
 export function toast(text, type = "info", timeout = 3000) {
   const host = document.getElementById("toast-host");
   if (!host) return;
   const el = document.createElement("div");
-  el.className = `toast ${type}`;
-  const icon =
-    {
-      success: "fa-circle-check",
-      error: "fa-circle-exclamation",
-      warning: "fa-triangle-exclamation",
-      info: "fa-circle-info",
-    }[type] || "fa-circle-info";
-  // Support an html option via { html: '<a>...</a>' } or plain text
-  if (typeof text === "object" && text && text.html) {
-    el.innerHTML = `<i class="fa-solid ${icon}"></i><span>${sanitize(text.html)}</span>`;
-  } else {
-    el.innerHTML = `<i class="fa-solid ${icon}"></i><span>${escape(text)}</span>`;
-  }
+  el.className = `toast toast--${type}`;
+  el.setAttribute("role", "status");
+  const icon = TOAST_ICONS[type] || TOAST_ICONS.info;
+  el.innerHTML = buildToastMarkup(text, icon);
   host.appendChild(el);
   setTimeout(() => {
-    el.style.transition = "all .3s";
-    el.style.opacity = "0";
-    el.style.transform = "translateX(120%)";
-    setTimeout(() => el.remove(), 300);
+    el.classList.add("is-leaving");
+    setTimeout(() => el.remove(), 320);
   }, timeout);
 }
 window.addEventListener("toast", (e) => {
@@ -140,4 +178,54 @@ export function debounce(fn, wait = 300) {
     clearTimeout(t);
     t = setTimeout(() => fn(...args), wait);
   };
+}
+
+/** Toggle password visibility — expects `.toggle-password` with `data-target` id */
+export function bindPasswordToggles(root = document) {
+  root.querySelectorAll(".toggle-password").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.dataset.target || "");
+      if (!input) return;
+      const icon = btn.querySelector("i");
+      if (input.type === "password") {
+        input.type = "text";
+        icon?.classList.replace("fa-eye", "fa-eye-slash");
+        btn.setAttribute("aria-label", "Sembunyikan password");
+      } else {
+        input.type = "password";
+        icon?.classList.replace("fa-eye-slash", "fa-eye");
+        btn.setAttribute("aria-label", "Tampilkan password");
+      }
+    });
+  });
+}
+
+/** Sinkronkan rating & ulasan user ke store + broadcast ke profil/dashboard */
+export async function refreshUserReviewsSnapshot() {
+  const { store } = await import("../../app/store.js");
+  const { api } = await import("./api.js");
+  const u = store.getState().user;
+  if (!u?.id) return null;
+  try {
+    const [stats, reviewsByUser] = await Promise.all([
+      api.get(`/users/${u.id}/stats`),
+      api.get(`/reviews/user/${u.id}`).catch(() => ({ all: [], asSeller: [], asBuyer: [] })),
+    ]);
+    store.setState({
+      user: {
+        ...u,
+        rating: Number(stats?.averageRating) || 0,
+        reviewCount: Number(stats?.reviewCount) || 0,
+      },
+    });
+    window.dispatchEvent(
+      new CustomEvent("reviews-updated", {
+        detail: { userId: u.id, stats, reviews: reviewsByUser },
+      }),
+    );
+    return { stats, reviews: reviewsByUser };
+  } catch (err) {
+    if (import.meta.env.DEV) console.warn("[reviews] sync failed", err);
+    return null;
+  }
 }

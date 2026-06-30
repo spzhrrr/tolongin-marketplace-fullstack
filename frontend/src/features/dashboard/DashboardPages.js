@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-=======
 // frontend/src/features/dashboard/DashboardPages.js
 
->>>>>>> ec26484 (implementasi demo)
 import { api } from "../../shared/utils/api.js";
 import {
   escape,
@@ -10,20 +7,58 @@ import {
   toast,
   modal,
   confirmModal,
+  bindRupiahInput,
+  parseIDRInput,
 } from "../../shared/utils/helpers.js";
-<<<<<<< HEAD
-import { statusPill, serviceCard, empty } from "../../shared/ui/components.js";
+import { statusPill, serviceCard, empty, avatar, bindFavoriteButtons, stars } from "../../shared/ui/components.js";
+import {
+  serviceImagesFieldHtml,
+  initServiceImagesField,
+  getServiceImagesValue,
+} from "../../shared/utils/service-image-upload.js";
+import { resolveAssetUrl } from "../../shared/utils/api.js";
 import { store } from "../../app/store.js";
 import { router } from "../../app/router.js";
+import {
+  postTypeLocationFieldsHtml,
+  initPostTypeLocationForm,
+  readPostTypeLocation,
+  validatePostTypeLocation,
+  resolveInitialServiceType,
+  matchPostCityValue,
+} from "../../shared/utils/post-type-location.js";
 
-<<<<<<< HEAD
-=======
-=======
-import { statusPill, serviceCard, empty, avatar } from "../../shared/ui/components.js";
-import { store } from "../../app/store.js";
-import { router } from "../../app/router.js";
+function getServiceCoverUrl(service) {
+  if (!service) return "";
+  if (service.image) return service.image;
+  if (!service.images) return "";
+  try {
+    const imgs =
+      typeof service.images === "string" ? JSON.parse(service.images) : service.images;
+    return Array.isArray(imgs) && imgs.length ? imgs[0] : "";
+  } catch {
+    return "";
+  }
+}
 
->>>>>>> ec26484 (implementasi demo)
+function getServiceAllImages(service) {
+  if (!service) return [];
+  try {
+    const imgs =
+      typeof service.images === "string" ? JSON.parse(service.images) : service.images;
+    if (Array.isArray(imgs) && imgs.length) return imgs.filter(Boolean);
+  } catch {
+    /* fall through */
+  }
+  const one = getServiceCoverUrl(service);
+  return one ? [one] : [];
+}
+
+function serviceThumbUrl(s) {
+  const first = getServiceAllImages(s)[0];
+  return first ? resolveAssetUrl(first) : "https://placehold.co/400x200/0a66c2/fff?text=No+Image";
+}
+
 // Status order yang masih dianggap aktif (bukan selesai/batal/sengketa)
 const ACTIVE_STATUSES = [
   "WAITING_CONFIRMATION",
@@ -108,60 +143,6 @@ function buildMonthlySeries(orders, valueKey) {
 }
 
 // SIDEBAR — anchor tags trigger hashchange so router stays in sync
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-function sidebar(active) {
-  const u = store.getState().user;
-  return `<aside class="dash-side">
-    <div class="who">
-      <img src="${u.avatar || "https://i.pravatar.cc/100?u=" + u.id}" class="avatar"/>
-      <div><div class="name">${escape(u.name)}</div><div class="role">${u.role === "ADMIN" ? "Admin" : "Pengguna"}</div></div>
-    </div>
-    <a href="#/dashboard" class="side-link ${active === "overview" ? "active" : ""}" data-testid="side-overview"><i class="fa-solid fa-gauge"></i> Overview</a>
-    <a href="#/dashboard/buyer/orders" class="side-link ${active === "b-orders" ? "active" : ""}" data-testid="side-b-orders"><i class="fa-solid fa-receipt"></i> Pesanan Saya</a>
-    <a href="#/dashboard/buyer/jobs" class="side-link ${active === "b-jobs" ? "active" : ""}" data-testid="side-b-jobs"><i class="fa-solid fa-folder-open"></i> Proyek Saya</a>
-    <a href="#/dashboard/buyer/favorites" class="side-link ${active === "b-fav" ? "active" : ""}" data-testid="side-fav"><i class="fa-solid fa-heart"></i> Freelancer Favorit</a>
-    <a href="#/dashboard/seller/services" class="side-link ${active === "s-services" ? "active" : ""}" data-testid="side-s-services"><i class="fa-solid fa-box"></i> Layanan Saya</a>
-    <a href="#/dashboard/seller/orders" class="side-link ${active === "s-orders" ? "active" : ""}" data-testid="side-s-orders"><i class="fa-solid fa-inbox"></i> Pesanan Masuk</a>
-    <a href="#/dashboard/seller/earnings" class="side-link ${active === "s-earn" ? "active" : ""}" data-testid="side-s-earn"><i class="fa-solid fa-coins"></i> Penghasilan</a>
-    <a href="#/verification" class="side-link" data-testid="side-verif"><i class="fa-solid fa-id-card"></i> Verifikasi</a>
-    <a href="#/profile" class="side-link"><i class="fa-solid fa-user"></i> Profil</a>
-    <a href="#/settings" class="side-link"><i class="fa-solid fa-gear"></i> Pengaturan</a>
-  </aside>`;
-}
-
-export async function DashboardOverview({ mount }) {
-  const u = store.getState().user;
-  mount.innerHTML = `<div class="container page"><div class="dash-wrap">${sidebar("overview")}<section><div class="spinner"></div></section></div></div>`;
-  const main = mount.querySelector("section");
-  try {
-    const orders = await api.get("/orders");
-    const my = orders.filter((o) => o.buyerId === u.id);
-    const recv = orders.filter((o) => o.sellerId === u.id);
-    const myEarn = recv
-      .filter((o) => o.status === "completed")
-      .reduce((s, o) => s + o.amount, 0);
-    const isBuyerRole = true;
-    const isSellerRole = true;
-    main.innerHTML = `
-      <div class="page-header"><div><h1 class="page-title">Halo, ${escape(u.name.split(" ")[0])}! 👋</h1><p class="page-subtitle">Berikut ringkasan aktivitas Anda</p></div></div>
-      <div class="kpis">
-        ${
-          isBuyerRole
-            ? `
-        <div class="kpi"><div class="ic"><i class="fa-solid fa-receipt"></i></div><div class="v">${my.length}</div><div class="l">Pesanan Saya</div></div>
-        <div class="kpi"><div class="ic"><i class="fa-solid fa-heart"></i></div><div class="v">${my.filter((o) => ["pending", "accepted", "in_progress"].includes(o.status)).length}</div><div class="l">Pesanan Aktif</div></div>`
-            : ""
-        }
-        ${
-          isSellerRole
-            ? `
-        <div class="kpi"><div class="ic"><i class="fa-solid fa-briefcase"></i></div><div class="v">${recv.length}</div><div class="l">Pesanan Diterima</div></div>
-        <div class="kpi"><div class="ic"><i class="fa-solid fa-coins"></i></div><div class="v">${fmtIDR(myEarn)}</div><div class="l">Total Penghasilan</div></div>
-        <div class="kpi"><div class="ic"><i class="fa-solid fa-star"></i></div><div class="v">${(u.rating || 0).toFixed(1)}</div><div class="l">Rating Anda</div></div>`
-            : ""
-        }
-=======
 function sidebar(active) {
   const u = store.getState().user;
   const link = (key, icon, label, testid) =>
@@ -170,141 +151,33 @@ function sidebar(active) {
      </a>`;
   return `<aside class="dash-side">
     <div class="who">
-      ${avatar(u, "lg")}
-      <div><div class="name">${escape(u.name)}</div><div class="role">${u.role === "ADMIN" ? "Admin" : "Anggota TOLONGIN"}</div></div>
+      ${avatar(u, "sm")}
+      <div class="who-text"><div class="name">${escape(u.name.split(" ")[0])}</div><div class="role">${u.role === "ADMIN" ? "Admin" : "Member"}</div></div>
     </div>
-    <div class="side-group">
+    <div class="side-group side-group--tight">
       ${link("overview", "fa-gauge", "Overview", "side-overview")}
     </div>
-    <div class="side-group">
+    <div class="side-group side-group--tight">
       <div class="side-label">Aktivitas Saya</div>
       ${link("transactions", "fa-receipt", "Transaksi", "side-transactions")}
       ${link("my-applications", "fa-file-circle-check", "Lamaran Saya", "side-applications")}
       ${link("favorites", "fa-heart", "Favorit", "side-favorites")}
     </div>
-    <div class="side-group">
+    <div class="side-group side-group--tight">
       <div class="side-label">Saya Menawarkan</div>
       ${link("manage-services", "fa-box", "Kelola Jasa", "side-manage-services")}
       ${link("manage-jobs", "fa-folder-open", "Kelola Lowongan", "side-manage-jobs")}
     </div>
-    <div class="side-group">
+    <div class="side-group side-group--tight">
       <div class="side-label">Keuangan</div>
       ${link("earnings", "fa-coins", "Keuangan", "side-earnings")}
     </div>
-    <div class="side-group">
-      <div class="side-label">Akun Saya</div>
-      ${link("account", "fa-user-circle", "Profil & Pengaturan", "side-account")}
+    <div class="dash-side-footer">
+      <a class="dash-side-mini" href="#/users/${u.id}" data-testid="dash-link-profile"><i class="fa-solid fa-user"></i> Profil</a>
+      <a class="dash-side-mini" href="#/settings" data-testid="dash-link-settings"><i class="fa-solid fa-gear"></i> Atur</a>
+      <a class="dash-side-mini" href="#/verification" data-testid="dash-link-verify"><i class="fa-solid fa-shield-halved"></i> Verifikasi</a>
     </div>
   </aside>`;
-}
-
-// Fungsi setup upload gambar
-function setupImageUpload() {
-  const uploadZone = document.getElementById("upload-zone");
-  const imageFile = document.getElementById("imageFile");
-  const imageUrlInput = document.getElementById("imageUrl");
-  const imagePreview = document.getElementById("image-preview");
-  const previewImg = document.getElementById("preview-img");
-  const removeImage = document.getElementById("remove-image");
-
-  let uploadStatus = document.getElementById("upload-status");
-  if (!uploadStatus && uploadZone) {
-    uploadStatus = document.createElement("div");
-    uploadStatus.id = "upload-status";
-    uploadStatus.style.cssText =
-      "margin-top:8px; font-size:12px; color:#666; display:none;";
-    uploadZone.parentNode.appendChild(uploadStatus);
-  }
-
-  if (uploadZone) {
-    const newUploadZone = uploadZone.cloneNode(true);
-    uploadZone.parentNode.replaceChild(newUploadZone, uploadZone);
-    newUploadZone.addEventListener("click", () => {
-      const fileInput = document.getElementById("imageFile");
-      if (fileInput) fileInput.click();
-    });
-  }
-
-  if (imageFile) {
-    const newImageFile = imageFile.cloneNode(true);
-    imageFile.parentNode.replaceChild(newImageFile, imageFile);
-    newImageFile.addEventListener("change", async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      if (!file.type.startsWith("image/")) {
-        toast("File harus berupa gambar", "error");
-        return;
-      }
-      if (file.size > 2 * 1024 * 1024) {
-        toast("Ukuran file maksimal 2MB", "error");
-        return;
-      }
-
-      const currentPreviewImg = document.getElementById("preview-img");
-      const currentImagePreview = document.getElementById("image-preview");
-      const currentUploadZone = document.getElementById("upload-zone");
-      const currentImageUrlInput = document.getElementById("imageUrl");
-      const currentUploadStatus = document.getElementById("upload-status");
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (currentPreviewImg) currentPreviewImg.src = event.target.result;
-        if (currentImagePreview) currentImagePreview.style.display = "block";
-        if (currentUploadZone) currentUploadZone.style.display = "none";
-      };
-      reader.readAsDataURL(file);
-
-      if (currentUploadStatus) {
-        currentUploadStatus.style.display = "block";
-        currentUploadStatus.innerHTML =
-          '<i class="fa-solid fa-spinner fa-spin"></i> Mengupload gambar...';
-      }
-
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-                const uploadResult = await api.post("/uploads?folder=services", formData);
-        const uploadedUrl =
-          uploadResult.url || uploadResult.secure_url || uploadResult.fileUrl;
-        if (currentImageUrlInput) currentImageUrlInput.value = uploadedUrl;
-        if (currentUploadStatus) {
-          currentUploadStatus.innerHTML =
-            '<i class="fa-solid fa-check-circle" style="color:#10b981;"></i> Gambar berhasil diupload!';
-          setTimeout(() => {
-            if (currentUploadStatus) currentUploadStatus.style.display = "none";
-          }, 2000);
-        }
-      } catch (err) {
-        console.error("Upload error:", err);
-        if (currentUploadStatus) {
-          currentUploadStatus.innerHTML =
-            '<i class="fa-solid fa-exclamation-circle" style="color:#ef4444;"></i> Gagal upload gambar';
-        }
-        toast("Gagal upload gambar: " + (err.message || "Coba lagi"), "error");
-        const currentImagePreview = document.getElementById("image-preview");
-        const currentUploadZone = document.getElementById("upload-zone");
-        if (currentImagePreview) currentImagePreview.style.display = "none";
-        if (currentUploadZone) currentUploadZone.style.display = "block";
-      }
-    });
-  }
-
-  if (removeImage) {
-    const newRemoveImage = removeImage.cloneNode(true);
-    removeImage.parentNode.replaceChild(newRemoveImage, removeImage);
-    newRemoveImage.addEventListener("click", () => {
-      const currentImagePreview = document.getElementById("image-preview");
-      const currentUploadZone = document.getElementById("upload-zone");
-      const currentImageUrlInput = document.getElementById("imageUrl");
-      const currentImageFile = document.getElementById("imageFile");
-      const currentUploadStatus = document.getElementById("upload-status");
-      if (currentImagePreview) currentImagePreview.style.display = "none";
-      if (currentUploadZone) currentUploadZone.style.display = "block";
-      if (currentImageUrlInput) currentImageUrlInput.value = "";
-      if (currentImageFile) currentImageFile.value = "";
-      if (currentUploadStatus) currentUploadStatus.style.display = "none";
-    });
-  }
 }
 
 // Fungsi untuk load konten berdasarkan navigasi
@@ -357,7 +230,7 @@ async function loadDashboardContent(section, mountEl) {
         await loadEarnings(container);
         break;
       case "account":
-        await loadAccount(container);
+        router.navigate("/settings");
         break;
       default:
         await loadOverview(container);
@@ -374,8 +247,10 @@ async function loadMyApplications(container) {
     const apps = await api.get("/applications/seller");
     const list = Array.isArray(apps) ? apps : apps?.data || [];
     container.innerHTML = `
-      <div class="page-header"><h1 class="page-title">Lamaran Saya</h1>
-        <p class="page-subtitle">Lacak status semua lamaran kerja yang Anda kirim</p>
+      <div class="dash-page">
+      <div class="dash-page-head">
+        <h1 class="dash-page-title">Lamaran Saya</h1>
+        <p class="dash-page-sub">Lacak status lamaran kerja yang Anda kirim</p>
       </div>
       ${list.length === 0 ? empty("Belum ada lamaran", "Mulai lamar pekerjaan di halaman Cari Kerja.", "fa-file-circle-check") : ""}
       <div class="grid" style="grid-template-columns:1fr; gap:12px;">
@@ -393,22 +268,25 @@ async function loadMyApplications(container) {
               </div>
               <div class="flex gap-sm" style="flex-direction:column; align-items:stretch;">
                 <a class="btn btn-secondary btn-sm" href="#/jobs/${a.jobId}">Lihat Pekerjaan</a>
-                ${a.status === "ACCEPTED" ? `<a class="btn btn-primary btn-sm" href="#/chat/${a.job?.buyerId || a.buyerId || ""}">Chat Pemilik</a>` : ""}
+                ${a.status === "ACCEPTED" ? `<a class="btn btn-primary btn-sm" href="#/orders?role=SELLER">Upload Bukti Kerja</a>` : ""}
               </div>
             </div>
           </div>`).join("")}
+      </div>
       </div>`;
   } catch (e) {
     container.innerHTML = empty("Gagal memuat lamaran", e.message);
   }
 }
 
-// ==================== LOAD FUNCTIONS ====================
-
 async function loadOverview(container) {
   const u = store.getState().user;
   try {
-    const orders = await api.get("/orders");
+    const [orders, stats, reviewsData] = await Promise.all([
+      api.get("/orders"),
+      api.get(`/users/${u.id}/stats`).catch(() => null),
+      api.get(`/reviews/user/${u.id}`).catch(() => ({ all: [], asSeller: [], asBuyer: [] })),
+    ]);
     const asBuyer = orders.filter((o) => o.buyerId === u.id);
     const asSeller = orders.filter((o) => o.sellerId === u.id);
     const completedBuyer = asBuyer.filter((o) => o.status === "COMPLETED");
@@ -421,7 +299,9 @@ async function loadOverview(container) {
     const pendingSeller = asSeller.filter((o) =>
       ACTIVE_STATUSES.includes(String(o.status).toUpperCase()),
     ).length;
-    const rating = (u.rating || 0).toFixed(1);
+    const rating = Number(stats?.averageRating ?? u.rating ?? 0).toFixed(1);
+    const reviewCount = Number(stats?.reviewCount ?? u.reviewCount ?? 0);
+    const recentReviews = (reviewsData?.all || []).slice(0, 4);
 
     const earningSeries = buildMonthlySeries(completedSeller, "earnings");
     const buyerOrderSeries = buildMonthlySeries(asBuyer, "count");
@@ -429,153 +309,108 @@ async function loadOverview(container) {
     const hasBuyerOrders = buyerOrderSeries.some((m) => m.value > 0);
 
     container.innerHTML = `
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">Halo, ${escape(u.name.split(" ")[0])}! <span aria-hidden="true">👋</span></h1>
-          <p class="page-subtitle">Berikut ringkasan aktivitas Anda</p>
+      <div class="dash-page dash-page--overview">
+      <div class="dash-page-head">
+        <h1 class="dash-page-title">Halo, ${escape(u.name.split(" ")[0])}! <span aria-hidden="true">👋</span></h1>
+        <p class="dash-page-sub">Ringkasan aktivitas Anda</p>
+      </div>
+      <div class="kpis kpis--overview kpis--compact">
+        <div class="kpi-row kpi-row--primary">
+          <div class="kpi kpi--highlight" data-testid="kpi-spent">
+            <div class="ic kpi-ic-green"><i class="fa-solid fa-money-bill-wave"></i></div>
+            <div class="v">${fmtIDR(buyerSpent)}</div>
+            <div class="l">Total Belanja</div>
+          </div>
+          <div class="kpi kpi--highlight" data-testid="kpi-earned">
+            <div class="ic kpi-ic-purple"><i class="fa-solid fa-coins"></i></div>
+            <div class="v">${fmtIDR(sellerEarned)}</div>
+            <div class="l">Penghasilan (Penjual)</div>
+          </div>
+        </div>
+        <div class="kpi-row kpi-row--secondary">
+          <div class="kpi" data-testid="kpi-completed-buyer">
+            <div class="ic kpi-ic-blue"><i class="fa-solid fa-bag-shopping"></i></div>
+            <div class="v">${completedBuyer.length}</div>
+            <div class="l">Selesai (Pembeli)</div>
+          </div>
+          <div class="kpi" data-testid="kpi-rating">
+            <div class="ic kpi-ic-gold"><i class="fa-solid fa-star"></i></div>
+            <div class="v">${rating}</div>
+            <div class="l">Rating · ${reviewCount} ulasan</div>
+          </div>
+          <div class="kpi" data-testid="kpi-pending">
+            <div class="ic kpi-ic-amber"><i class="fa-solid fa-hourglass-half"></i></div>
+            <div class="v">${pendingBuyer + pendingSeller}</div>
+            <div class="l">Pesanan Aktif</div>
+          </div>
         </div>
       </div>
-      <div class="kpis" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:1rem; margin-bottom:1.5rem;">
-        <div class="kpi" data-testid="kpi-completed-buyer" style="background:#fff; border-radius:16px; padding:1.25rem; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-          <div class="ic" style="font-size:2rem; color:#0a66c2;"><i class="fa-solid fa-bag-shopping"></i></div>
-          <div class="v" style="font-size:1.8rem; font-weight:700;">${completedBuyer.length}</div>
-          <div class="l" style="color:#666; font-size:0.85rem;">Pesanan Selesai (Pembeli)</div>
+      <div class="dash-charts-grid">
+        <div class="card card-pad dash-chart-card">
+          <h3 class="dash-chart-title"><i class="fa-solid fa-chart-column"></i> Pendapatan 6 Bulan</h3>
+          ${hasEarnings ? svgBarChart(earningSeries, { height: 140, barColor: "#2e7d32", valueFormatter: (v) => (v >= 1000 ? Math.round(v / 1000) + "k" : v) }) : `<p class="dash-chart-empty">Belum ada pendapatan</p>`}
         </div>
-        <div class="kpi" data-testid="kpi-spent" style="background:#fff; border-radius:16px; padding:1.25rem; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-          <div class="ic" style="font-size:2rem; color:#2e7d32;"><i class="fa-solid fa-money-bill-wave"></i></div>
-          <div class="v" style="font-size:1.4rem; font-weight:700;">${fmtIDR(buyerSpent)}</div>
-          <div class="l" style="color:#666; font-size:0.85rem;">Total Belanja</div>
-        </div>
-        <div class="kpi" data-testid="kpi-earned" style="background:#fff; border-radius:16px; padding:1.25rem; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-          <div class="ic" style="font-size:2rem; color:#7c3aed;"><i class="fa-solid fa-coins"></i></div>
-          <div class="v" style="font-size:1.4rem; font-weight:700;">${fmtIDR(sellerEarned)}</div>
-          <div class="l" style="color:#666; font-size:0.85rem;">Penghasilan (Penjual)</div>
-        </div>
-        <div class="kpi" data-testid="kpi-rating" style="background:#fff; border-radius:16px; padding:1.25rem; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-          <div class="ic" style="font-size:2rem; color:#f5b042;"><i class="fa-solid fa-star"></i></div>
-          <div class="v" style="font-size:1.8rem; font-weight:700;">${rating}</div>
-          <div class="l" style="color:#666; font-size:0.85rem;">Rating Anda</div>
-        </div>
-        <div class="kpi" data-testid="kpi-pending" style="background:#fff; border-radius:16px; padding:1.25rem; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-          <div class="ic" style="font-size:2rem; color:#f59e0b;"><i class="fa-solid fa-hourglass-half"></i></div>
-          <div class="v" style="font-size:1.8rem; font-weight:700;">${pendingBuyer + pendingSeller}</div>
-          <div class="l" style="color:#666; font-size:0.85rem;">Pesanan Aktif</div>
+        <div class="card card-pad dash-chart-card">
+          <h3 class="dash-chart-title"><i class="fa-solid fa-chart-simple"></i> Pesanan 6 Bulan</h3>
+          ${hasBuyerOrders ? svgBarChart(buyerOrderSeries, { height: 140, barColor: "#0a66c2" }) : `<p class="dash-chart-empty">Belum ada pesanan</p>`}
         </div>
       </div>
-      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;margin-top:1rem">
-        <div class="card card-pad-lg">
-          <h3 style="margin:0 0 .25rem"><i class="fa-solid fa-chart-column"></i> Pendapatan 6 Bulan Terakhir</h3>
-          <p class="text-muted text-sm" style="margin:0 0 .5rem">Dari pesanan yang selesai sebagai penjual</p>
-          ${hasEarnings ? svgBarChart(earningSeries, { barColor: "#2e7d32", valueFormatter: (v) => (v >= 1000 ? Math.round(v / 1000) + "k" : v) }) : `<p class="text-muted" style="text-align:center;padding:24px">Belum ada pendapatan.</p>`}
+      <div class="card card-pad dash-recent-card">
+        <div class="dash-recent-head">
+          <h3 class="dash-chart-title">Pesanan Terbaru</h3>
+          <a class="btn btn-secondary btn-sm" href="#/dashboard/transactions">Lihat semua</a>
         </div>
-        <div class="card card-pad-lg">
-          <h3 style="margin:0 0 .25rem"><i class="fa-solid fa-chart-simple"></i> Pesanan 6 Bulan Terakhir</h3>
-          <p class="text-muted text-sm" style="margin:0 0 .5rem">Jumlah pesanan Anda sebagai pembeli</p>
-          ${hasBuyerOrders ? svgBarChart(buyerOrderSeries, { barColor: "#0a66c2" }) : `<p class="text-muted" style="text-align:center;padding:24px">Belum ada pesanan.</p>`}
-        </div>
->>>>>>> ec26484 (implementasi demo)
-      </div>
-      <div class="card card-pad-lg mt-3">
-        <h3>Pesanan Terbaru</h3>
         ${
-          orders.slice(0, 5).length
-            ? `
-        <div class="scroll-x"><table class="tbl">
-<<<<<<< HEAD
-          <thead><tr><th>Order</th><th>Status</th><th>Total</th><th></th></tr></thead>
-          <tbody>${orders
-            .slice(0, 5)
-            .map(
-              (o) =>
-                `<tr><td>${escape(o.title)}</td><td>${statusPill(o.status)}</td><td>${fmtIDR(o.amount)}</td><td><a class="btn btn-secondary btn-sm" href="#/orders/${o.id}">Lihat</a></td></tr>`,
-            )
-            .join("")}</tbody>
-        </table></div>`
-            : empty("Belum ada pesanan", "", "fa-receipt")
-        }
-      </div>`;
-  } catch (e) {
-    main.innerHTML = empty("Gagal memuat", e.message);
-  }
-}
-
-export async function BuyerOrders({ mount }) {
-  const u = store.getState().user;
-  mount.innerHTML = `<div class="container page"><div class="dash-wrap">${sidebar("b-orders")}<section><h1>Pesanan Saya</h1><div id="list"></div></section></div></div>`;
-  try {
-    const o = await api.get("/orders?role=buyer");
-    document.getElementById("list").innerHTML = o.length
-      ? `
-      <div class="scroll-x"><table class="tbl"><thead><tr><th>Order</th><th>Status</th><th>Total</th><th></th></tr></thead><tbody>
-        ${o.map((x) => `<tr><td>${escape(x.title)}</td><td>${statusPill(x.status)}</td><td>${fmtIDR(x.amount)}</td><td><a class="btn btn-secondary btn-sm" href="#/orders/${x.id}">Detail</a></td></tr>`).join("")}
-      </tbody></table></div>`
-      : empty("Belum ada pesanan");
-  } catch (e) {
-    document.getElementById("list").innerHTML = empty("Gagal");
-  }
-}
-
-export async function BuyerJobs({ mount }) {
-  const u = store.getState().user;
-  mount.innerHTML = `<div class="container page"><div class="dash-wrap">${sidebar("b-jobs")}<section><div class="flex-between mb-2"><h1>Job Saya</h1><a href="#/post-job" class="btn btn-primary" data-testid="dash-post-job"><i class="fa-solid fa-plus"></i> Posting Job</a></div><div id="list"></div></section></div></div>`;
-  try {
-    const jr = await api.get("/jobs?buyerId=" + u.id);
-    const j = Array.isArray(jr) ? jr : jr.data || [];
-    document.getElementById("list").innerHTML = j.length
-      ? `<div class="flex-col">${j
-          .map(
-            (x) => `
-      <div class="card card-pad">
-        <div class="flex-between"><div><h3 style="margin:0">${escape(x.title)}</h3><div class="text-sm text-muted">${escape(x.category)} · ${fmtIDR(x.budget)}</div></div>${statusPill(x.status)}</div>
-        <div class="flex gap-sm mt-2"><a class="btn btn-secondary btn-sm" href="#/jobs/${x.id}" data-testid="view-job-${x.id}">Lihat (${x.applicationCount} pelamar)</a></div>
-      </div>`,
-          )
-          .join("")}</div>`
-      : empty("Belum ada job");
-  } catch (e) {
-    document.getElementById("list").innerHTML = empty("Gagal");
-  }
-}
-
-export async function BuyerFavorites({ mount }) {
-  mount.innerHTML = `<div class="container page"><div class="dash-wrap">${sidebar("b-fav")}<section><h1>Favorit</h1><div id="list" class="grid grid-3"></div></section></div></div>`;
-  try {
-    const favs = await api.get("/favorites");
-    document.getElementById("list").innerHTML = favs.length
-      ? favs.map((s) => serviceCard(s, { favorited: true })).join("")
-      : empty(
-          "Belum ada favorit",
-          "Tambahkan jasa ke favorit dari marketplace",
-        );
-  } catch (e) {
-    document.getElementById("list").innerHTML = empty("Gagal");
-  }
-}
-
-export async function SellerServices({ mount }) {
-  const u = store.getState().user;
-  mount.innerHTML = `<div class="container page"><div class="dash-wrap">${sidebar("s-services")}<section><div class="flex-between mb-2"><h1>Jasa Saya</h1><button class="btn btn-primary" id="add-svc" data-testid="add-service-btn"><i class="fa-solid fa-plus"></i> Tambah Jasa</button></div><div id="svc-list" class="grid grid-3"></div></section></div></div>`;
-=======
-          <thead><tr><th>Order</th><th>Peran</th><th>Status</th><th>Total</th><th></th></tr></thead>
-          <tbody>${orders
-            .slice(0, 5)
+          orders.slice(0, 4).length
+            ? `<div class="dash-recent-list">${orders
+            .slice(0, 4)
             .map(
               (o) => `
-            <tr data-testid="recent-order-${o.id}">
-              <td><a href="#/orders/${o.id}" style="text-decoration:none;">${escape(o.title)}</a></td>
-              <td><span class="badge ${o.buyerId === u.id ? "badge-info" : "badge-success"}">${o.buyerId === u.id ? "Pembeli" : "Penjual"}</span></td>
-              <td>${statusPill(o.status)}</td>
-              <td>${fmtIDR(o.amount)}</td>
-              <td><a class="btn btn-secondary btn-sm" href="#/orders/${o.id}">Lihat</a></td>
-            </tr>
-          `,
+            <a class="dash-recent-item" href="#/orders/${o.id}" data-testid="recent-order-${o.id}">
+              <div class="dash-recent-item-main">
+                <strong>${escape(o.title)}</strong>
+                <span class="text-sm text-muted">${o.buyerId === u.id ? "Pembeli" : "Penjual"} · ${fmtIDR(o.amount)}</span>
+              </div>
+              ${statusPill(o.status)}
+            </a>`,
             )
-            .join("")}</tbody>
-        </table></div>`
-            : empty("Belum ada pesanan", "Mulai dari Marketplace atau Cari Kerja", "fa-receipt")
+            .join("")}</div>`
+            : empty("Belum ada pesanan", "Mulai dari Cari Jasa atau Cari Kerja", "fa-receipt")
         }
       </div>
+      <div class="card card-pad dash-recent-card" id="dash-reviews-card">
+        <div class="dash-recent-head">
+          <h3 class="dash-chart-title"><i class="fa-solid fa-star"></i> Ulasan untuk Anda</h3>
+          <a class="btn btn-secondary btn-sm" href="#/profile">Lihat profil</a>
+        </div>
+        ${
+          recentReviews.length
+            ? `<div class="dash-reviews-list">${recentReviews
+                .map((r) => {
+                  const reviewer = r.reviewer || { name: "Pengguna" };
+                  const comment = (r.comment || "").trim();
+                  return `<article class="dash-review-item">
+                    <div class="dash-review-head">
+                      ${avatar(reviewer, "sm")}
+                      <div>
+                        <strong>${escape(reviewer.name || "Pengguna")}</strong>
+                        <div class="dash-review-stars">${stars(r.rating || 5)}</div>
+                      </div>
+                    </div>
+                    ${comment ? `<p class="dash-review-comment">${escape(comment.slice(0, 140))}${comment.length > 140 ? "…" : ""}</p>` : ""}
+                  </article>`;
+                })
+                .join("")}</div>`
+            : empty("Belum ada ulasan", "Selesaikan transaksi dan terima ulasan dari lawan transaksi.", "fa-star")
+        }
+      </div>
+      </div>
     `;
+
+    const onReviewsUpdated = (e) => {
+      if (e.detail?.userId === u.id) loadOverview(container);
+    };
+    window.addEventListener("reviews-updated", onReviewsUpdated);
   } catch (e) {
     container.innerHTML = empty("Gagal memuat", e.message);
   }
@@ -590,20 +425,20 @@ async function loadTransactions(container) {
     ]);
 
     container.innerHTML = `
-      <div class="page-header">
-        <h1 class="page-title">Transaksi</h1>
-        <p class="page-subtitle">Semua pesanan Anda sebagai pembeli dan penjual</p>
+      <div class="dash-page">
+      <div class="dash-page-head">
+        <h1 class="dash-page-title">Transaksi</h1>
+        <p class="dash-page-sub">Semua pesanan sebagai pembeli dan penjual</p>
       </div>
-      <div style="margin-bottom:1.5rem;">
-        <div style="display:flex; gap:8px; border-bottom:1px solid #e0e0e0;">
-          <button class="trans-tab-btn active" data-tab="buyer" style="padding:10px 16px; background:none; border:none; cursor:pointer; font-weight:600; color:#0a66c2; border-bottom:2px solid #0a66c2;">
-            <i class="fa-solid fa-shopping-cart"></i> Sebagai Pembeli (${buyerOrders.length})
+      <div class="dash-tabs">
+          <button class="dash-tab active" data-tab="buyer">
+            <i class="fa-solid fa-shopping-cart"></i> Pembeli (${buyerOrders.length})
           </button>
-          <button class="trans-tab-btn" data-tab="seller" style="padding:10px 16px; background:none; border:none; cursor:pointer; font-weight:600; color:#666;">
-            <i class="fa-solid fa-store"></i> Sebagai Penjual (${sellerOrders.length})
+          <button class="dash-tab" data-tab="seller">
+            <i class="fa-solid fa-store"></i> Penjual (${sellerOrders.length})
           </button>
         </div>
-        <div id="buyer-orders" class="trans-content" style="margin-top:1rem;">
+        <div id="buyer-orders" class="trans-content">
           ${
             buyerOrders.length
               ? `
@@ -626,7 +461,7 @@ async function loadTransactions(container) {
               : empty("Belum ada pesanan sebagai pembeli")
           }
         </div>
-        <div id="seller-orders" class="trans-content" style="display:none; margin-top:1rem;">
+        <div id="seller-orders" class="trans-content" hidden>
           ${
             sellerOrders.length
               ? `
@@ -653,25 +488,16 @@ async function loadTransactions(container) {
       </div>
     `;
 
-    const tabs = container.querySelectorAll(".trans-tab-btn");
+    const tabs = container.querySelectorAll(".dash-tab");
     tabs.forEach((tab) => {
       tab.addEventListener("click", () => {
         const target = tab.dataset.tab;
-        tabs.forEach((t) => {
-          t.classList.remove("active");
-          t.style.color = "#666";
-          t.style.borderBottom = "none";
-        });
+        tabs.forEach((t) => t.classList.remove("active"));
         tab.classList.add("active");
-        tab.style.color = "#0a66c2";
-        tab.style.borderBottom = "2px solid #0a66c2";
-
         const buyerDiv = container.querySelector("#buyer-orders");
         const sellerDiv = container.querySelector("#seller-orders");
-        if (buyerDiv)
-          buyerDiv.style.display = target === "buyer" ? "block" : "none";
-        if (sellerDiv)
-          sellerDiv.style.display = target === "seller" ? "block" : "none";
+        if (buyerDiv) buyerDiv.hidden = target !== "buyer";
+        if (sellerDiv) sellerDiv.hidden = target !== "seller";
       });
     });
   } catch (e) {
@@ -691,9 +517,26 @@ async function loadFavorites(container) {
   try {
     const favs = await api.get("/favorites");
     container.innerHTML = `
-      <div class="page-header"><h1 class="page-title">Freelancer Favorit</h1></div>
-      ${favs.length ? `<div class="grid grid-3">${favs.map((s) => serviceCard(s, { favorited: true })).join("")}</div>` : empty("Belum ada favorit", "Tambahkan jasa ke favorit dari marketplace")}
+      <div class="dash-page">
+      <div class="dash-page-head">
+        <h1 class="dash-page-title">Favorit</h1>
+        <p class="dash-page-sub">Jasa yang Anda simpan dari marketplace</p>
+      </div>
+      ${favs.length ? `<div class="marketplace-grid" id="fav-grid">${favs.map((s) => serviceCard(s, { favorited: true })).join("")}</div>` : empty("Belum ada favorit", "Tambahkan jasa ke favorit dari marketplace")}
+      </div>
     `;
+    const grid = container.querySelector("#fav-grid");
+    if (grid) {
+      bindFavoriteButtons(grid, favs.map((s) => s.id));
+      grid.addEventListener("fav-changed", (e) => {
+        const { serviceId, favorited } = e.detail || {};
+        if (favorited) return;
+        grid.querySelector(`[data-testid="service-card-${serviceId}"]`)?.remove();
+        if (!grid.querySelector(".service-card")) {
+          grid.outerHTML = empty("Belum ada favorit", "Tambahkan jasa ke favorit dari marketplace");
+        }
+      });
+    }
   } catch (e) {
     container.innerHTML = empty("Gagal", e.message);
   }
@@ -708,29 +551,34 @@ async function loadEarnings(container) {
     );
     const total = done.reduce((s, x) => s + (x.amount || 0) * 0.95, 0);
     container.innerHTML = `
-      <div class="page-header"><h1 class="page-title">Keuangan</h1></div>
-      <div class="kpis" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:1rem;">
-        <div class="kpi" style="background:#fff; border-radius:16px; padding:1.25rem; text-align:center;">
-          <div class="ic"><i class="fa-solid fa-wallet" style="font-size:2rem; color:#2e7d32;"></i></div>
-          <div class="v" style="font-size:1.8rem; font-weight:700;">${fmtIDR(total)}</div>
+      <div class="dash-page">
+      <div class="dash-page-head">
+        <h1 class="dash-page-title">Keuangan</h1>
+        <p class="dash-page-sub">Saldo penghasilan dan penarikan dana</p>
+      </div>
+      <div class="kpis kpis--compact kpi-row kpi-row--secondary" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi">
+          <div class="ic kpi-ic-green"><i class="fa-solid fa-wallet"></i></div>
+          <div class="v">${fmtIDR(total)}</div>
           <div class="l">Saldo Tersedia</div>
         </div>
-        <div class="kpi" style="background:#fff; border-radius:16px; padding:1.25rem; text-align:center;">
-          <div class="ic"><i class="fa-solid fa-hourglass" style="font-size:2rem; color:#f59e0b;"></i></div>
-          <div class="v" style="font-size:1.8rem; font-weight:700;">${fmtIDR(pending.reduce((s, x) => s + (x.amount || 0) * 0.95, 0))}</div>
+        <div class="kpi">
+          <div class="ic kpi-ic-amber"><i class="fa-solid fa-hourglass"></i></div>
+          <div class="v">${fmtIDR(pending.reduce((s, x) => s + (x.amount || 0) * 0.95, 0))}</div>
           <div class="l">Pending</div>
         </div>
-        <div class="kpi" style="background:#fff; border-radius:16px; padding:1.25rem; text-align:center;">
-          <div class="ic"><i class="fa-solid fa-trophy" style="font-size:2rem; color:#0a66c2;"></i></div>
-          <div class="v" style="font-size:1.8rem; font-weight:700;">${done.length}</div>
+        <div class="kpi">
+          <div class="ic kpi-ic-blue"><i class="fa-solid fa-trophy"></i></div>
+          <div class="v">${done.length}</div>
           <div class="l">Pesanan Selesai</div>
         </div>
       </div>
-      <div class="card card-pad-lg mt-3 flex-between">
-        <div><h3>Tarik Penghasilan</h3><p class="text-muted">Withdraw ke rekening bank Anda</p></div>
-        <button class="btn btn-primary" onclick="window.dispatchEvent(new CustomEvent('toast', {detail: {type: 'info', text: 'Permintaan withdraw sedang diproses'}}))">
+      <div class="card card-pad-lg dash-withdraw-card">
+        <div><h3>Tarik Penghasilan</h3><p class="text-muted text-sm">Withdraw ke rekening bank terverifikasi</p></div>
+        <button class="btn btn-primary" onclick="window.dispatchEvent(new CustomEvent('toast', {detail: {type: 'info', text: 'Permintaan penarikan sedang diproses — hubungi support jika perlu bantuan'}}))">
           <i class="fa-solid fa-money-bill-transfer"></i> Tarik Sekarang
         </button>
+      </div>
       </div>
     `;
   } catch (e) {
@@ -738,58 +586,19 @@ async function loadEarnings(container) {
   }
 }
 
-async function loadAccount(container) {
-  const u = store.getState().user;
-  container.innerHTML = `
-    <div class="page-header">
-      <h1 class="page-title">Akun Saya</h1>
-      <p class="page-subtitle">Profil publik, verifikasi, dan pengaturan akun</p>
-    </div>
-
-    <div class="card card-pad-lg" style="margin-bottom:1rem">
-      <div class="flex gap-md" style="align-items:center">
-        ${avatar(u, "xl")}
-        <div style="flex:1">
-          <div style="font-size:1.25rem; font-weight:700">${escape(u.name)}</div>
-          <div class="text-sm text-muted">${escape(u.email)}</div>
-          <div class="text-sm text-muted">${escape(u.city || "Lokasi belum diisi")}</div>
-        </div>
-        <div class="flex gap-sm">
-          <a class="btn btn-secondary btn-sm" href="#/profile/${u.id}" data-testid="view-public-profile"><i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat Profil Publik</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid grid-3" style="gap:1rem">
-      <a href="#/profile" class="card card-pad card-hover" data-testid="account-edit-profile" style="text-decoration:none; color:inherit">
-        <div style="font-size:1.5rem; color:var(--primary)"><i class="fa-solid fa-user-pen"></i></div>
-        <h3 style="margin:.5rem 0 .25rem">Edit Profil</h3>
-        <div class="text-sm text-muted">Perbarui nama, bio, foto, kota & skill</div>
-      </a>
-      <a href="#/verification" class="card card-pad card-hover" data-testid="account-verification" style="text-decoration:none; color:inherit">
-        <div style="font-size:1.5rem; color:var(--primary)"><i class="fa-solid fa-id-card"></i></div>
-        <h3 style="margin:.5rem 0 .25rem">Verifikasi Akun</h3>
-        <div class="text-sm text-muted">Verifikasi email, telepon & KTP untuk meningkatkan kepercayaan</div>
-      </a>
-      <a href="#/settings" class="card card-pad card-hover" data-testid="account-settings" style="text-decoration:none; color:inherit">
-        <div style="font-size:1.5rem; color:var(--primary)"><i class="fa-solid fa-gear"></i></div>
-        <h3 style="margin:.5rem 0 .25rem">Pengaturan</h3>
-        <div class="text-sm text-muted">Password, keamanan, dan preferensi notifikasi</div>
-      </a>
-    </div>
-  `;
-}
-
 // ==================== LOAD BUYER JOBS ====================
 async function loadBuyerJobs(container, opts = {}) {
   const u = store.getState().user;
 
   container.innerHTML = `
-    <div class="page-header"><div class="flex-between"><h1 class="page-title">Kelola Lowongan</h1>
+    <div class="dash-page">
+    <div class="dash-page-head dash-page-head--row">
+      <div><h1 class="dash-page-title">Kelola Lowongan</h1><p class="dash-page-sub">Lowongan kerja yang Anda pasang</p></div>
       <button class="btn btn-primary" id="dash-post-job-btn" data-testid="dash-post-job"><i class="fa-solid fa-plus"></i> Pasang Lowongan</button>
-    </div></div>
+    </div>
     <div id="jobs-list" class="flex-col"></div>
     <div id="job-form-container" style="display:none; margin-top:24px;"></div>
+    </div>
   `;
 
   const listEl = container.querySelector("#jobs-list");
@@ -822,6 +631,15 @@ async function loadBuyerJobs(container, opts = {}) {
     }
     const today = new Date().toISOString().split("T")[0];
     const deadlineISO = existing?.deadline ? new Date(existing.deadline).toISOString().split("T")[0] : "";
+    const jobInitialType = existing
+      ? resolveInitialServiceType(cats, {
+          categoryId: existing.categoryId,
+          isOnline: existing.isOnline,
+          location: existing.location,
+        })
+      : "";
+    const jobInitialLocation =
+      jobInitialType === "PHYSICAL" ? matchPostCityValue(existing?.location) : "";
 
     formContainer.innerHTML = `
       <div class="card card-pad-lg" style="background:#fff;">
@@ -831,18 +649,23 @@ async function loadBuyerJobs(container, opts = {}) {
         </div>
         <form id="job-form" data-testid="dash-job-form">
           <div class="form-group"><label class="label">Judul Lowongan *</label><input class="input" id="j-title" required minlength="5" value="${escape(existing?.title || "")}" placeholder="Contoh: Desainer Grafis untuk Brosur" data-testid="dash-job-title"></div>
-          <div class="form-group"><label class="label">Kategori *</label>
-            <select class="select" id="j-category" required data-testid="dash-job-category">
-              <option value="">Pilih Kategori</option>
-              ${cats.map((c) => `<option value="${c.id}" ${existing?.categoryId === c.id ? "selected" : ""}>${escape(c.name)}</option>`).join("")}
-            </select>
-          </div>
+          ${postTypeLocationFieldsHtml({
+            typeFieldId: "j-serviceType",
+            categoryFieldId: "j-category",
+            locationFieldId: "j-loc",
+            remoteFieldId: "j-remote",
+            categoryTestId: "dash-job-category",
+            typeLabel: "Jenis Pekerjaan",
+            categoryLabel: "Sub-kategori",
+            locationLabel: "Lokasi",
+            initialType: jobInitialType,
+            initialLocation: jobInitialLocation,
+          })}
           <div class="form-group"><label class="label">Deskripsi Lengkap *</label><textarea class="textarea" id="j-desc" rows="5" required minlength="20" placeholder="Jelaskan kebutuhan, deliverable, dan ekspektasi…" data-testid="dash-job-desc">${escape(existing?.description || "")}</textarea></div>
           <div class="grid grid-2">
-            <div class="form-group"><label class="label">Budget (Rp) *</label><input class="input" id="j-budget" type="number" required min="10000" step="1000" value="${existing?.budget || ""}" placeholder="500000" data-testid="dash-job-budget"></div>
+            <div class="form-group"><label class="label">Budget *</label><input class="input" id="j-budget" type="text" required inputmode="numeric" value="${existing?.budget ? "Rp " + Number(existing.budget).toLocaleString("id-ID") : ""}" placeholder="Rp 500.000" data-testid="dash-job-budget"></div>
             <div class="form-group"><label class="label">Deadline</label><input class="input" id="j-deadline" type="date" min="${today}" value="${deadlineISO}" data-testid="dash-job-deadline"></div>
           </div>
-          <div class="form-group"><label class="label">Lokasi</label><input class="input" id="j-loc" value="${escape(existing?.location || "Remote")}" placeholder="Remote / Jakarta / Surabaya" data-testid="dash-job-loc"></div>
           <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:24px;">
             <button type="button" class="btn btn-secondary" id="cancel-job-form">Batal</button>
             <button class="btn btn-primary" type="submit" data-testid="dash-job-submit"><i class="fa-solid fa-paper-plane"></i> ${mode === "edit" ? "Update Lowongan" : "Pasang Sekarang"}</button>
@@ -858,17 +681,37 @@ async function loadBuyerJobs(container, opts = {}) {
     formContainer.querySelector("#close-job-form")?.addEventListener("click", closeForm);
     formContainer.querySelector("#cancel-job-form")?.addEventListener("click", closeForm);
 
+    bindRupiahInput(formContainer.querySelector("#j-budget"));
+    initPostTypeLocationForm(formContainer, {
+      categories: cats,
+      typeFieldId: "j-serviceType",
+      categoryFieldId: "j-category",
+      locationFieldId: "j-loc",
+      initial: {
+        serviceType: jobInitialType,
+        categoryId: existing?.categoryId || "",
+        location: existing?.location || "",
+      },
+    });
+
     formContainer.querySelector("#job-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const title = formContainer.querySelector("#j-title").value.trim();
-      const categoryId = formContainer.querySelector("#j-category").value;
+      const typeLoc = readPostTypeLocation(formContainer, {
+        typeFieldId: "j-serviceType",
+        categoryFieldId: "j-category",
+        locationFieldId: "j-loc",
+      });
+      const categoryId = typeLoc.categoryId;
       const description = formContainer.querySelector("#j-desc").value.trim();
-      const budget = parseFloat(formContainer.querySelector("#j-budget").value);
+      const budget = parseIDRInput(formContainer.querySelector("#j-budget").value);
       const deadline = formContainer.querySelector("#j-deadline").value || null;
-      const location = formContainer.querySelector("#j-loc").value.trim() || "Remote";
+
+      const typeErr = validatePostTypeLocation(typeLoc, "pekerjaan");
+      if (typeErr) return toast(typeErr, "error");
 
       if (title.length < 5) return toast("Judul minimal 5 karakter", "error");
-      if (!categoryId) return toast("Pilih kategori", "error");
+      if (!categoryId) return toast("Pilih sub-kategori", "error");
       if (description.length < 20) return toast("Deskripsi minimal 20 karakter", "error");
       if (!budget || budget < 10000) return toast("Budget minimal Rp 10.000", "error");
 
@@ -877,7 +720,15 @@ async function loadBuyerJobs(container, opts = {}) {
       submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan…';
 
       try {
-        const payload = { title, categoryId, description, budget, location, isOnline: location.toLowerCase() === "remote", deadline };
+        const payload = {
+          title,
+          categoryId,
+          description,
+          budget,
+          location: typeLoc.location,
+          isOnline: typeLoc.isOnline,
+          deadline,
+        };
         if (mode === "edit" && existingId) {
           await api.put(`/jobs/${existingId}`, payload);
           toast("Lowongan diperbarui", "success");
@@ -910,7 +761,7 @@ async function loadBuyerJobs(container, opts = {}) {
               </div>
             </div>
             <div class="flex gap-sm mt-2">
-              <a class="btn btn-secondary btn-sm" href="#/jobs/${x.id}" data-testid="view-job-${x.id}"><i class="fa-solid fa-eye"></i> Lihat (${x.applicationsCount || x.applicationCount || 0} pelamar)</a>
+              <a class="btn btn-secondary btn-sm" href="#/jobs/${x.id}?tab=applications" data-testid="view-job-${x.id}"><i class="fa-solid fa-eye"></i> Lihat (${x.applicationsCount || x.applicationCount || 0} pelamar)</a>
               <a class="btn btn-ghost btn-sm" href="#/dashboard/manage-jobs/edit/${x.id}" data-testid="edit-job-${x.id}"><i class="fa-solid fa-pen"></i> Edit</a>
               <button class="btn btn-danger btn-sm" data-del-job="${x.id}" data-testid="del-job-${x.id}"><i class="fa-solid fa-trash"></i> Hapus</button>
             </div>
@@ -957,9 +808,14 @@ async function loadSellerServices(container, opts = {}) {
 
   // Render directly into the live container so event listeners are preserved.
   container.innerHTML = `
-    <div class="page-header"><div class="flex-between"><h1 class="page-title">Kelola Jasa</h1><button class="btn btn-primary" id="add-svc" data-testid="add-service-btn"><i class="fa-solid fa-plus"></i> Tambah Jasa</button></div></div>
-    <div id="svc-list" class="grid grid-3"></div>
+    <div class="dash-page">
+    <div class="dash-page-head dash-page-head--row">
+      <div><h1 class="dash-page-title">Kelola Jasa</h1><p class="dash-page-sub">Jasa yang Anda tawarkan di marketplace</p></div>
+      <button class="btn btn-primary" id="add-svc" data-testid="add-service-btn"><i class="fa-solid fa-plus"></i> Tambah Jasa</button>
+    </div>
+    <div id="svc-list" class="marketplace-grid"></div>
     <div id="service-form-container" style="display:none; margin-top:24px;"></div>
+    </div>
   `;
 
   const svcListContainer = container.querySelector("#svc-list");
@@ -983,6 +839,13 @@ async function loadSellerServices(container, opts = {}) {
 
   const showEditServiceForm = async (serviceId, currentData) => {
     const cats = await api.get("/categories");
+    const svcInitialType = resolveInitialServiceType(cats, {
+      categoryId: currentData.categoryId,
+      isRemote: currentData.isRemote,
+      location: currentData.location,
+    });
+    const svcInitialLocation =
+      svcInitialType === "PHYSICAL" ? matchPostCityValue(currentData.location) : "";
 
     formContainer.innerHTML = `
       <div class="card card-pad-lg" style="background:#fff; border-radius:20px; padding:24px;">
@@ -992,29 +855,23 @@ async function loadSellerServices(container, opts = {}) {
         </div>
         <form id="service-form">
           <div class="form-group"><label class="label">Judul Jasa *</label><input class="input" id="title" required value="${escape(currentData.title || "")}" data-testid="edit-svc-title"></div>
-          <div class="form-group"><label class="label">Kategori *</label>
-            <select class="select" id="categoryId" required data-testid="edit-svc-category">
-              <option value="">Pilih Kategori</option>
-              ${cats.map((c) => `<option value="${c.id}" ${currentData.categoryId === c.id ? "selected" : ""}>${escape(c.name)}</option>`).join("")}
-            </select>
-          </div>
+          ${postTypeLocationFieldsHtml({
+            categoryFieldId: "categoryId",
+            categoryTestId: "edit-svc-category",
+            typeLabel: "Jenis Jasa",
+            categoryLabel: "Sub-kategori",
+            locationLabel: "Lokasi",
+            initialType: svcInitialType,
+            initialLocation: svcInitialLocation,
+          })}
           <div class="form-group"><label class="label">Deskripsi *</label><textarea class="textarea" id="description" rows="5" required data-testid="edit-svc-desc">${escape(currentData.description || "")}</textarea></div>
           <div class="grid grid-2">
-            <div class="form-group"><label class="label">Harga (Rp) *</label><input class="input" id="price" type="number" required min="10000" value="${currentData.price || ""}" data-testid="edit-svc-price"></div>
+            <div class="form-group"><label class="label">Harga *</label><input class="input" id="price" type="text" required inputmode="numeric" value="${currentData.price ? "Rp " + Number(currentData.price).toLocaleString("id-ID") : ""}" placeholder="Rp 150.000" data-testid="edit-svc-price"></div>
             <div class="form-group"><label class="label">Hari Pengerjaan *</label><input class="input" id="deliveryTime" type="number" required min="1" max="30" value="${currentData.deliveryTime || ""}" data-testid="edit-svc-days"></div>
           </div>
           <div class="form-group">
-            <label class="label">Gambar Cover</label>
-            <div style="border:2px dashed #ddd; border-radius:16px; padding:20px; text-align:center; cursor:pointer;" id="upload-zone">
-              <i class="fa-solid fa-cloud-upload-alt" style="font-size:2rem;"></i>
-              <p>Klik untuk upload gambar baru</p>
-              <input type="file" id="imageFile" accept="image/*" style="display:none;">
-              <input type="hidden" id="imageUrl" value="${currentData.image || ""}">
-            </div>
-            <div id="image-preview" style="margin-top:12px;${currentData.image ? "" : "display:none"}">
-              <img id="preview-img" src="${currentData.image || ""}" style="max-width:100%; max-height:150px; border-radius:12px;">
-              <button type="button" id="remove-image" class="btn btn-sm btn-ghost" style="margin-top:8px;"><i class="fa-solid fa-trash"></i> Hapus gambar</button>
-            </div>
+            <label class="label">Foto Portofolio Jasa *</label>
+            ${serviceImagesFieldHtml(getServiceAllImages(currentData))}
           </div>
           <div style="display:flex; gap:12px; justify-content:flex-end;">
             <button type="button" class="btn btn-secondary" id="cancel-service-form">Batal</button>
@@ -1029,7 +886,16 @@ async function loadSellerServices(container, opts = {}) {
     if (addBtn) addBtn.style.display = "none";
     isFormVisible = true;
 
-    setupImageUpload();
+    initServiceImagesField(formContainer, getServiceAllImages(currentData));
+    bindRupiahInput(formContainer.querySelector("#price"));
+    initPostTypeLocationForm(formContainer, {
+      categories: cats,
+      initial: {
+        serviceType: svcInitialType,
+        categoryId: currentData.categoryId || "",
+        location: currentData.location || "",
+      },
+    });
 
     const serviceForm = formContainer.querySelector("#service-form");
     formContainer.querySelector("#cancel-service-form")?.addEventListener("click", closeForm);
@@ -1038,17 +904,18 @@ async function loadSellerServices(container, opts = {}) {
     serviceForm?.addEventListener("submit", async (e) => {
       e.preventDefault();
       const title = formContainer.querySelector("#title")?.value.trim();
-      const categoryId = formContainer.querySelector("#categoryId")?.value;
+      const typeLoc = readPostTypeLocation(formContainer);
+      const categoryId = typeLoc.categoryId;
       const description = formContainer.querySelector("#description")?.value.trim();
-      const price = parseFloat(formContainer.querySelector("#price")?.value);
+      const price = parseIDRInput(formContainer.querySelector("#price")?.value);
       const deliveryTime = parseInt(formContainer.querySelector("#deliveryTime")?.value);
-      const image =
-        formContainer.querySelector("#imageUrl")?.value.trim() ||
-        currentData.image ||
-        "https://placehold.co/600x400/0a66c2/ffffff?text=No+Image";
+      const images = getServiceImagesValue(formContainer);
+      if (!images.length) return toast("Upload minimal 1 foto portofolio", "error");
+
+      const typeErr = validatePostTypeLocation(typeLoc, "jasa");
+      if (typeErr) return toast(typeErr, "error");
 
       if (!title || title.length < 5) return toast("Judul minimal 5 karakter", "error");
-      if (!categoryId) return toast("Pilih kategori", "error");
       if (!description || description.length < 20) return toast("Deskripsi minimal 20 karakter", "error");
       if (!price || isNaN(price) || price < 10000) return toast("Harga minimal Rp 10.000", "error");
       if (!deliveryTime || isNaN(deliveryTime) || deliveryTime < 1 || deliveryTime > 30)
@@ -1062,7 +929,8 @@ async function loadSellerServices(container, opts = {}) {
 
       try {
         await api.put(`/services/${serviceId}`, {
-          title, categoryId, description, price, deliveryTime, images: [image],
+          title, categoryId, description, price, deliveryTime, images,
+          location: typeLoc.location,
         });
         toast("Jasa berhasil diupdate", "success");
         closeForm();
@@ -1093,29 +961,21 @@ async function loadSellerServices(container, opts = {}) {
         </div>
         <form id="service-form">
           <div class="form-group"><label class="label">Judul Jasa *</label><input class="input" id="title" required placeholder="Contoh: Desain Logo Profesional" data-testid="create-svc-title"></div>
-          <div class="form-group"><label class="label">Kategori *</label>
-            <select class="select" id="categoryId" required data-testid="create-svc-category">
-              <option value="">Pilih Kategori</option>
-              ${cats.map((c) => `<option value="${c.id}">${escape(c.name)}</option>`).join("")}
-            </select>
-          </div>
+          ${postTypeLocationFieldsHtml({
+            categoryFieldId: "categoryId",
+            categoryTestId: "create-svc-category",
+            typeLabel: "Jenis Jasa",
+            categoryLabel: "Sub-kategori",
+            locationLabel: "Lokasi",
+          })}
           <div class="form-group"><label class="label">Deskripsi Jasa *</label><textarea class="textarea" id="description" rows="5" required placeholder="Jelaskan detail jasa yang Anda tawarkan..." data-testid="create-svc-desc"></textarea></div>
           <div class="grid grid-2">
-            <div class="form-group"><label class="label">Harga (Rp) *</label><input class="input" id="price" type="number" required min="10000" placeholder="150000" data-testid="create-svc-price"></div>
+            <div class="form-group"><label class="label">Harga *</label><input class="input" id="price" type="text" required inputmode="numeric" placeholder="Rp 150.000" data-testid="create-svc-price"></div>
             <div class="form-group"><label class="label">Hari Pengerjaan *</label><input class="input" id="deliveryTime" type="number" required min="1" max="30" placeholder="3" data-testid="create-svc-days"></div>
           </div>
           <div class="form-group">
-            <label class="label">Gambar Cover</label>
-            <div style="border:2px dashed #ddd; border-radius:16px; padding:20px; text-align:center; cursor:pointer;" id="upload-zone">
-              <i class="fa-solid fa-cloud-upload-alt" style="font-size:2rem;"></i>
-              <p>Klik untuk upload gambar</p>
-              <input type="file" id="imageFile" accept="image/*" style="display:none;">
-              <input type="hidden" id="imageUrl">
-            </div>
-            <div id="image-preview" style="display:none; margin-top:12px;">
-              <img id="preview-img" src="" style="max-width:100%; max-height:150px; border-radius:12px;">
-              <button type="button" id="remove-image" class="btn btn-sm btn-ghost" style="margin-top:8px;"><i class="fa-solid fa-trash"></i> Hapus</button>
-            </div>
+            <label class="label">Foto Portofolio Jasa *</label>
+            ${serviceImagesFieldHtml()}
           </div>
           <div style="display:flex; gap:12px; justify-content:flex-end;">
             <button type="button" class="btn btn-secondary" id="cancel-service-form">Batal</button>
@@ -1130,7 +990,9 @@ async function loadSellerServices(container, opts = {}) {
     if (addBtn) addBtn.style.display = "none";
     isFormVisible = true;
 
-    setupImageUpload();
+    initServiceImagesField(formContainer);
+    bindRupiahInput(formContainer.querySelector("#price"));
+    initPostTypeLocationForm(formContainer, { categories: cats });
 
     const serviceForm = formContainer.querySelector("#service-form");
     formContainer.querySelector("#cancel-service-form")?.addEventListener("click", closeForm);
@@ -1139,16 +1001,18 @@ async function loadSellerServices(container, opts = {}) {
     serviceForm?.addEventListener("submit", async (e) => {
       e.preventDefault();
       const title = formContainer.querySelector("#title")?.value.trim();
-      const categoryId = formContainer.querySelector("#categoryId")?.value;
+      const typeLoc = readPostTypeLocation(formContainer);
+      const categoryId = typeLoc.categoryId;
       const description = formContainer.querySelector("#description")?.value.trim();
-      const price = parseFloat(formContainer.querySelector("#price")?.value);
+      const price = parseIDRInput(formContainer.querySelector("#price")?.value);
       const deliveryTime = parseInt(formContainer.querySelector("#deliveryTime")?.value);
-      const image =
-        formContainer.querySelector("#imageUrl")?.value.trim() ||
-        "https://placehold.co/600x400/0a66c2/ffffff?text=No+Image";
+      const images = getServiceImagesValue(formContainer);
+      if (!images.length) return toast("Upload minimal 1 foto portofolio", "error");
+
+      const typeErr = validatePostTypeLocation(typeLoc, "jasa");
+      if (typeErr) return toast(typeErr, "error");
 
       if (!title || title.length < 5) return toast("Judul minimal 5 karakter", "error");
-      if (!categoryId) return toast("Pilih kategori", "error");
       if (!description || description.length < 20) return toast("Deskripsi minimal 20 karakter", "error");
       if (!price || isNaN(price) || price < 10000) return toast("Harga minimal Rp 10.000", "error");
       if (!deliveryTime || isNaN(deliveryTime) || deliveryTime < 1 || deliveryTime > 30)
@@ -1162,7 +1026,8 @@ async function loadSellerServices(container, opts = {}) {
 
       try {
         await api.post("/services", {
-          title, categoryId, description, price, deliveryTime, images: [image],
+          title, categoryId, description, price, deliveryTime, images,
+          location: typeLoc.location,
         });
         toast("Jasa berhasil dibuat", "success");
         closeForm();
@@ -1177,49 +1042,14 @@ async function loadSellerServices(container, opts = {}) {
     });
   };
 
->>>>>>> ec26484 (implementasi demo)
   const load = async () => {
     try {
       const svcsResp = await api.get("/services?sellerId=" + u.id);
       const svcs = Array.isArray(svcsResp) ? svcsResp : svcsResp.data || [];
-<<<<<<< HEAD
-      document.getElementById("svc-list").innerHTML = svcs.length
-        ? svcs
-            .map(
-              (s) => `
-        <div class="service-card ${s.active === false ? "inactive" : ""}" style="${s.active === false ? "opacity:.6" : ""}">
-          <div class="thumb"><img src="${s.image}" loading="lazy"/></div>
-          <div class="body">
-            <div class="title">${escape(s.title)} ${s.active === false ? '<span class="badge">Nonaktif</span>' : ""}</div>
-            <div class="meta"><span class="price">${fmtIDR(s.price)}</span></div>
-            <div class="flex gap-sm" style="flex-wrap:wrap">
-              <button class="btn btn-secondary btn-sm" data-edit="${s.id}" data-testid="edit-svc-${s.id}"><i class="fa-solid fa-pen"></i> Edit</button>
-              <button class="btn btn-ghost btn-sm" data-toggle="${s.id}" data-testid="toggle-svc-${s.id}"><i class="fa-solid ${s.active === false ? "fa-eye" : "fa-eye-slash"}"></i> ${s.active === false ? "Aktifkan" : "Nonaktifkan"}</button>
-              <button class="btn btn-danger btn-sm" data-del="${s.id}" data-testid="del-svc-${s.id}"><i class="fa-solid fa-trash"></i> Hapus</button>
-            </div>
-          </div>
-        </div>`,
-            )
-            .join("")
-        : empty("Belum ada jasa", "Tambahkan jasa pertama Anda");
-      bindActions(svcs);
-    } catch (e) {
-      toast(e.message, "error");
-    }
-  };
-  const bindActions = (svcs) => {
-    document.querySelectorAll("[data-del]").forEach((b) =>
-      b.addEventListener("click", () =>
-        confirmModal("Hapus jasa?", async () => {
-          try {
-            await api.del("/services/" + b.dataset.del);
-            toast("Dihapus", "success");
-            load();
-=======
       svcListContainer.innerHTML = svcs.length
         ? svcs.map((s) => `
           <div class="service-card" data-testid="service-card-${s.id}" style="background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-            <div class="thumb" style="height:160px;"><img src="${s.image || s.images?.[0] || "https://placehold.co/400x200/0a66c2/fff?text=No+Image"}" style="width:100%; height:100%; object-fit:cover;"></div>
+            <div class="thumb" style="height:160px;"><img src="${escape(serviceThumbUrl(s))}" style="width:100%; height:100%; object-fit:cover;"></div>
             <div class="body" style="padding:12px;">
               <div class="title" style="font-weight:600;">${escape(s.title)}</div>
               <div class="meta" style="display:flex; justify-content:space-between; margin:8px 0;">
@@ -1256,139 +1086,10 @@ async function loadSellerServices(container, opts = {}) {
             await api.post("/services/" + b.dataset.toggle + "/toggle-active");
             toast("Status jasa berubah", "success");
             await load();
->>>>>>> ec26484 (implementasi demo)
           } catch (err) {
             toast(err.message, "error");
           }
         }),
-<<<<<<< HEAD
-      ),
-    );
-    document.querySelectorAll("[data-toggle]").forEach((b) =>
-      b.addEventListener("click", async () => {
-        try {
-          const r = await api.post("/services/" + b.dataset.toggle + "/toggle");
-          toast(r.active ? "Jasa diaktifkan" : "Jasa dinonaktifkan", "success");
-          load();
-        } catch (err) {
-          toast(err.message, "error");
-        }
-      }),
-    );
-    document
-      .querySelectorAll("[data-edit]")
-      .forEach((b) =>
-        b.addEventListener("click", () =>
-          showForm(svcs.find((x) => x.id === b.dataset.edit)),
-        ),
-      );
-  };
-  const showForm = async (existing) => {
-    const cats = await api.get("/categories");
-    const { mountImageUpload } =
-      await import("../../shared/utils/upload-widget.js");
-    const m = modal({
-      title: existing ? "Edit Jasa" : "Tambah Jasa",
-      size: "lg",
-      body: `<form id="sf">
-        <div class="form-group"><label class="label">Judul</label><input class="input" id="title" required value="${escape(existing?.title || "")}" data-testid="svc-title"></div>
-        <div class="form-group"><label class="label">Kategori</label><select class="select" id="category" data-testid="svc-cat">${cats.map((c) => `<option value="${c.slug}" ${existing?.category === c.slug ? "selected" : ""}>${c.name}</option>`).join("")}</select></div>
-        <div class="form-group"><label class="label">Deskripsi</label><textarea class="textarea" id="description" required data-testid="svc-desc">${escape(existing?.description || "")}</textarea></div>
-        <div class="grid grid-2">
-          <div class="form-group"><label class="label">Harga (Rp)</label><input class="input" type="number" id="price" required min="50000" step="1000" value="${existing?.price || ""}" placeholder="Min Rp 50.000" data-testid="svc-price"></div>
-          <div class="form-group"><label class="label">Hari Pengerjaan</label><input class="input" type="number" id="dd" value="${existing?.deliveryDays || 3}" data-testid="svc-days"></div>
-        </div>
-        <div class="form-group"><label class="label">Gambar Cover</label><div id="svc-img-upload"></div></div>
-        <button class="btn btn-primary btn-block" type="submit" data-testid="svc-save-btn">${existing ? "Update" : "Simpan"}</button>
-      </form>`,
-    });
-    let imageUrl = existing?.image || "";
-    mountImageUpload(m.el.querySelector("#svc-img-upload"), {
-      folder: "services",
-      initial: imageUrl,
-      name: "svc-image",
-      testid: "svc-image-upload",
-      onChange: (u) => {
-        imageUrl = u;
-      },
-    });
-    m.el.querySelector("#sf").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const price = parseFloat(m.el.querySelector("#price").value);
-      if (price < 50000) return toast("Harga minimum jasa Rp 50.000", "error");
-      const body = {
-        title: m.el.querySelector("#title").value,
-        category: m.el.querySelector("#category").value,
-        description: m.el.querySelector("#description").value,
-        price,
-        deliveryDays: parseInt(m.el.querySelector("#dd").value) || 3,
-        image: imageUrl || null,
-        city: u.city || "",
-      };
-      try {
-        if (existing) await api.put("/services/" + existing.id, body);
-        else await api.post("/services", body);
-        m.close();
-        toast("Tersimpan", "success");
-        load();
-      } catch (err) {
-        toast(err.message, "error");
-      }
-    });
-  };
-  document
-    .getElementById("add-svc")
-    .addEventListener("click", () => showForm(null));
-  load();
-}
-
-export async function SellerOrders({ mount }) {
-  mount.innerHTML = `<div class="container page"><div class="dash-wrap">${sidebar("s-orders")}<section><h1>Pesanan Diterima</h1><div id="list"></div></section></div></div>`;
-  try {
-    const o = await api.get("/orders?role=seller");
-    document.getElementById("list").innerHTML = o.length
-      ? `
-      <div class="scroll-x"><table class="tbl"><thead><tr><th>Order</th><th>Pembeli</th><th>Status</th><th>Total</th><th></th></tr></thead><tbody>
-        ${o.map((x) => `<tr><td>${escape(x.title)}</td><td>${escape(x.buyer?.name)}</td><td>${statusPill(x.status)}</td><td>${fmtIDR(x.amount)}</td><td><a class="btn btn-secondary btn-sm" href="#/orders/${x.id}">Kelola</a></td></tr>`).join("")}
-      </tbody></table></div>`
-      : empty("Belum ada pesanan");
-  } catch (e) {
-    document.getElementById("list").innerHTML = empty("Gagal");
-  }
-}
-
-export async function SellerEarnings({ mount }) {
-  mount.innerHTML = `<div class="container page"><div class="dash-wrap">${sidebar("s-earn")}<section><h1>Penghasilan</h1><div id="content"></div></section></div></div>`;
-  try {
-    const o = await api.get("/orders?role=seller");
-    const done = o.filter((x) => x.status === "completed");
-    const pending = o.filter((x) =>
-      ["accepted", "in_progress"].includes(x.status),
-    );
-    const total = done.reduce((s, x) => s + x.amount * 0.95, 0);
-    document.getElementById("content").innerHTML = `
-      <div class="kpis">
-        <div class="kpi"><div class="ic"><i class="fa-solid fa-wallet"></i></div><div class="v">${fmtIDR(total)}</div><div class="l">Saldo Tersedia</div></div>
-        <div class="kpi"><div class="ic"><i class="fa-solid fa-hourglass"></i></div><div class="v">${fmtIDR(pending.reduce((s, x) => s + x.amount * 0.95, 0))}</div><div class="l">Pending</div></div>
-        <div class="kpi"><div class="ic"><i class="fa-solid fa-trophy"></i></div><div class="v">${done.length}</div><div class="l">Pesanan Selesai</div></div>
-      </div>
-      <div class="card card-pad-lg mt-3 flex-between">
-        <div><h3 style="margin:0">Tarik Penghasilan</h3><p class="text-muted" style="margin:0">Withdraw ke rekening bank Anda</p></div>
-        <button class="btn btn-primary" data-testid="withdraw-btn" onclick="(${() => {
-          window.dispatchEvent(
-            new CustomEvent("toast", {
-              detail: {
-                type: "info",
-                text: "Fitur withdraw demo - hubungi support",
-              },
-            }),
-          );
-        }})()"><i class="fa-solid fa-money-bill-transfer"></i> Tarik Sekarang</button>
-      </div>`;
-  } catch (e) {
-    document.getElementById("content").innerHTML = empty("Gagal");
-  }
-=======
       );
 
       svcListContainer.querySelectorAll("[data-edit]").forEach((b) =>
@@ -1450,39 +1151,38 @@ export async function DashboardOverview({ mount }) {
     activeSection = hashMatch[1];
   }
 
-  mount.innerHTML = `<div class="container page"><div class="dash-wrap">${sidebar(activeSection)}<section class="dash-main"><div class="spinner"></div></section></div></div>`;
+  mount.innerHTML = `<div class="container page dashboard-page"><div class="dash-wrap">${sidebar(activeSection)}<section class="dash-main"><div class="spinner"></div></section></div></div>`;
   dashboardContentContainer = mount.querySelector("section");
   await loadDashboardContent(activeSection, mount);
 }
 
 // Export untuk kompatibilitas router
 export async function BuyerOrders({ mount }) {
-  mount.innerHTML = `<div class="container page"><div class="dash-wrap">${sidebar("transactions")}<section><div class="spinner"></div></section></div></div>`;
+  mount.innerHTML = `<div class="container page dashboard-page"><div class="dash-wrap">${sidebar("transactions")}<section class="dash-main"><div class="spinner"></div></section></div></div>`;
   await loadTransactions(mount.querySelector("section"));
 }
 
 export async function BuyerJobs({ mount }) {
-  mount.innerHTML = `<div class="container page"><div class="dash-wrap">${sidebar("manage-jobs")}<section><div class="spinner"></div></section></div></div>`;
+  mount.innerHTML = `<div class="container page dashboard-page"><div class="dash-wrap">${sidebar("manage-jobs")}<section class="dash-main"><div class="spinner"></div></section></div></div>`;
   await loadManageJobs(mount.querySelector("section"));
 }
 
 export async function BuyerFavorites({ mount }) {
-  mount.innerHTML = `<div class="container page"><div class="dash-wrap">${sidebar("favorites")}<section><div class="spinner"></div></section></div></div>`;
+  mount.innerHTML = `<div class="container page dashboard-page"><div class="dash-wrap">${sidebar("favorites")}<section class="dash-main"><div class="spinner"></div></section></div></div>`;
   await loadFavorites(mount.querySelector("section"));
 }
 
 export async function SellerServices({ mount }) {
-  mount.innerHTML = `<div class="container page"><div class="dash-wrap">${sidebar("manage-services")}<section><div class="spinner"></div></section></div></div>`;
+  mount.innerHTML = `<div class="container page dashboard-page"><div class="dash-wrap">${sidebar("manage-services")}<section class="dash-main"><div class="spinner"></div></section></div></div>`;
   await loadManageServices(mount.querySelector("section"));
 }
 
 export async function SellerOrders({ mount }) {
-  mount.innerHTML = `<div class="container page"><div class="dash-wrap">${sidebar("transactions")}<section><div class="spinner"></div></section></div></div>`;
+  mount.innerHTML = `<div class="container page dashboard-page"><div class="dash-wrap">${sidebar("transactions")}<section class="dash-main"><div class="spinner"></div></section></div></div>`;
   await loadTransactions(mount.querySelector("section"));
 }
 
 export async function SellerEarnings({ mount }) {
-  mount.innerHTML = `<div class="container page"><div class="dash-wrap">${sidebar("earnings")}<section><div class="spinner"></div></section></div></div>`;
+  mount.innerHTML = `<div class="container page dashboard-page"><div class="dash-wrap">${sidebar("earnings")}<section class="dash-main"><div class="spinner"></div></section></div></div>`;
   await loadEarnings(mount.querySelector("section"));
->>>>>>> ec26484 (implementasi demo)
 }

@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-import { Controller, Delete, Get, Param, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-=======
 import {
   Controller,
   Delete,
@@ -12,7 +8,6 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
->>>>>>> ec26484 (implementasi demo)
 import { NotificationsService } from '../services/notifications.service';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 
@@ -24,10 +19,6 @@ export class NotificationsController {
 
   @Get()
   @ApiOperation({ summary: 'List my notifications' })
-<<<<<<< HEAD
-  list(@CurrentUser('id') uid: string) {
-    return this.notificationsService.list(uid);
-=======
   @ApiQuery({ name: 'unreadOnly', required: false, type: Boolean })
   list(
     @CurrentUser('id') uid: string,
@@ -35,7 +26,6 @@ export class NotificationsController {
   ) {
     // Dukung filter ?unreadOnly=true untuk hanya menampilkan notifikasi belum dibaca
     return this.notificationsService.list(uid, unreadOnly === 'true');
->>>>>>> ec26484 (implementasi demo)
   }
 
   @Get('unread-count')
@@ -52,8 +42,6 @@ export class NotificationsController {
       .then(() => ({ ok: true }));
   }
 
-<<<<<<< HEAD
-=======
   // Alias PATCH untuk kompatibilitas dengan frontend
   @Patch(':id/read')
   @ApiOperation({ summary: 'Mark as read (alias PATCH)' })
@@ -63,7 +51,6 @@ export class NotificationsController {
       .then(() => ({ ok: true }));
   }
 
->>>>>>> ec26484 (implementasi demo)
   @Post('read-all')
   @ApiOperation({ summary: 'Mark all as read' })
   readAll(@CurrentUser('id') uid: string) {
@@ -72,8 +59,6 @@ export class NotificationsController {
       .then(() => ({ ok: true }));
   }
 
-<<<<<<< HEAD
-=======
   // Alias PATCH untuk kompatibilitas dengan frontend
   @Patch('read-all')
   @ApiOperation({ summary: 'Mark all as read (alias PATCH)' })
@@ -83,7 +68,6 @@ export class NotificationsController {
       .then(() => ({ ok: true }));
   }
 
->>>>>>> ec26484 (implementasi demo)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete notification' })
   delete(@Param('id') id: string, @CurrentUser('id') uid: string) {

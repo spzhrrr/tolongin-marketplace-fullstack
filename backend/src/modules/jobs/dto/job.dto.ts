@@ -14,8 +14,8 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { BUDGET_TYPE_VALUES } from '../../../common/constants/enums';
-import type { BudgetType } from '../../../common/constants/enums';
+import { BUDGET_TYPE_VALUES, SERVICE_TYPE_VALUES } from '../../../common/constants/enums';
+import type { BudgetType, ServiceType } from '../../../common/constants/enums';
 
 export class CreateJobDto {
   @ApiProperty({ minLength: 5, maxLength: 100 })
@@ -65,8 +65,6 @@ export class CreateJobDto {
   @ArrayMaxSize(20)
   @IsString({ each: true })
   skills?: string[];
-<<<<<<< HEAD
-=======
 
   @ApiProperty({
     required: false,
@@ -76,7 +74,11 @@ export class CreateJobDto {
   @IsOptional()
   @IsString()
   urgency?: string;
->>>>>>> ec26484 (implementasi demo)
+
+  @ApiProperty({ required: false, description: 'URL gambar cover lowongan' })
+  @IsOptional()
+  @IsString()
+  coverImage?: string;
 }
 
 export class UpdateJobDto {
@@ -130,8 +132,6 @@ export class UpdateJobDto {
   @IsArray()
   @IsString({ each: true })
   skills?: string[];
-<<<<<<< HEAD
-=======
 
   @ApiProperty({
     required: false,
@@ -140,7 +140,11 @@ export class UpdateJobDto {
   @IsOptional()
   @IsString()
   urgency?: string;
->>>>>>> ec26484 (implementasi demo)
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  coverImage?: string;
 }
 
 export class JobQueryDto {
@@ -164,8 +168,6 @@ export class JobQueryDto {
   @IsString()
   status?: string;
 
-<<<<<<< HEAD
-=======
   @ApiProperty({ required: false, description: 'Budget minimum' })
   @IsOptional()
   @Type(() => Number)
@@ -205,7 +207,6 @@ export class JobQueryDto {
   @IsString()
   sortOrder?: 'asc' | 'desc';
 
->>>>>>> ec26484 (implementasi demo)
   @ApiProperty({ required: false })
   @IsOptional()
   @Type(() => Number)
@@ -217,4 +218,9 @@ export class JobQueryDto {
   @Type(() => Number)
   @IsNumber()
   limit?: number;
+
+  @ApiProperty({ required: false, enum: SERVICE_TYPE_VALUES })
+  @IsOptional()
+  @IsEnum(SERVICE_TYPE_VALUES)
+  serviceType?: ServiceType;
 }

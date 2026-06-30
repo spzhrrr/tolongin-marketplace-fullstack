@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -8,17 +8,11 @@ import { VerificationController } from './controllers/verification.controller';
 import { AuthService } from './services/auth.service';
 import { AuthRepository } from './repositories/auth.repository';
 import { JwtStrategy } from './strategies/jwt.strategy';
-<<<<<<< HEAD
-
-@Module({
-  imports: [
-=======
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    NotificationsModule,
->>>>>>> ec26484 (implementasi demo)
+    forwardRef(() => NotificationsModule),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     MulterModule.register({
       dest: './uploads',

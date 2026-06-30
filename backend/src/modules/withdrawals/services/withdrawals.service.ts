@@ -9,30 +9,6 @@ import {
   CreateWithdrawalDto,
   CreateBankAccountDto,
 } from '../dto/withdrawal.dto';
-<<<<<<< HEAD
-
-@Injectable()
-export class WithdrawalsService {
-  constructor(private readonly repo: WithdrawalsRepository) {}
-
-  async create(sellerId: string, dto: CreateWithdrawalDto) {
-    const acc = await this.repo.findBankAccountById(dto.bankAccountId);
-    if (!acc || acc.userId !== sellerId)
-      throw new NotFoundException('Bank account not found');
-    const profile = await this.repo.findUser(sellerId);
-    if (!profile) throw new BadRequestException('Seller profile not found');
-    if (profile.balance < dto.amount)
-      throw new BadRequestException('Saldo tidak mencukupi');
-    const created = await this.repo.createWithdrawal({
-      seller: { connect: { id: sellerId } },
-      amount: dto.amount,
-      bankName: acc.bankName,
-      accountNumber: acc.accountNumber,
-      accountName: acc.accountName,
-    });
-    await this.repo.updateBalance(sellerId, -dto.amount);
-    return created;
-=======
 import { PrismaService } from '../../../prisma/prisma.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
 import { WITHDRAWAL_STATUS } from '../../../common/constants/enums';
@@ -121,7 +97,6 @@ export class WithdrawalsService {
       .catch(() => undefined);
 
     return result;
->>>>>>> ec26484 (implementasi demo)
   }
 
   listMine(sellerId: string) {

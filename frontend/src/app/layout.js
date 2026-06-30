@@ -1,32 +1,39 @@
-<<<<<<< HEAD
-=======
 // frontend/src/layout.js
 
->>>>>>> ec26484 (implementasi demo)
 // Layout: header (navbar) + footer wrapper around page content
 import { store } from "./store.js";
 import { router } from "./router.js";
 import { t } from "../shared/utils/i18n.js";
 import { escape } from "../shared/utils/helpers.js";
 import { avatar } from "../shared/ui/components.js";
-<<<<<<< HEAD
-=======
 import {
   initNotifications,
   stopNotificationPolling,
 } from "../features/notifications/NotificationsPanel.js";
->>>>>>> ec26484 (implementasi demo)
 
 export function renderLayout(root) {
   root.innerHTML = `
+    <div class="app-canvas" aria-hidden="true">
+      <span class="app-canvas__blob app-canvas__blob--a"></span>
+      <span class="app-canvas__blob app-canvas__blob--b"></span>
+      <span class="app-canvas__blob app-canvas__blob--c"></span>
+      <span class="app-canvas__blob app-canvas__blob--d"></span>
+    </div>
     <header class="navbar" data-testid="navbar">
-      <div class="container navbar-inner">
-        <a class="brand" href="#/" data-testid="brand-logo">
-          <img src="/logotolongin.png" alt="Tolongin" class="brand-logo-img" height="36">
-        </a>
-        <button class="menu-toggle" id="menu-toggle" data-testid="mobile-menu-btn" aria-label="menu"><i class="fa-solid fa-bars"></i></button>
-        <nav class="nav-links" id="nav-links"></nav>
-        <div class="nav-right" id="nav-right"></div>
+      <div class="navbar-veil" aria-hidden="true"></div>
+      <div class="navbar-aurora" aria-hidden="true"></div>
+      <div class="container navbar-stage">
+        <div class="navbar-float">
+          <div class="navbar-inner">
+            <a class="brand" href="#/" data-testid="brand-logo">
+              <span class="brand-glow" aria-hidden="true"></span>
+              <img src="/logotolongin.png" alt="Tolongin" class="brand-logo-img" height="36">
+            </a>
+            <nav class="nav-links" id="nav-links"></nav>
+            <div class="nav-right" id="nav-right"></div>
+            <button class="menu-toggle" id="menu-toggle" data-testid="mobile-menu-btn" aria-label="menu"><i class="fa-solid fa-bars"></i></button>
+          </div>
+        </div>
       </div>
     </header>
     <div id="verify-banner"></div>
@@ -37,17 +44,23 @@ export function renderLayout(root) {
   renderNav();
   renderBanner();
   renderFooter();
-  store.subscribe(() => {
-    renderNav();
+  store.subscribe((state) => {
     renderBanner();
+    const navKey = `${state.user?.id || ""}:${state.token ? "t" : "x"}:${state.lang}`;
+    if (renderNav._lastKey !== navKey) {
+      renderNav._lastKey = navKey;
+      renderNav();
+    }
   });
-  window.addEventListener("route-change", () => renderNav());
+  window.addEventListener("route-change", () => {
+    updateNavActiveState();
+    renderFooter();
+    initNavbarAdaptive();
+  });
 
-<<<<<<< HEAD
-  // ========== MOBILE MENU - PERBAIKAN UNTUK HP ==========
-=======
+  initNavbarAdaptive();
+
   // ========== MOBILE MENU ==========
->>>>>>> ec26484 (implementasi demo)
   const menuToggle = document.getElementById("menu-toggle");
   const navLinks = document.getElementById("nav-links");
 
@@ -95,6 +108,81 @@ export function renderLayout(root) {
   return document.getElementById("page-mount");
 }
 
+let navbarAdaptiveCleanup = null;
+
+function initNavbarAdaptive() {
+  if (navbarAdaptiveCleanup) {
+    navbarAdaptiveCleanup();
+    navbarAdaptiveCleanup = null;
+  }
+
+  const navbar = document.querySelector(".navbar");
+  if (!navbar) return;
+
+  const discoverHead = document.querySelector(".discover-head");
+  const isDiscover = !!discoverHead;
+
+  navbar.classList.remove(
+    "navbar--discover",
+    "navbar--discover-services",
+    "navbar--discover-jobs",
+    "navbar--past-hero",
+    "navbar--scrolled",
+    "navbar--hero-blend",
+    "navbar--hero-blend-services",
+    "navbar--hero-blend-jobs",
+    "navbar--hero-scrolled",
+  );
+
+  if (isDiscover) {
+    navbar.classList.add("navbar--discover");
+    navbar.classList.add(
+      discoverHead.classList.contains("discover-head--jobs")
+        ? "navbar--discover-jobs"
+        : "navbar--discover-services",
+    );
+  }
+
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const headerH =
+      parseInt(
+        getComputedStyle(document.documentElement).getPropertyValue("--header-h"),
+        10,
+      ) || 72;
+    const y = window.scrollY;
+    navbar.classList.toggle("navbar--scrolled", y > 10);
+    if (isDiscover) {
+      const pastHero = discoverHead.getBoundingClientRect().bottom <= headerH + 4;
+      navbar.classList.toggle("navbar--past-hero", pastHero);
+    }
+  };
+
+  const onScroll = () => {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+  };
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll, { passive: true });
+  update();
+
+  navbarAdaptiveCleanup = () => {
+    window.removeEventListener("scroll", onScroll);
+    window.removeEventListener("resize", onScroll);
+    navbar.classList.remove(
+      "navbar--discover",
+      "navbar--discover-services",
+      "navbar--discover-jobs",
+      "navbar--past-hero",
+      "navbar--scrolled",
+    );
+  };
+}
+
 function renderBanner() {
   const host = document.getElementById("verify-banner");
   if (!host) return;
@@ -122,30 +210,22 @@ function renderBanner() {
         const { api } = await import("../shared/utils/api.js");
         const r = await api.post("/verification/email/request", {});
         if (r.demoOtp) {
-<<<<<<< HEAD
-          console.log(`🔗 Kode OTP: ${r.demoOtp}`);
-          const detail = {
-            type: "info",
-            html: `<span>Demo mode — Kode OTP: <strong>${r.demoOtp}</strong>. Masukkan di halaman verifikasi.</span>`,
-=======
-          const detail = {
-            type: "info",
-            html: `<span>Kode OTP: <strong>${r.demoOtp}</strong>. Masukkan di halaman verifikasi.</span>`,
->>>>>>> ec26484 (implementasi demo)
-            timeout: 10000,
-          };
-          window.dispatchEvent(new CustomEvent("toast", { detail }));
+          window.dispatchEvent(
+            new CustomEvent("toast", {
+              detail: {
+                type: "info",
+                html: `<span>Kode OTP: <strong>${r.demoOtp}</strong>. Masukkan di halaman verifikasi.</span>`,
+                timeout: 10000,
+              },
+            }),
+          );
           window.location.hash = "#/verification";
         } else {
           window.dispatchEvent(
             new CustomEvent("toast", {
               detail: {
                 type: "success",
-<<<<<<< HEAD
-                text: "OTP terkirim! Cek console untuk demo.",
-=======
                 text: "OTP terkirim! Cek email Anda.",
->>>>>>> ec26484 (implementasi demo)
               },
             }),
           );
@@ -168,6 +248,90 @@ function renderBanner() {
   }
 }
 
+function positionNavIndicator() {
+  const nav = document.getElementById("nav-links");
+  if (!nav) return;
+
+  let indicator = nav.querySelector(".nav-active-indicator");
+  if (!indicator) {
+    indicator = document.createElement("span");
+    indicator.className = "nav-active-indicator";
+    indicator.setAttribute("aria-hidden", "true");
+    nav.prepend(indicator);
+  }
+
+  const active = nav.querySelector(".nav-link.active");
+  if (!active || window.innerWidth <= 768) {
+    indicator.style.opacity = "0";
+    return;
+  }
+
+  indicator.dataset.accent = (active.dataset.testid || "").replace("nav-", "");
+
+  requestAnimationFrame(() => {
+    indicator.style.left = `${active.offsetLeft}px`;
+    indicator.style.top = `${active.offsetTop}px`;
+    indicator.style.width = `${active.offsetWidth}px`;
+    indicator.style.height = `${active.offsetHeight}px`;
+    indicator.style.opacity = "1";
+  });
+}
+
+if (!window.__navIndicatorResizeBound) {
+  window.__navIndicatorResizeBound = true;
+  window.addEventListener("resize", () => positionNavIndicator());
+}
+
+if (!window.__profileDropdownOutsideBound) {
+  window.__profileDropdownOutsideBound = true;
+  document.addEventListener("click", (e) => {
+    const menu = document.getElementById("profile-dropdown-menu");
+    const trigger = document.getElementById("profile-dropdown-trigger");
+    if (!menu?.classList.contains("is-open")) return;
+    if (trigger?.contains(e.target) || menu.contains(e.target)) return;
+    menu.classList.remove("is-open");
+    trigger?.setAttribute("aria-expanded", "false");
+  });
+}
+
+function updateNavActiveState() {
+  const nav = document.getElementById("nav-links");
+  if (!nav) return;
+
+  const cur = location.hash.replace(/^#/, "").split("?")[0] || "/";
+  nav.querySelectorAll(".nav-link").forEach((link) => {
+    const path =
+      (link.getAttribute("href") || "#/").replace(/^#/, "").split("?")[0] || "/";
+    const active = cur === path || (path !== "/" && cur.startsWith(path));
+    link.classList.toggle("active", active);
+  });
+  positionNavIndicator();
+}
+
+function bindProfileDropdown(right) {
+  const trigger = right.querySelector("#profile-dropdown-trigger");
+  const menu = right.querySelector("#profile-dropdown-menu");
+  if (!trigger || !menu) return;
+
+  trigger.setAttribute("aria-haspopup", "true");
+  trigger.setAttribute("aria-expanded", "false");
+
+  trigger.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const opening = !menu.classList.contains("is-open");
+    menu.classList.toggle("is-open", opening);
+    trigger.setAttribute("aria-expanded", String(opening));
+  });
+
+  menu.querySelectorAll(".dropdown-item[href]").forEach((item) => {
+    item.addEventListener("click", () => {
+      menu.classList.remove("is-open");
+      trigger.setAttribute("aria-expanded", "false");
+    });
+  });
+}
+
 function renderNav() {
   const { user, lang } = store.getState();
   const cur = location.hash.replace(/^#/, "").split("?")[0] || "/";
@@ -179,68 +343,6 @@ function renderNav() {
 
   const isAdmin = user && user.role === "ADMIN";
 
-<<<<<<< HEAD
-  const baseLinks = isAdmin
-    ? `<a class="nav-link ${isActive("/")}" href="#/" data-testid="nav-home">${t("nav.home")}</a>`
-    : `
-    <a class="nav-link ${isActive("/")}" href="#/" data-testid="nav-home">${t("nav.home")}</a>
-    <a class="nav-link ${isActive("/marketplace")}" href="#/marketplace" data-testid="nav-marketplace"><i class="fa-solid fa-magnifying-glass"></i> Cari Jasa</a>
-    <a class="nav-link ${isActive("/jobs")}" href="#/jobs" data-testid="nav-jobs"><i class="fa-solid fa-briefcase"></i> Cari Kerja</a>
-  `;
-
-  const authedLinks = user
-    ? isAdmin
-      ? `<a class="nav-link ${isActive("/admin")}" href="#/admin" data-testid="nav-admin"><i class="fa-solid fa-shield-halved"></i> Admin Dashboard</a>`
-      : `
-    <a class="nav-link ${isActive("/orders")}" href="#/orders" data-testid="nav-orders">${t("nav.orders")}</a>
-    <a class="nav-link ${isActive("/chat")}" href="#/chat" data-testid="nav-chat">${t("nav.chat")}</a>
-    <a class="nav-link ${isActive("/dashboard")}" href="#/dashboard" data-testid="nav-dashboard">${t("nav.dashboard")}</a>
-    `
-    : "";
-
-  nav.innerHTML = baseLinks + authedLinks;
-
-  const langToggle = `
-    <div class="lang-toggle" data-testid="lang-toggle">
-      <button class="${lang === "id" ? "active" : ""}" data-lang="id" data-testid="lang-id">ID</button>
-      <button class="${lang === "en" ? "active" : ""}" data-lang="en" data-testid="lang-en">EN</button>
-    </div>`;
-
-  if (user) {
-    right.innerHTML = `
-      ${langToggle}
-      <button class="btn btn-ghost btn-sm" id="notif-btn" data-testid="notif-bell" title="Notifikasi" style="position:relative">
-        <i class="fa-regular fa-bell"></i>
-      </button>
-      <a class="nav-link" href="#/profile" data-testid="nav-profile" style="display:flex;align-items:center;gap:.5rem;padding:.3rem .6rem">
-        ${avatar(user, "sm")}
-        <span style="font-size:.85rem;font-weight:600">${escape(user.name.split(" ")[0])}</span>
-      </a>
-      <button class="btn btn-secondary btn-sm" id="logout-btn" data-testid="logout-btn"><i class="fa-solid fa-right-from-bracket"></i></button>
-    `;
-    right.querySelector("#logout-btn").addEventListener("click", () => {
-      store.logout();
-      window.dispatchEvent(
-        new CustomEvent("toast", {
-          detail: { type: "success", text: "Berhasil keluar" },
-        }),
-      );
-      router.navigate("/");
-    });
-    right.querySelector("#notif-btn").addEventListener("click", () => {
-      window.dispatchEvent(
-        new CustomEvent("toast", {
-          detail: {
-            type: "info",
-            text: "Fitur notifikasi sedang dalam pengembangan",
-          },
-        }),
-      );
-    });
-  } else {
-    right.innerHTML = `
-      ${langToggle}
-=======
   // ✅ NAVBAR BARU: Hanya 4 menu utama untuk user biasa
   const baseLinks = isAdmin
     ? `<a class="nav-link ${isActive("/")}" href="#/" data-testid="nav-home">${t("nav.home")}</a>
@@ -261,116 +363,113 @@ function renderNav() {
   `;
 
   nav.innerHTML = baseLinks;
+  positionNavIndicator();
 
-  if (user) {
-    // ✅ NAVBAR BARU: Profile dropdown dengan icon + nama
-    right.innerHTML = `
-      <button class="btn btn-ghost btn-sm" id="notif-btn" data-testid="notif-bell" title="Notifikasi" style="position:relative">
+  if (user && store.getState().token) {
+    const hadProfile = !!right.querySelector("#profile-dropdown-trigger");
+    if (!hadProfile) {
+      right.innerHTML = `
+      <button class="nav-icon-btn" id="notif-btn" data-testid="notif-bell" title="Notifikasi">
         <i class="fa-regular fa-bell"></i>
       </button>
-      <div class="profile-dropdown" id="profile-dropdown" style="position:relative">
-        <button class="profile-dropdown-trigger" id="profile-dropdown-trigger" data-testid="nav-profile" style="display:flex;align-items:center;gap:.5rem;padding:.3rem .6rem;background:none;border:none;cursor:pointer;border-radius:20px;">
-          ${avatar(user, "sm")}
-          <span style="font-size:.85rem;font-weight:600">${escape(user.name.split(" ")[0])}</span>
-          <i class="fa-solid fa-chevron-down" style="font-size:10px;color:#666;"></i>
+      <div class="profile-dropdown" id="profile-dropdown">
+        <button class="profile-dropdown-trigger" id="profile-dropdown-trigger" data-testid="nav-profile" type="button">
+          <span class="profile-ring">${avatar(user, "sm")}</span>
+          <span class="profile-dropdown-name">${escape(user.name.split(" ")[0])}</span>
+          <i class="fa-solid fa-chevron-down profile-dropdown-chevron"></i>
         </button>
-        <div class="profile-dropdown-menu" id="profile-dropdown-menu" style="display:none;position:absolute;top:100%;right:0;min-width:220px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:1000;margin-top:8px;overflow:hidden;">
-          <div style="padding:12px 16px;border-bottom:1px solid #eee;">
-            <div style="font-weight:600">${escape(user.name)}</div>
-            <div style="font-size:12px;color:#666;">${escape(user.email)}</div>
+        <div class="profile-dropdown-menu" id="profile-dropdown-menu">
+          <div class="profile-dropdown-head">
+            <strong>${escape(user.name)}</strong>
+            <span>${escape(user.email)}</span>
           </div>
-          <a href="#/dashboard" class="dropdown-item" style="display:flex;align-items:center;gap:10px;padding:10px 16px;text-decoration:none;color:#333;transition:background 0.2s;">
-            <i class="fa-solid fa-tachometer-alt" style="width:20px;"></i> Dashboard
+          <a href="#/dashboard" class="dropdown-item">
+            <i class="fa-solid fa-gauge-high"></i> Dashboard
           </a>
-          <a href="#/profile" class="dropdown-item" style="display:flex;align-items:center;gap:10px;padding:10px 16px;text-decoration:none;color:#333;transition:background 0.2s;">
-            <i class="fa-solid fa-user" style="width:20px;"></i> Profil Saya
+          <a href="#/users/${user.id}" class="dropdown-item">
+            <i class="fa-solid fa-user"></i> Profil Saya
           </a>
-          <a href="#/orders" class="dropdown-item" style="display:flex;align-items:center;gap:10px;padding:10px 16px;text-decoration:none;color:#333;transition:background 0.2s;">
-            <i class="fa-solid fa-receipt" style="width:20px;"></i> Transaksi
+          <a href="#/orders" class="dropdown-item">
+            <i class="fa-solid fa-receipt"></i> Transaksi
           </a>
-          <a href="#/settings" class="dropdown-item" style="display:flex;align-items:center;gap:10px;padding:10px 16px;text-decoration:none;color:#333;transition:background 0.2s;">
-            <i class="fa-solid fa-user-cog" style="width:20px;"></i> Pengaturan
+          <a href="#/settings" class="dropdown-item">
+            <i class="fa-solid fa-gear"></i> Pengaturan
           </a>
-          <div style="border-top:1px solid #eee;margin-top:4px;">
-            <button id="logout-btn-dropdown" class="dropdown-item" style="display:flex;align-items:center;gap:10px;padding:10px 16px;width:100%;text-align:left;background:none;border:none;cursor:pointer;color:#dc2626;">
-              <i class="fa-solid fa-right-from-bracket" style="width:20px;"></i> Keluar
+          <a href="#/verification" class="dropdown-item">
+            <i class="fa-solid fa-shield-halved"></i> Verifikasi
+          </a>
+          <div class="profile-dropdown-foot">
+            <button type="button" id="logout-btn-dropdown" class="dropdown-item dropdown-item--danger">
+              <i class="fa-solid fa-right-from-bracket"></i> Keluar
             </button>
           </div>
         </div>
       </div>
     `;
 
-    // Dropdown toggle
-    const trigger = document.getElementById("profile-dropdown-trigger");
-    const menu = document.getElementById("profile-dropdown-menu");
+      bindProfileDropdown(right);
 
-    if (trigger && menu) {
-      trigger.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const isVisible = menu.style.display === "block";
-        menu.style.display = isVisible ? "none" : "block";
-      });
-
-      // Tutup dropdown saat klik di luar
-      document.addEventListener("click", (e) => {
-        if (!trigger.contains(e.target) && !menu.contains(e.target)) {
-          menu.style.display = "none";
-        }
-      });
-
-      // Hover effect untuk dropdown items
-      menu.querySelectorAll(".dropdown-item").forEach((item) => {
-        item.addEventListener("mouseenter", () => {
-          item.style.background = "#f5f5f5";
+      const logoutBtnDropdown = right.querySelector("#logout-btn-dropdown");
+      if (logoutBtnDropdown) {
+        logoutBtnDropdown.addEventListener("click", () => {
+          store.logout();
+          window.dispatchEvent(
+            new CustomEvent("toast", {
+              detail: { type: "success", text: "Berhasil keluar" },
+            }),
+          );
+          router.navigate("/");
         });
-        item.addEventListener("mouseleave", () => {
-          item.style.background = "";
-        });
-      });
-    }
+      }
 
-    // Logout button di dropdown
-    const logoutBtnDropdown = right.querySelector("#logout-btn-dropdown");
-    if (logoutBtnDropdown) {
-      logoutBtnDropdown.addEventListener("click", () => {
-        store.logout();
-        window.dispatchEvent(
-          new CustomEvent("toast", {
-            detail: { type: "success", text: "Berhasil keluar" },
-          }),
-        );
-        router.navigate("/");
-      });
+      initNotifications(right);
+    } else {
+      const nameEl = right.querySelector(".profile-dropdown-name");
+      const headStrong = right.querySelector(".profile-dropdown-head strong");
+      const headEmail = right.querySelector(".profile-dropdown-head span");
+      const ring = right.querySelector(".profile-ring");
+      const profileLink = right.querySelector('.dropdown-item[href^="#/users/"]');
+      if (nameEl) nameEl.textContent = user.name.split(" ")[0];
+      if (headStrong) headStrong.textContent = user.name;
+      if (headEmail) headEmail.textContent = user.email;
+      if (ring) ring.innerHTML = avatar(user, "sm");
+      if (profileLink) profileLink.setAttribute("href", `#/users/${user.id}`);
+      if (!right.dataset.notifReady) initNotifications(right);
     }
-
-    // Inisialisasi panel notifikasi
-    initNotifications(right);
   } else {
     // Pengguna keluar -> hentikan polling notifikasi
     stopNotificationPolling();
     right.innerHTML = `
->>>>>>> ec26484 (implementasi demo)
-      <a class="btn btn-ghost btn-sm" href="#/login" data-testid="login-link">${t("nav.login")}</a>
-      <a class="btn btn-primary btn-sm" href="#/register" data-testid="register-link">${t("nav.register")}</a>
+      <div class="navbar-auth">
+        <a class="btn btn-ghost btn-sm" href="#/login" data-testid="login-link">${t("nav.login")}</a>
+        <a class="btn btn-primary btn-sm" href="#/register" data-testid="register-link">${t("nav.register")}</a>
+      </div>
     `;
   }
-<<<<<<< HEAD
-
-  // lang switcher
-  right.querySelectorAll("[data-lang]").forEach((b) => {
-    b.addEventListener("click", () => {
-      store.setState({ lang: b.getAttribute("data-lang") });
-      router.render();
-    });
-  });
-=======
->>>>>>> ec26484 (implementasi demo)
 }
 
 function renderFooter() {
   const f = document.getElementById("site-footer");
   if (!f) return;
+  const cur = location.hash.replace(/^#/, "").split("?")[0] || "/";
+  const authRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
+  const minimal = authRoutes.includes(cur);
+
+  if (minimal) {
+    f.className = "footer footer--minimal";
+    f.innerHTML = `
+      <div class="container footer-minimal-inner">
+        <span>© ${new Date().getFullYear()} Tolongin</span>
+        <div class="footer-minimal-links">
+          <a href="#/">Beranda</a>
+          <a href="#/">Syarat &amp; Ketentuan</a>
+          <a href="#/">Privasi</a>
+        </div>
+      </div>`;
+    return;
+  }
+
+  f.className = "footer";
   f.innerHTML = `
     <div class="container">
       <div class="footer-grid">
@@ -383,25 +482,42 @@ function renderFooter() {
             <a href="#" aria-label="instagram"><i class="fa-brands fa-instagram"></i></a>
             <a href="#" aria-label="twitter"><i class="fa-brands fa-x-twitter"></i></a>
             <a href="#" aria-label="linkedin"><i class="fa-brands fa-linkedin"></i></a>
+            <a href="#" aria-label="tiktok"><i class="fa-brands fa-tiktok"></i></a>
           </div>
+          <p class="footer-trust"><i class="fa-solid fa-shield-halved"></i> Escrow aman · Seller terverifikasi · 34 provinsi</p>
         </div>
         <div><h4>Marketplace</h4>
           <a href="#/marketplace">Cari Jasa</a>
           <a href="#/jobs">Cari Kerja</a>
-          <a href="#/register">Mulai Jual Jasa</a>
+          <a href="#/dashboard/manage-services/new">Tawarkan Jasa</a>
+          <a href="#/jobs/create">Posting Lowongan</a>
+        </div>
+        <div><h4>Resources</h4>
+          <a href="#/">Panduan Buyer</a>
+          <a href="#/">Panduan Seller</a>
+          <a href="#/">Blog</a>
+          <a href="#/">FAQ</a>
         </div>
         <div><h4>Perusahaan</h4>
           <a href="#/">Tentang Kami</a>
           <a href="#/">Karir</a>
-          <a href="#/">Blog</a>
+          <a href="#/">Hubungi Kami</a>
         </div>
-        <div><h4>Bantuan</h4>
-          <a href="#/">FAQ</a>
-          <a href="#/">Pusat Bantuan</a>
+        <div><h4>Legal</h4>
           <a href="#/">Syarat &amp; Ketentuan</a>
+          <a href="#/">Kebijakan Privasi</a>
+          <a href="#/">Kebijakan Escrow</a>
+        </div>
+        <div><h4>Newsletter</h4>
+          <p style="font-size:.85rem;color:rgba(255,255,255,.65);margin:0 0 .5rem">Tips freelancer &amp; update fitur.</p>
+          <form class="footer-newsletter" onsubmit="event.preventDefault()">
+            <input type="email" placeholder="Email Anda" aria-label="Email newsletter">
+            <button class="btn btn-sm btn-white" type="submit">Langganan</button>
+          </form>
+          <p style="font-size:.75rem;color:rgba(255,255,255,.5);margin-top:.5rem">App mobile — segera hadir</p>
         </div>
       </div>
-      <div class="footer-bottom">© ${new Date().getFullYear()} Tolongin Indonesia. Made with <i class="fa-solid fa-heart" style="color:#ef4444"></i> for sustainable growth.</div>
+      <div class="footer-bottom">© ${new Date().getFullYear()} Tolongin Indonesia · Marketplace jasa untuk Indonesia</div>
     </div>
   `;
 }

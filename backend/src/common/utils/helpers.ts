@@ -7,12 +7,15 @@
  * @returns Hasil parsing atau defaultValue
  */
 export function parseJsonField<T = any>(
-  value: string | null | undefined,
+  value: string | null | undefined | T,
   defaultValue: T,
 ): T {
-  if (!value) return defaultValue;
+  if (value === null || value === undefined) return defaultValue;
+  if (typeof value !== 'string') return value as T;
+  const trimmed = value.trim();
+  if (!trimmed) return defaultValue;
   try {
-    return JSON.parse(value) as T;
+    return JSON.parse(trimmed) as T;
   } catch {
     return defaultValue;
   }

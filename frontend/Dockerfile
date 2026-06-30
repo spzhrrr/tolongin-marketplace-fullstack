@@ -3,19 +3,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-<<<<<<< HEAD
-<<<<<<< HEAD
-RUN yarn build
-=======
 ARG VITE_BACKEND_URL
 ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
 RUN npm run build
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
-ARG VITE_BACKEND_URL
-ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
-RUN npm run build
->>>>>>> ec26484 (implementasi demo)
 
 FROM nginx:1.27-alpine
 COPY --from=build /app/dist /usr/share/nginx/html

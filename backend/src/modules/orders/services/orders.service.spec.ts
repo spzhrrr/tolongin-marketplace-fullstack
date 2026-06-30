@@ -11,11 +11,7 @@ describe('OrdersService escrow state machine', () => {
     amount: 500000,
     fee: 25000,
     totalAmount: 525000,
-<<<<<<< HEAD
-    status: ORDER_STATUS.WAITING_REVIEW,
-=======
     status: ORDER_STATUS.WAITING_REVIEW as string,
->>>>>>> ec26484 (implementasi demo)
     escrowStatus: 'AWAITING_APPROVAL',
     workSubmission: JSON.stringify({
       note: 'Semua file final telah dilampirkan.',
@@ -56,6 +52,7 @@ describe('OrdersService escrow state machine', () => {
       {} as any,
       notifications as any,
       prisma as any,
+      {} as any,
       {} as any,
     );
     return { service, repo, prisma, tx, notifications };

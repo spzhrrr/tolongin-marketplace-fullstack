@@ -8,10 +8,7 @@ import {
   Post,
   Put,
   Query,
-<<<<<<< HEAD
-=======
   UseGuards,
->>>>>>> ec26484 (implementasi demo)
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
@@ -20,23 +17,12 @@ import { AuthService } from '../modules/auth/services/auth.service';
 import { ChatService } from '../modules/chat/services/chat.service';
 import { AdminService } from '../modules/admin/services/admin.service';
 import { OrdersService } from '../modules/orders/services/orders.service';
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-import { ReviewsService } from '../modules/reviews/services/reviews.service';
-import { ApplicationsService } from '../modules/applications/services/applications.service';
-import { PaymentsService } from '../modules/payments/services/payments.service';
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-import { PrismaService } from '../prisma/prisma.service';
-import { ROLE } from '../common/constants/enums';
-=======
 import { ReviewsService } from '../modules/reviews/services/reviews.service';
 import { ApplicationsService } from '../modules/applications/services/applications.service';
 import { PaymentsService } from '../modules/payments/services/payments.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ORDER_STATUS, PAYMENT_STATUS, ROLE } from '../common/constants/enums';
 import { VerifiedTransactionGuard } from '../common/guards/verification.guards';
->>>>>>> ec26484 (implementasi demo)
 
 /**
  * Compatibility layer mapping frontend-expected REST paths to backend services.
@@ -50,18 +36,9 @@ export class CompatController {
     private readonly chat: ChatService,
     private readonly admin: AdminService,
     private readonly orders: OrdersService,
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
     private readonly reviews: ReviewsService,
     private readonly applications: ApplicationsService,
     private readonly payments: PaymentsService,
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
-    private readonly reviews: ReviewsService,
-    private readonly applications: ApplicationsService,
-    private readonly payments: PaymentsService,
->>>>>>> ec26484 (implementasi demo)
     private readonly prisma: PrismaService,
   ) {}
 
@@ -116,8 +93,6 @@ export class CompatController {
   }
 
   @ApiBearerAuth('jwt')
-<<<<<<< HEAD
-=======
   @Get('admin/activity')
   @ApiOperation({ summary: 'Alias for /admin/activity-log' })
   async adminActivity(@CurrentUser('role') role: string) {
@@ -144,7 +119,6 @@ export class CompatController {
   }
 
   @ApiBearerAuth('jwt')
->>>>>>> ec26484 (implementasi demo)
   @Get('admin/kyc')
   async adminKyc(
     @CurrentUser('role') role: string,
@@ -192,16 +166,23 @@ export class CompatController {
 
   @ApiBearerAuth('jwt')
   @Post('favorites/:serviceId')
-  async addFav(
+  async toggleFav(
     @CurrentUser('id') uid: string,
     @Param('serviceId') serviceId: string,
   ) {
-    await this.prisma.favorite.upsert({
+    const existing = await this.prisma.favorite.findUnique({
       where: { userId_serviceId: { userId: uid, serviceId } },
-      update: {},
-      create: { userId: uid, serviceId },
     });
-    return { ok: true };
+    if (existing) {
+      await this.prisma.favorite.delete({
+        where: { userId_serviceId: { userId: uid, serviceId } },
+      });
+      return { ok: true, favorited: false };
+    }
+    await this.prisma.favorite.create({
+      data: { userId: uid, serviceId },
+    });
+    return { ok: true, favorited: true };
   }
 
   @ApiBearerAuth('jwt')
@@ -356,20 +337,6 @@ export class CompatController {
   @Post('payments/demo/confirm/:orderId')
   async demoPay(
     @CurrentUser('id') uid: string,
-<<<<<<< HEAD
-    @CurrentUser('role') role: string,
-    @Param('orderId') orderId: string,
-  ) {
-<<<<<<< HEAD
-    // mark order ACCEPTED as if seller accepted after buyer paid; or just mark COMPLETED on demo
-    return this.orders.accept(orderId, uid, role).catch(() => ({ ok: true }));
-=======
-    return this.payments.confirmDemo(uid, orderId);
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-  }
-  // ----- order create (frontend posts to /orders) -----
-  @ApiBearerAuth('jwt')
-=======
     @Param('orderId') orderId: string,
   ) {
     return this.payments.confirmDemo(uid, orderId);
@@ -377,7 +344,6 @@ export class CompatController {
   // ----- order create (frontend posts to /orders) -----
   @ApiBearerAuth('jwt')
   @UseGuards(VerifiedTransactionGuard)
->>>>>>> ec26484 (implementasi demo)
   @Post('orders')
   @ApiOperation({
     summary:
@@ -393,8 +359,6 @@ export class CompatController {
     return { error: 'Provide serviceId or applicationId' };
   }
 
-<<<<<<< HEAD
-=======
   @ApiBearerAuth('jwt')
   @Post('orders/:id/review')
   @ApiOperation({ summary: 'Alias for POST /reviews with orderId from route' })
@@ -431,7 +395,6 @@ export class CompatController {
     return { error: 'Unsupported decision status' };
   }
 
->>>>>>> ec26484 (implementasi demo)
   @Public()
   @Get()
   @ApiOperation({ summary: 'API root' })

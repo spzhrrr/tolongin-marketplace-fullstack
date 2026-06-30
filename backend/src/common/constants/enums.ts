@@ -7,6 +7,13 @@ export const ROLE = {
 export type Role = (typeof ROLE)[keyof typeof ROLE];
 export const ROLE_VALUES = Object.values(ROLE);
 
+export const SERVICE_TYPE = {
+  DIGITAL: 'DIGITAL',
+  PHYSICAL: 'PHYSICAL',
+} as const;
+export type ServiceType = (typeof SERVICE_TYPE)[keyof typeof SERVICE_TYPE];
+export const SERVICE_TYPE_VALUES = Object.values(SERVICE_TYPE);
+
 export const PRICE_TYPE = { FIXED: 'FIXED', HOURLY: 'HOURLY' } as const;
 export type PriceType = (typeof PRICE_TYPE)[keyof typeof PRICE_TYPE];
 export const PRICE_TYPE_VALUES = Object.values(PRICE_TYPE);
@@ -122,26 +129,18 @@ export type DisputeStatus =
   (typeof DISPUTE_STATUS)[keyof typeof DISPUTE_STATUS];
 export const DISPUTE_STATUS_VALUES = Object.values(DISPUTE_STATUS);
 
-<<<<<<< HEAD
-// ============================================================
-// Order state machine — sekarang tidak lagi pakai role 'buyer'/'seller',
-// melainkan posisi user dalam order (apakah dia BUYER atau SELLER pada order itu).
-// Konsumen di service mengevaluasi `userId === order.buyerId` dst.
-// ============================================================
-=======
 //                         ====
 // Order state machine — sekarang tidak lagi pakai role 'buyer'/'seller',
 // melainkan posisi user dalam order (apakah dia BUYER atau SELLER pada order itu).
 // Konsumen di service mengevaluasi `userId === order.buyerId` dst.
 //                         ====
->>>>>>> ec26484 (implementasi demo)
 export const ORDER_TRANSITIONS: Record<
   OrderStatus,
   Partial<Record<'buyer' | 'seller' | 'admin', OrderStatus[]>>
 > = {
   WAITING_CONFIRMATION: {
     buyer: ['CANCELLED'],
-    seller: ['CANCELLED'],
+    seller: ['ACCEPTED', 'CANCELLED'],
     admin: ['DISPUTED'],
   },
   PAID: {
@@ -160,6 +159,7 @@ export const ORDER_TRANSITIONS: Record<
     admin: ['DISPUTED'],
   },
   ACCEPTED: {
+    buyer: ['CANCELLED'],
     seller: ['IN_PROGRESS', 'CANCELLED'],
     admin: ['DISPUTED'],
   },

@@ -20,11 +20,7 @@ import { Public } from '../../../common/decorators/public.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { ROLE } from '../../../common/constants/enums';
-<<<<<<< HEAD
-import { VerifiedKtpGuard } from '../../../common/guards/verification.guards';
-=======
 import { VerifiedSellerGuard } from '../../../common/guards/verification.guards';
->>>>>>> ec26484 (implementasi demo)
 
 @ApiTags('Services')
 @Controller('services')
@@ -62,17 +58,10 @@ export class ServicesController {
   }
 
   @ApiBearerAuth('jwt')
-<<<<<<< HEAD
-  @UseGuards(VerifiedKtpGuard)
-  @Post()
-  @ApiOperation({
-    summary: 'Create new service (requires KTP-verified user)',
-=======
   @UseGuards(VerifiedSellerGuard)
   @Post()
   @ApiOperation({
     summary: 'Create new service (requires full seller verification)',
->>>>>>> ec26484 (implementasi demo)
   })
   create(@CurrentUser('id') sellerId: string, @Body() dto: CreateServiceDto) {
     return this.servicesService.create(sellerId, dto);

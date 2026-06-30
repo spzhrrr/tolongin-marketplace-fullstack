@@ -31,35 +31,6 @@ export class VerifiedContactGuard implements CanActivate {
 }
 
 /**
-<<<<<<< HEAD
-=======
- * Requires emailVerified && phoneVerified && ktpVerified.
- * Used for transactions: order, post job, apply to job.
- */
-@Injectable()
-export class VerifiedTransactionGuard implements CanActivate {
-  canActivate(ctx: ExecutionContext): boolean {
-    const user = ctx.switchToHttp().getRequest().user;
-    if (!user) throw new ForbiddenException('Login terlebih dahulu');
-    if (!user.emailVerified || !user.phoneVerified || !user.ktpVerified) {
-      throw new ForbiddenException({
-        message:
-          'Verifikasi email, telepon, dan KTP diperlukan untuk aksi ini',
-        code: 'VERIFICATION_REQUIRED',
-        requiredLevel: 'KTP',
-        missing: {
-          email: !user.emailVerified,
-          phone: !user.phoneVerified,
-          ktp: !user.ktpVerified,
-        },
-      });
-    }
-    return true;
-  }
-}
-
-/**
->>>>>>> ec26484 (implementasi demo)
  * Requires ktpVerified. Used for selling actions (creating a service,
  * receiving payments).
  */
@@ -80,41 +51,6 @@ export class VerifiedKtpGuard implements CanActivate {
 }
 
 /**
-<<<<<<< HEAD
-=======
- * Requires email + phone + KTP + verified bank account.
- * Used for posting services (seller onboarding).
- */
-@Injectable()
-export class VerifiedSellerGuard implements CanActivate {
-  canActivate(ctx: ExecutionContext): boolean {
-    const user = ctx.switchToHttp().getRequest().user;
-    if (!user) throw new ForbiddenException('Login terlebih dahulu');
-    if (
-      !user.emailVerified ||
-      !user.phoneVerified ||
-      !user.ktpVerified ||
-      !user.bankVerified
-    ) {
-      throw new ForbiddenException({
-        message:
-          'Verifikasi email, telepon, KTP, dan rekening bank diperlukan untuk posting jasa',
-        code: 'VERIFICATION_REQUIRED',
-        requiredLevel: 'BANK',
-        missing: {
-          email: !user.emailVerified,
-          phone: !user.phoneVerified,
-          ktp: !user.ktpVerified,
-          bank: !user.bankVerified,
-        },
-      });
-    }
-    return true;
-  }
-}
-
-/**
->>>>>>> ec26484 (implementasi demo)
  * Requires ktpVerified && bankVerified. Used for withdrawal actions.
  */
 @Injectable()
@@ -129,6 +65,62 @@ export class VerifiedWithdrawalGuard implements CanActivate {
         code: 'VERIFICATION_REQUIRED',
         requiredLevel: 'BANK',
         missing: {
+          ktp: !user.ktpVerified,
+          bank: !user.bankVerified,
+        },
+      });
+    }
+    return true;
+  }
+}
+
+/**
+ * Requires email + phone + KTP verified. Used for orders, post job, apply.
+ */
+@Injectable()
+export class VerifiedTransactionGuard implements CanActivate {
+  canActivate(ctx: ExecutionContext): boolean {
+    const user = ctx.switchToHttp().getRequest().user;
+    if (!user) throw new ForbiddenException('Login terlebih dahulu');
+    if (!user.emailVerified || !user.phoneVerified || !user.ktpVerified) {
+      throw new ForbiddenException({
+        message:
+          'Verifikasi email, telepon, dan KTP diperlukan untuk aksi ini',
+        code: 'VERIFICATION_REQUIRED',
+        requiredLevel: 'TRANSACTION',
+        missing: {
+          email: !user.emailVerified,
+          phone: !user.phoneVerified,
+          ktp: !user.ktpVerified,
+        },
+      });
+    }
+    return true;
+  }
+}
+
+/**
+ * Requires email + phone + KTP + bank. Used for posting services.
+ */
+@Injectable()
+export class VerifiedSellerGuard implements CanActivate {
+  canActivate(ctx: ExecutionContext): boolean {
+    const user = ctx.switchToHttp().getRequest().user;
+    if (!user) throw new ForbiddenException('Login terlebih dahulu');
+    if (
+      !user.emailVerified ||
+      !user.phoneVerified ||
+      !user.ktpVerified ||
+      !user.bankVerified
+    ) {
+      throw new ForbiddenException({
+        message:
+          'Verifikasi lengkap (email, telepon, KTP, rekening bank) diperlukan untuk posting jasa',
+        code: 'VERIFICATION_REQUIRED',
+        requiredLevel: 'SELLER',
+        missing: {
+          email: !user.emailVerified,
+          phone: !user.phoneVerified,
           ktp: !user.ktpVerified,
           bank: !user.bankVerified,
         },

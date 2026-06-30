@@ -43,8 +43,6 @@ export class ReviewsController {
     return this.reviewsService.getByService(serviceId);
   }
 
-<<<<<<< HEAD
-=======
   @Public()
   @Get('order/:orderId')
   @ApiOperation({ summary: 'Ambil semua ulasan pada sebuah order' })
@@ -61,7 +59,6 @@ export class ReviewsController {
     return this.reviewsService.getByUser(userId);
   }
 
->>>>>>> ec26484 (implementasi demo)
   @ApiBearerAuth('jwt')
   @Put(':id')
   @ApiOperation({ summary: 'Update own review' })

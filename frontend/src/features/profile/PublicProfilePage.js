@@ -1,70 +1,91 @@
-<<<<<<< HEAD
-import { api } from "../../shared/utils/api.js";
-import { escape, fmtIDR, toast, timeAgo } from "../../shared/utils/helpers.js";
-import {
-  avatar,
-  serviceCard,
-  empty,
-  stars,
-} from "../../shared/ui/components.js";
-import { store } from "../../app/store.js";
-import { router } from "../../app/router.js";
-
-=======
 // frontend/src/features/profile/PublicProfilePage.js
 
 import { api } from "../../shared/utils/api.js";
 import { escape, fmtIDR, toast, timeAgo } from "../../shared/utils/helpers.js";
-import { avatar, serviceCard, empty } from "../../shared/ui/components.js";
+import { avatar, serviceCard, empty, stars, jobCard } from "../../shared/ui/components.js";
 import { store } from "../../app/store.js";
 import { router } from "../../app/router.js";
 
 // Render daftar ulasan (dipakai untuk tab "sebagai penjual" & "sebagai klien")
 function renderReviewList(list, emptyText, isOwn = false) {
   if (!list || !list.length) {
-    return `<div style="text-align:center; padding:60px 20px; background:#fafafa; border-radius:12px;">
-      <i class="fa-solid fa-comment-slash" style="font-size:3rem; color:#ccc;"></i>
-      <h3 style="margin:14px 0 8px;">Belum ada ulasan</h3>
-      <p style="color:#888; max-width:420px; margin:0 auto;">
-        ${isOwn ? "Anda belum menerima ulasan. Selesaikan pesanan untuk mendapatkan ulasan dari klien." : "Pengguna ini belum memiliki ulasan."}
-      </p>
+    return `<div class="empty-state-inline">
+      <i class="fa-solid fa-comment-slash"></i>
+      <h3>Belum ada ulasan</h3>
+      <p>${isOwn ? "Selesaikan pesanan untuk mendapatkan ulasan dari klien." : "Pengguna ini belum memiliki ulasan."}</p>
     </div>`;
   }
-  return `<div style="display:flex; flex-direction:column; gap:16px;">${list
-    .map(
-      (r) => `
-    <div class="review-item" style="padding:16px; background:#fff; border-radius:12px; transition:background .15s ease;">
-      <div style="display:flex; gap:12px; align-items:center;">
-        ${avatar(r.isAnonymous ? { name: "Anonim" } : r.reviewer || { name: "User", id: r.reviewerId }, "sm")}
-        <div style="flex:1;">
-          <strong>${escape(r.isAnonymous ? "Anonim" : r.reviewer?.name || "User")}</strong>
-          <div style="font-size:11px; color:#999; margin-top:2px;">${timeAgo(r.createdAt)}</div>
+  return `<div class="profile-review-list">${list
+    .map((r) => {
+      const reviewer = r.isAnonymous
+        ? null
+        : r.reviewer || { name: "User", id: r.reviewerId };
+      const rid = reviewer?.id || r.reviewerId;
+      const headClass =
+        rid && !r.isAnonymous
+          ? "profile-review-head profile-link"
+          : "profile-review-head";
+      const headAttrs =
+        rid && !r.isAnonymous
+          ? ` data-user-id="${escape(String(rid))}" role="link" tabindex="0"`
+          : "";
+      const comment = (r.comment || "").trim();
+      return `
+    <article class="profile-review-item">
+      <div class="${headClass}"${headAttrs}>
+        ${avatar(r.isAnonymous ? { name: "Anonim" } : reviewer || { name: "User" })}
+        <div class="profile-review-meta">
+          <div class="profile-review-row">
+            <strong class="profile-review-name">${escape(r.isAnonymous ? "Anonim" : reviewer?.name || "User")}</strong>
+            <div class="profile-review-stars">${stars(r.rating || 5)}</div>
+          </div>
+          <time class="profile-review-date">${timeAgo(r.createdAt)}</time>
         </div>
-        <div style="color:#f5b042; font-size:14px;">${"★".repeat(r.rating || 5)}${"☆".repeat(5 - (r.rating || 5))}</div>
       </div>
-      <p style="margin:12px 0 0 52px; color:#555; font-size:14px; line-height:1.5;">${escape(r.comment || "")}</p>
-    </div>`,
-    )
+      ${comment ? `<p class="profile-review-comment">${escape(comment)}</p>` : ""}
+    </article>`;
+    })
     .join("")}</div>`;
 }
 
->>>>>>> ec26484 (implementasi demo)
+function profileEmptyState({ icon, title, text, ctaHtml = "" }) {
+  return `<div class="profile-empty">
+    <i class="fa-solid ${icon}"></i>
+    <h3>${escape(title)}</h3>
+    <p>${text}</p>
+    ${ctaHtml ? `<div class="profile-empty-cta">${ctaHtml}</div>` : ""}
+  </div>`;
+}
+
+function renderHistoryList(history) {
+  if (!history.length) return "";
+  return `<div class="profile-history-list">${history
+    .map((h) => {
+      const done = String(h.status).toUpperCase() === "COMPLETED";
+      return `<article class="profile-history-item">
+        <div class="profile-history-main">
+          <div class="profile-history-top">
+            <span class="profile-history-badge ${done ? "is-done" : ""}">${done ? "Selesai" : escape(String(h.status).replace(/_/g, " "))}</span>
+            ${h.label ? `<span class="profile-history-label">${escape(h.label)}</span>` : ""}
+          </div>
+          <h4 class="profile-history-title">${escape(h.title || "Pekerjaan")}</h4>
+          <div class="profile-history-meta">
+            ${h.client?.name ? `<span><i class="fa-solid fa-user"></i> ${escape(h.client.name)}</span>` : ""}
+            ${h.completedAt ? `<span><i class="fa-solid fa-calendar-check"></i> ${new Date(h.completedAt).toLocaleDateString("id-ID")}</span>` : ""}
+            ${h.review ? `<span class="profile-history-rating"><i class="fa-solid fa-star"></i> ${h.review.rating}</span>` : ""}
+          </div>
+        </div>
+        <div class="profile-history-amount">${fmtIDR(h.amount || 0)}</div>
+      </article>`;
+    })
+    .join("")}</div>`;
+}
+
 export async function PublicProfilePage({ mount, params }) {
   mount.innerHTML = `<div class="container page"><div class="spinner"></div></div>`;
   const userId = params.id;
 
   try {
-<<<<<<< HEAD
-    // Ambil semua data sekaligus
-    const [u, services, reviewsData, jobs] = await Promise.all([
-      api.get("/users/" + userId),
-      api.get(`/users/${userId}/services`).catch(() => []),
-      api
-        .get(`/users/${userId}/reviews`)
-        .catch(() => ({ reviews: [], rating: 0, reviewCount: 0 })),
-      api.get(`/users/${userId}/jobs`).catch(() => []),
-    ]);
-=======
     const [u, services, reviewsByUser, jobs, stats, workHistory] =
       await Promise.all([
         api.get("/users/" + userId),
@@ -82,27 +103,10 @@ export async function PublicProfilePage({ mount, params }) {
         })),
         api.get(`/users/${userId}/work-history`).catch(() => []),
       ]);
->>>>>>> ec26484 (implementasi demo)
 
     const me = store.getState().user;
     const isOwn = me && me.id === u.id;
 
-<<<<<<< HEAD
-    // Data reviews
-    const reviews = Array.isArray(reviewsData)
-      ? reviewsData
-      : reviewsData.reviews || [];
-    const avgRating = u.rating || reviewsData.rating || 0;
-    const reviewCount =
-      u.reviewCount || reviewsData.reviewCount || reviews.length;
-
-    // Hitung statistik
-    const totalServices = services.length;
-    const totalJobs = jobs.length;
-    const activeJobs = jobs.filter(
-      (j) => j.status === "OPEN" || j.status === "open",
-    ).length;
-=======
     const reviewsAsSeller = Array.isArray(reviewsByUser?.asSeller)
       ? reviewsByUser.asSeller
       : [];
@@ -119,457 +123,181 @@ export async function PublicProfilePage({ mount, params }) {
     const completedOrders =
       Number(stats?.completedOrders) || u.completedOrders || 0;
     const totalEarnings = Number(stats?.totalEarnings) || 0;
->>>>>>> ec26484 (implementasi demo)
+
+    const memberSince = new Date(u.createdAt).toLocaleDateString("id-ID", {
+      month: "long",
+      year: "numeric",
+    });
 
     mount.innerHTML = `
-      <div class="container page" style="max-width:1200px; margin:0 auto; padding:20px;">
-        <a href="#/marketplace" class="text-sm" data-testid="public-profile-back" style="display:inline-block; margin-bottom:20px; text-decoration:none; color:#0a66c2;">
-          <i class="fa-solid fa-arrow-left"></i> Kembali ke Marketplace
+      <div class="container page public-profile-page">
+        <a href="#/marketplace" class="profile-back-link" data-testid="public-profile-back">
+          <i class="fa-solid fa-arrow-left"></i> Kembali
         </a>
 
-        <!-- Profile Header Card -->
-        <div class="card card-pad-lg" style="background:#fff; border-radius:16px; padding:24px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-<<<<<<< HEAD
-          <div style="display:flex; gap:24px; align-items:center; flex-wrap:wrap;">
-            ${avatar(u, "xl")}
-            <div style="flex:1; min-width:240px;">
-              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                <h1 style="margin:0; font-size:1.8rem;" data-testid="public-profile-name">${escape(u.name || "User")}</h1>
-                ${u.verified ? '<i class="fa-solid fa-circle-check" style="color:#0a66c2; font-size:20px;" title="Terverifikasi"></i>' : ""}
-                ${u.role === "ADMIN" ? '<span class="badge" style="background:#f5b042; color:#fff;">Admin</span>' : ""}
-              </div>
-              <p class="text-muted" style="margin:8px 0 12px 0; color:#666;" data-testid="public-profile-bio">
-                ${escape(u.bio || "Belum ada bio")}
-              </p>
-              <div style="display:flex; gap:20px; flex-wrap:wrap; font-size:14px; color:#666;">
-                <span><i class="fa-solid fa-star" style="color:#f5b042;"></i> <strong>${avgRating.toFixed(1)}</strong> (${reviewCount} ulasan)</span>
-                <span><i class="fa-solid fa-bag-shopping"></i> ${u.completedOrders || 0} pesanan selesai</span>
-                ${u.city ? `<span><i class="fa-solid fa-location-dot"></i> ${escape(u.city)}</span>` : ""}
-                <span><i class="fa-solid fa-calendar"></i> Bergabung ${timeAgo(u.createdAt)}</span>
-              </div>
-            </div>
-            <div style="display:flex; gap:12px; flex-wrap:wrap;">
-              ${
-                !isOwn
-                  ? `
-                <button class="btn btn-primary" id="chat-user-btn" data-testid="public-profile-chat-btn" style="background:#0a66c2; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">
-                  <i class="fa-solid fa-message"></i> Chat
-                </button>
-                <button class="btn btn-secondary" id="report-user-btn" data-testid="public-profile-report-btn" style="background:#f0f0f0; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">
-                  <i class="fa-solid fa-flag"></i> Laporkan
-                </button>
-              `
-                  : `<a class="btn btn-secondary" href="#/settings" data-testid="public-profile-edit-btn" style="background:#f0f0f0; text-decoration:none; padding:10px 20px; border-radius:8px;"><i class="fa-solid fa-pen"></i> Edit Profil</a>`
-              }
-            </div>
-=======
-          <div style="display:flex; justify-content:space-between; gap:32px; align-items:flex-start; flex-wrap:wrap;">
-            
-            <div style="display:flex; gap:24px; align-items:flex-start; flex:1;">
-              <div style="position: relative;">
-                ${avatar(u, "xl")}
-                ${
-                  isOwn
-                    ? `
-                  <label for="avatar-upload" class="btn btn-secondary" style="margin-top:10px; display:block; text-align:center; cursor:pointer; font-size:12px; padding:6px 12px;">
-                    <i class="fa-solid fa-camera"></i> Ubah Foto
-                  </label>
-                  <input id="avatar-upload" type="file" accept="image/*" hidden>
-                `
-                    : ""
-                }
-              </div>
-
-              <div style="flex:1;">
-                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                  <h1 style="margin:0;font-size:2.2rem;font-weight:800;">
-                    ${escape(u.name || "User")}
-                  </h1>
+        <div class="profile-shell card">
+          <div class="profile-cover" aria-hidden="true">
+            <div class="profile-cover__mesh"></div>
+            <div class="profile-cover__blob profile-cover__blob--a"></div>
+            <div class="profile-cover__blob profile-cover__blob--b"></div>
+            <div class="profile-cover__fade"></div>
+          </div>
+          <div class="profile-header">
+            <div class="profile-header-row">
+              <div class="profile-identity">
+                <div class="profile-avatar-wrap">
+                  ${avatar(u, "xl")}
                   ${
-                    u.verified
-                      ? `<i class="fa-solid fa-circle-check"
-                           style="color:#2563eb;font-size:20px;"
-                           title="Akun Terverifikasi"></i>`
+                    isOwn
+                      ? `<label for="avatar-upload" class="profile-avatar-edit" title="Ubah foto">
+                          <i class="fa-solid fa-camera"></i>
+                        </label>
+                        <input id="avatar-upload" type="file" accept="image/*" hidden>`
                       : ""
                   }
                 </div>
-
-                <p style="margin:8px 0 14px;color:#666;font-size:15px;line-height:1.6;">
-                  ${escape(
+                <div class="profile-identity-text">
+                  <div class="profile-name-row">
+                    <h1 class="profile-name">${escape(u.name || "User")}</h1>
+                    ${u.verified ? '<i class="fa-solid fa-circle-check verified-icon verified-icon-lg" title="Terverifikasi"></i>' : ""}
+                  </div>
+                  ${u.city ? `<p class="profile-location"><i class="fa-solid fa-location-dot"></i> ${escape(u.city)}</p>` : ""}
+                  <p class="profile-bio">${escape(
                     u.bio ||
                       (isOwn
-                        ? "Tambahkan bio untuk meningkatkan kepercayaan calon klien."
-                        : "Pengguna ini belum menambahkan deskripsi profil."),
-                  )}
-                </p>
-
-                <div style="display:flex;gap:18px;flex-wrap:wrap;color:#666;font-size:14px;">
-                  <span><i class="fa-solid fa-star" style="color:#f5b042"></i> ${avgRating.toFixed(1)} (${reviewCount} ulasan)</span>
-                  <span><i class="fa-solid fa-bag-shopping"></i> ${completedOrders} pesanan selesai</span>
-                  ${u.city ? `<span><i class="fa-solid fa-location-dot"></i> ${escape(u.city)}</span>` : ""}
-                  <span><i class="fa-solid fa-calendar"></i> Aktif sejak ${new Date(u.createdAt).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}</span>
+                        ? "Tambahkan bio agar klien lebih percaya — edit di Pengaturan."
+                        : "Belum ada deskripsi profil."),
+                  )}</p>
+                  <div class="profile-trust-chips">
+                    ${u.verified ? '<span class="profile-trust-chip profile-trust-chip--verified"><i class="fa-solid fa-shield-halved"></i> Terverifikasi</span>' : ""}
+                    <span class="profile-trust-chip"><i class="fa-solid fa-calendar"></i> Member sejak ${memberSince}</span>
+                    ${completedOrders > 0 ? `<span class="profile-trust-chip"><i class="fa-solid fa-circle-check"></i> ${completedOrders} pesanan selesai</span>` : ""}
+                  </div>
                 </div>
+              </div>
+              <div class="profile-header-actions">
+                ${
+                  !isOwn
+                    ? `<button class="btn btn-primary" id="chat-user-btn"><i class="fa-solid fa-message"></i> Chat</button>
+                       <button class="btn btn-secondary" id="report-user-btn"><i class="fa-solid fa-flag"></i> Laporkan</button>`
+                    : `<a class="btn btn-secondary" href="#/settings/profile"><i class="fa-solid fa-pen"></i> Edit Profil</a>
+                       <a class="btn btn-secondary" href="#/settings"><i class="fa-solid fa-gear"></i> Pengaturan</a>
+                       <a class="btn btn-primary" href="#/dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>`
+                }
               </div>
             </div>
 
-            <div style="display:flex;gap:12px;align-self:center;flex-wrap:wrap;">
+            <div class="profile-metrics">
+              <button type="button" class="profile-metric clickable-stat" data-target-tab="reviews">
+                <span class="profile-metric-icon profile-metric-icon--gold" aria-hidden="true"><i class="fa-solid fa-star"></i></span>
+                <span class="profile-metric-value">${avgRating.toFixed(1)}</span>
+                <span class="profile-metric-label">${reviewCount} ulasan</span>
+              </button>
+              <button type="button" class="profile-metric clickable-stat" data-target-tab="history">
+                <span class="profile-metric-icon profile-metric-icon--blue" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span>
+                <span class="profile-metric-value">${completedOrders}</span>
+                <span class="profile-metric-label">Pesanan selesai</span>
+              </button>
+              <button type="button" class="profile-metric clickable-stat" data-target-tab="services">
+                <span class="profile-metric-icon profile-metric-icon--purple" aria-hidden="true"><i class="fa-solid fa-store"></i></span>
+                <span class="profile-metric-value">${totalServices}</span>
+                <span class="profile-metric-label">Jasa aktif</span>
+              </button>
+              <button type="button" class="profile-metric clickable-stat" data-target-tab="jobs">
+                <span class="profile-metric-icon profile-metric-icon--green" aria-hidden="true"><i class="fa-solid fa-briefcase"></i></span>
+                <span class="profile-metric-value">${totalJobs}</span>
+                <span class="profile-metric-label">Lowongan</span>
+              </button>
+              ${totalEarnings > 0 && isOwn ? `<div class="profile-metric profile-metric--static">
+                <span class="profile-metric-icon profile-metric-icon--green" aria-hidden="true"><i class="fa-solid fa-wallet"></i></span>
+                <span class="profile-metric-value profile-metric-value--green">${fmtIDR(totalEarnings)}</span>
+                <span class="profile-metric-label">Total penghasilan</span>
+              </div>` : ""}
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-content card">
+          <nav class="profile-tabs" aria-label="Konten profil">
+            <button class="profile-tab active" data-tab="services"><i class="fa-solid fa-store"></i> Jasa <span class="profile-tab-count">${totalServices}</span></button>
+            <button class="profile-tab" data-tab="history"><i class="fa-solid fa-briefcase"></i> Riwayat <span class="profile-tab-count">${history.length}</span></button>
+            <button class="profile-tab" data-tab="jobs"><i class="fa-solid fa-clipboard-list"></i> Lowongan <span class="profile-tab-count">${totalJobs}</span></button>
+            <button class="profile-tab" data-tab="reviews"><i class="fa-solid fa-star"></i> Ulasan <span class="profile-tab-count">${reviews.length}</span></button>
+          </nav>
+
+          <div id="tab-services" class="profile-tab-panel active">
+            <div id="services-list" data-testid="public-profile-services">
               ${
-                !isOwn
-                  ? `
-                <button class="btn btn-primary" id="chat-user-btn" style="background:#0a66c2; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">
-                  <i class="fa-solid fa-message"></i> Chat
-                </button>
-                <button class="btn btn-secondary" id="report-user-btn" style="background:#f0f0f0; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">
-                  <i class="fa-solid fa-flag"></i> Laporkan
-                </button>
-              `
-                  : `
-                <a class="btn btn-secondary" href="#/dashboard" style="background:#f0f0f0; text-decoration:none; padding:10px 20px; border-radius:8px;">
-                  <i class="fa-solid fa-gauge-high"></i> Dashboard
-                </a>
-                <a class="btn btn-primary" href="#/settings" style="background:#0a66c2; color:#fff; text-decoration:none; padding:10px 20px; border-radius:8px;">
-                  <i class="fa-solid fa-pen"></i> Edit Profil
-                </a>
-              `
+                services.length
+                  ? `<div class="marketplace-grid profile-services-grid">${services.map((s) => serviceCard(s)).join("")}</div>`
+                  : profileEmptyState({
+                      icon: "fa-box-open",
+                      title: "Belum ada jasa",
+                      text: isOwn
+                        ? "Mulai tawarkan kemampuan Anda di marketplace Tolongin."
+                        : "Pengguna ini belum menawarkan jasa.",
+                      ctaHtml: isOwn
+                        ? `<a href="#/dashboard/manage-services/new" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Tambah Jasa</a>`
+                        : "",
+                    })
               }
             </div>
+          </div>
 
-          </div>
-        </div>
-
-        <!-- Activity Feed -->
-        <div style="background:#fafafa; border:1px solid #ececec; border-radius:14px; padding:18px; margin-bottom:22px;">
-          <div style="font-weight:700;margin-bottom:12px;">
-            <i class="fa-solid fa-clock-rotate-left"></i> Aktivitas Terbaru
-          </div>
-          <div style="display:flex;flex-direction:column;gap:8px;color:#555;font-size:14px;">
-            <div>✓ Profil diperbarui</div>
-            ${completedOrders > 0 ? `<div>✓ Menyelesaikan ${completedOrders} pesanan</div>` : ""}
-            ${totalServices > 0 ? `<div>✓ Memiliki ${totalServices} jasa aktif</div>` : ""}
-            ${reviewCount > 0 ? `<div>⭐ Menerima ${reviewCount} ulasan</div>` : ""}
->>>>>>> ec26484 (implementasi demo)
-          </div>
-        </div>
-
-        <!-- Statistik Ringkasan -->
-<<<<<<< HEAD
-        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px;">
-          <div class="stat-card" style="background:#fff; text-align:center; padding:16px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-            <div style="font-size:2rem; font-weight:700; color:#0a66c2;">${totalServices}</div>
-            <div style="font-size:13px; color:#666;">Jasa Ditawarkan</div>
-          </div>
-          <div class="stat-card" style="background:#fff; text-align:center; padding:16px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-            <div style="font-size:2rem; font-weight:700; color:#0a66c2;">${totalJobs}</div>
-            <div style="font-size:13px; color:#666;">Pekerjaan Diposting</div>
-          </div>
-          <div class="stat-card" style="background:#fff; text-align:center; padding:16px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-            <div style="font-size:2rem; font-weight:700; color:#0a66c2;">${activeJobs}</div>
-            <div style="font-size:13px; color:#666;">Pekerjaan Aktif</div>
-          </div>
-        </div>
-
-        <!-- Tab Navigation -->
-        <div style="display:flex; gap:8px; border-bottom:1px solid #e0e0e0; margin-bottom:24px;">
-          <button class="tab-btn active" data-tab="services" style="padding:12px 20px; background:none; border:none; cursor:pointer; font-weight:600; color:#0a66c2; border-bottom:2px solid #0a66c2;">Jasa Ditawarkan (${totalServices})</button>
-          <button class="tab-btn" data-tab="jobs" style="padding:12px 20px; background:none; border:none; cursor:pointer; font-weight:600; color:#666;">Pekerjaan Diposting (${totalJobs})</button>
-          <button class="tab-btn" data-tab="reviews" style="padding:12px 20px; background:none; border:none; cursor:pointer; font-weight:600; color:#666;">Ulasan (${reviews.length})</button>
-=======
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:16px; margin-bottom:24px;">
-          <div class="stat-card clickable-stat" data-target-tab="reviews" style="cursor:pointer; background:#fff; text-align:center; padding:16px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); transition:all .18s ease;">
-            <div style="font-size:2rem; font-weight:700; color:#f5b042;"><i class="fa-solid fa-star" style="font-size:1.3rem;"></i> ${avgRating.toFixed(1)}</div>
-            <div style="font-size:13px; color:#666;">Rating (${reviewCount} ulasan)</div>
-          </div>
-          <div class="stat-card clickable-stat" data-target-tab="history" style="cursor:pointer; background:#fff; text-align:center; padding:16px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); transition:all .18s ease;">
-            <div style="font-size:2rem; font-weight:700; color:#0a66c2;">${completedOrders}</div>
-            <div style="font-size:13px; color:#666;">Pesanan Selesai</div>
-          </div>
-          <div class="stat-card clickable-stat" data-target-tab="services" style="cursor:pointer; background:#fff; text-align:center; padding:16px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); transition:all .18s ease;">
-            <div style="font-size:2rem; font-weight:700; color:#0a66c2;">${totalServices}</div>
-            <div style="font-size:13px; color:#666;">Jasa Ditawarkan</div>
-          </div>
-          <div class="stat-card clickable-stat" data-target-tab="jobs" style="cursor:pointer; background:#fff; text-align:center; padding:16px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); transition:all .18s ease;">
-            <div style="font-size:2rem; font-weight:700; color:#0a66c2;">${totalJobs}</div>
-            <div style="font-size:13px; color:#666;">Pekerjaan Diposting</div>
-          </div>
-        </div>
-
-        <!-- Tab Navigation -->
-        <div style="display:flex; gap:8px; border-bottom:1px solid #e0e0e0; margin-bottom:24px; overflow-x:auto; flex-wrap:wrap;">
-          <button class="tab-btn active" data-tab="services" style="padding:12px 20px; background:none; border:none; cursor:pointer; font-weight:600; color:#0a66c2; border-bottom:2px solid #0a66c2; white-space:nowrap; transition:all .15s ease;">
-            🛠 Jasa Saya (${totalServices})
-          </button>
-          <button class="tab-btn" data-tab="history" style="padding:12px 20px; background:none; border:none; cursor:pointer; font-weight:600; color:#666; white-space:nowrap; transition:all .15s ease;">
-            💼 Riwayat Pekerjaan (${history.length})
-          </button>
-          <button class="tab-btn" data-tab="jobs" style="padding:12px 20px; background:none; border:none; cursor:pointer; font-weight:600; color:#666; white-space:nowrap; transition:all .15s ease;">
-            📋 Lowongan Saya (${totalJobs})
-          </button>
-          <button class="tab-btn" data-tab="reviews" style="padding:12px 20px; background:none; border:none; cursor:pointer; font-weight:600; color:#666; white-space:nowrap; transition:all .15s ease;">
-            ⭐ Ulasan (${reviews.length})
-          </button>
->>>>>>> ec26484 (implementasi demo)
-        </div>
-
-        <!-- Tab Content: Services -->
-        <div id="tab-services" class="tab-content active">
-          <div id="services-list" data-testid="public-profile-services">
+          <div id="tab-history" class="profile-tab-panel" hidden>
             ${
-              services.length
-                ? `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:20px;">
-                    ${services.map((s) => serviceCard(s)).join("")}
-                  </div>`
-                : `<div style="text-align:center; padding:60px 20px; background:#fafafa; border-radius:12px;">
-                    <i class="fa-solid fa-box-open" style="font-size:3rem; color:#ccc;"></i>
-<<<<<<< HEAD
-                    <h3 style="margin:12px 0 8px;">Belum ada jasa</h3>
-                    <p style="color:#999;">User ini belum memposting jasa.</p>
-=======
-                    <h3 style="margin:14px 0 8px;">Belum ada jasa</h3>
-                    <p style="color:#888;max-width:420px;margin:0 auto;">
-                    ${
-                      isOwn
-                        ? "Anda belum menawarkan jasa apa pun. Mulai tawarkan kemampuan Anda dan biarkan orang lain menemukan Anda."
-                        : "Pengguna ini belum menawarkan jasa apa pun saat ini."
-                    }
-                    </p>
-                    ${
-                      isOwn
-                        ? `<div style="margin-top:20px;">
-                             <a href="#/dashboard/manage-services"
-                                class="btn btn-primary" style="background:#0a66c2; color:#fff; text-decoration:none; padding:10px 20px; border-radius:8px; display:inline-block;">
-                                <i class="fa-solid fa-plus"></i> Tambah Jasa
-                             </a>
-                           </div>`
-                        : ""
-                    }
->>>>>>> ec26484 (implementasi demo)
-                  </div>`
+              history.length
+                ? renderHistoryList(history)
+                : profileEmptyState({
+                    icon: "fa-clock-rotate-left",
+                    title: "Belum ada riwayat",
+                    text: isOwn
+                      ? "Riwayat muncul setelah pesanan selesai."
+                      : "Belum ada riwayat pekerjaan yang ditampilkan.",
+                  })
             }
           </div>
-        </div>
 
-<<<<<<< HEAD
-=======
-        <!-- Tab Content: Work History -->
-        <div id="tab-history" class="tab-content" style="display:none;">
-          ${
-            history.length
-              ? `<div style="display:flex; flex-direction:column; gap:12px;">
-                  ${history
-                    .map((h) => {
-                      const done =
-                        String(h.status).toUpperCase() === "COMPLETED";
-                      return `
-                    <div class="history-card" style="background:#fff; border-radius:12px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.1); display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap;">
-                      <div style="flex:1; min-width:200px;">
-                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px;">
-                          <span class="badge" style="background:${done ? "#4caf50" : "#f5b042"}; color:#fff; padding:3px 10px; border-radius:20px; font-size:11px;">${done ? "Selesai" : escape(String(h.status).replace(/_/g, " "))}</span>
-                          <span style="font-size:11px; color:#999;">${escape(h.label || "")}</span>
-                        </div>
-                        <h4 style="margin:4px 0; font-size:1rem;">${escape(h.title || "Pekerjaan")}</h4>
-                        <div style="display:flex; gap:16px; flex-wrap:wrap; font-size:13px; color:#666;">
-                          ${h.client?.name ? `<span><i class="fa-solid fa-user"></i> ${escape(h.client.name)}</span>` : ""}
-                          ${h.completedAt ? `<span><i class="fa-solid fa-calendar-check"></i> ${new Date(h.completedAt).toLocaleDateString("id-ID")}</span>` : ""}
-                          ${h.review ? `<span style="color:#f5b042;"><i class="fa-solid fa-star"></i> ${h.review.rating}</span>` : ""}
-                        </div>
-                      </div>
-                      <div style="text-align:right; font-weight:700; color:#2e7d32; white-space:nowrap;">${fmtIDR(h.amount || 0)}</div>
-                    </div>`;
+          <div id="tab-jobs" class="profile-tab-panel" hidden>
+            <div id="jobs-list" class="profile-jobs-grid" data-testid="public-profile-jobs">
+              ${
+                jobs.length
+                  ? jobs.map((j) => jobCard(j)).join("")
+                  : profileEmptyState({
+                      icon: "fa-briefcase",
+                      title: "Belum ada lowongan",
+                      text: isOwn
+                        ? "Pasang lowongan untuk menemukan freelancer."
+                        : "Pengguna ini belum memposting lowongan.",
+                      ctaHtml: isOwn
+                        ? `<a href="#/dashboard/manage-jobs/new" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Pasang Lowongan</a>`
+                        : "",
                     })
-                    .join("")}
-                </div>`
-              : `<div style="text-align:center; padding:60px 20px; background:#fafafa; border-radius:12px;">
-                  <i class="fa-solid fa-clock-rotate-left" style="font-size:3rem; color:#ccc;"></i>
-                  <h3 style="margin:14px 0 8px;">Belum ada riwayat kerja</h3>
-                  <p style="color:#888;max-width:420px;margin:0 auto;">
-                  ${
-                    isOwn
-                      ? "Anda belum memiliki riwayat pekerjaan. Mulai terima pesanan untuk membangun portofolio Anda."
-                      : "Pengguna ini belum memiliki riwayat pekerjaan."
-                  }
-                  </p>
-                </div>`
-          }
-        </div>
+              }
+            </div>
+          </div>
 
->>>>>>> ec26484 (implementasi demo)
-        <!-- Tab Content: Jobs -->
-        <div id="tab-jobs" class="tab-content" style="display:none;">
-          <div id="jobs-list" data-testid="public-profile-jobs">
-            ${
-              jobs.length
-                ? `<div style="display:flex; flex-direction:column; gap:16px;">
-                    ${jobs
-                      .map(
-                        (j) => `
-<<<<<<< HEAD
-                      <div class="job-card" data-job-id="${j.id}" style="background:#fff; border-radius:12px; padding:20px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.1); transition:box-shadow 0.2s;">
-=======
-                      <div class="job-card" data-job-id="${j.id}" style="background:#fff; border-radius:12px; padding:20px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.1); transition:box-shadow 0.2s, transform 0.2s;">
->>>>>>> ec26484 (implementasi demo)
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap;">
-                          <div style="flex:1;">
-                            <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
-                              <span class="badge" style="background:${j.status === "OPEN" || j.status === "open" ? "#4caf50" : "#999"}; color:#fff; padding:4px 12px; border-radius:20px; font-size:12px;">
-                                ${j.status === "OPEN" || j.status === "open" ? "Aktif" : "Ditutup"}
-                              </span>
-                              <span style="font-size:12px; color:#999;">${timeAgo(j.createdAt)}</span>
-                            </div>
-                            <h3 style="margin:8px 0; font-size:1.1rem;">${escape(j.title)}</h3>
-                            <p style="color:#666; font-size:14px; line-height:1.5; margin:8px 0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
-                              ${escape(j.description?.substring(0, 120) || "")}${(j.description?.length || 0) > 120 ? "..." : ""}
-                            </p>
-                            <div style="display:flex; gap:16px; margin-top:12px; font-size:13px; color:#666; flex-wrap:wrap;">
-                              <span><i class="fa-solid fa-money-bill-wave"></i> ${fmtIDR(j.budget)}</span>
-                              <span><i class="fa-solid fa-location-dot"></i> ${escape(j.city || "Remote")}</span>
-                              ${j.deadline ? `<span><i class="fa-solid fa-calendar"></i> Deadline: ${new Date(j.deadline).toLocaleDateString()}</span>` : ""}
-                            </div>
-                          </div>
-                          <div style="text-align:right; margin-top:8px;">
-                            <span style="background:#f0f0f0; padding:4px 12px; border-radius:20px; font-size:12px;">${j.applicationCount || 0} pelamar</span>
-                          </div>
-                        </div>
-                      </div>
-                    `,
-                      )
-                      .join("")}
-                  </div>`
-                : `<div style="text-align:center; padding:60px 20px; background:#fafafa; border-radius:12px;">
-                    <i class="fa-solid fa-briefcase" style="font-size:3rem; color:#ccc;"></i>
-<<<<<<< HEAD
-                    <h3 style="margin:12px 0 8px;">Belum ada pekerjaan</h3>
-                    <p style="color:#999;">User ini belum memposting pekerjaan.</p>
-=======
-                    <h3 style="margin:14px 0 8px;">Belum ada pekerjaan</h3>
-                    <p style="color:#888;max-width:420px;margin:0 auto;">
-                    ${
-                      isOwn
-                        ? "Anda belum memposting pekerjaan. Buat lowongan sekarang untuk menemukan freelancer terbaik."
-                        : "Pengguna ini belum memposting pekerjaan."
-                    }
-                    </p>
-                    ${
-                      isOwn
-                        ? `<div style="margin-top:20px;">
-                             <a href="#/jobs/create"
-                                class="btn btn-primary" style="background:#0a66c2; color:#fff; text-decoration:none; padding:10px 20px; border-radius:8px; display:inline-block;">
-                                <i class="fa-solid fa-plus"></i> Buat Lowongan
-                             </a>
-                           </div>`
-                        : ""
-                    }
->>>>>>> ec26484 (implementasi demo)
-                  </div>`
-            }
-          </div>
-        </div>
-
-<<<<<<< HEAD
-        <!-- Tab Content: Reviews -->
-        <div id="tab-reviews" class="tab-content" style="display:none;">
-          <div style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-            ${
-              reviews.length
-                ? reviews
-                    .map(
-                      (r) => `
-                  <div class="review-item" style="padding:16px 0; border-bottom:1px solid #eee;">
-                    <div style="display:flex; gap:12px; align-items:center;">
-                      ${avatar(r.reviewer || { name: "User", id: r.reviewerId }, "sm")}
-                      <div style="flex:1;">
-                        <strong>${escape(r.reviewer?.name || "User")}</strong>
-                        <div style="font-size:11px; color:#999; margin-top:2px;">${timeAgo(r.createdAt)}</div>
-                      </div>
-                      <div style="color:#f5b042; font-size:14px;">${"★".repeat(r.rating || 5)}${"☆".repeat(5 - (r.rating || 5))}</div>
-                    </div>
-                    <p style="margin:12px 0 0 52px; color:#555; font-size:14px; line-height:1.5;">${escape(r.comment || "")}</p>
-                    ${r.serviceTitle ? `<p style="margin:8px 0 0 52px; font-size:12px; color:#999;"><i class="fa-solid fa-briefcase"></i> Jasa: ${escape(r.serviceTitle)}</p>` : ""}
-                  </div>
-                `,
-                    )
-                    .join("")
-                : '<p style="text-align:center; padding:40px; color:#999;">Belum ada ulasan</p>'
-            }
-=======
-        <!-- Tab Content: Reviews (dua arah) -->
-        <div id="tab-reviews" class="tab-content" style="display:none;">
-          <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
-            <button class="rev-sub-btn active" data-rev="seller" style="padding:8px 16px; border:1px solid #0a66c2; background:#0a66c2; color:#fff; border-radius:20px; cursor:pointer; font-size:13px; transition:all 0.2s;">Sebagai Penjual (${reviewsAsSeller.length})</button>
-            <button class="rev-sub-btn" data-rev="buyer" style="padding:8px 16px; border:1px solid #ccc; background:#fff; color:#666; border-radius:20px; cursor:pointer; font-size:13px; transition:all 0.2s;">Sebagai Klien (${reviewsAsBuyer.length})</button>
-          </div>
-          <div id="rev-seller" class="rev-sub-content" style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-            ${renderReviewList(reviewsAsSeller, "Belum ada ulasan dari klien", isOwn)}
-          </div>
-          <div id="rev-buyer" class="rev-sub-content" style="display:none; background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-            ${renderReviewList(reviewsAsBuyer, "Belum ada ulasan sebagai klien", isOwn)}
->>>>>>> ec26484 (implementasi demo)
+          <div id="tab-reviews" class="profile-tab-panel" hidden>
+            <div class="profile-rev-subtabs">
+              <button class="profile-rev-sub active" data-rev="seller">Sebagai Penjual <span>${reviewsAsSeller.length}</span></button>
+              <button class="profile-rev-sub" data-rev="buyer">Sebagai Klien <span>${reviewsAsBuyer.length}</span></button>
+            </div>
+            <div id="rev-seller" class="profile-rev-panel">
+              ${renderReviewList(reviewsAsSeller, "Belum ada ulasan dari klien", isOwn)}
+            </div>
+            <div id="rev-buyer" class="profile-rev-panel" hidden>
+              ${renderReviewList(reviewsAsBuyer, "Belum ada ulasan sebagai klien", isOwn)}
+            </div>
           </div>
         </div>
       </div>
-      
-      <style>
-<<<<<<< HEAD
-        .job-card:hover { box-shadow:0 4px 12px rgba(0,0,0,0.15); transform:translateY(-2px); transition:all 0.2s; }
-        .tab-btn:hover { color:#0a66c2; }
-        .service-card { transition:transform 0.2s, box-shadow 0.2s; }
-        .service-card:hover { transform:translateY(-4px); box-shadow:0 4px 12px rgba(0,0,0,0.15); }
-=======
-        .stat-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-        }
-        
-        .tab-btn:hover {
-          background: #f5f8ff;
-          border-radius: 8px 8px 0 0;
-          color: #0a66c2 !important;
-        }
-        
-        .review-item {
-          transition: background .15s ease;
-        }
-        
-        .review-item:hover {
-          background: #fafafa;
-        }
-        
-        .card {
-          transition: box-shadow .18s ease;
-        }
-        
-        .card:hover {
-          box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-        }
-        
-        .job-card {
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .job-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
-        .service-card {
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .service-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
->>>>>>> ec26484 (implementasi demo)
-      </style>
     `;
 
     // Tab switching
-    const tabs = mount.querySelectorAll(".tab-btn");
+    const tabs = mount.querySelectorAll(".profile-tab");
     const contents = {
       services: mount.querySelector("#tab-services"),
-<<<<<<< HEAD
-=======
       history: mount.querySelector("#tab-history"),
->>>>>>> ec26484 (implementasi demo)
       jobs: mount.querySelector("#tab-jobs"),
       reviews: mount.querySelector("#tab-reviews"),
     };
@@ -577,49 +305,40 @@ export async function PublicProfilePage({ mount, params }) {
     tabs.forEach((tab) => {
       tab.addEventListener("click", () => {
         const target = tab.dataset.tab;
-        tabs.forEach((t) => {
-          t.classList.remove("active");
-          t.style.color = "#666";
-          t.style.borderBottom = "none";
-        });
+        tabs.forEach((t) => t.classList.remove("active"));
         tab.classList.add("active");
-        tab.style.color = "#0a66c2";
-        tab.style.borderBottom = "2px solid #0a66c2";
-
         Object.values(contents).forEach((c) => {
-          if (c) c.style.display = "none";
+          if (c) {
+            c.classList.remove("active");
+            c.hidden = true;
+          }
         });
-        if (contents[target]) contents[target].style.display = "block";
+        if (contents[target]) {
+          contents[target].classList.add("active");
+          contents[target].hidden = false;
+        }
       });
     });
 
-<<<<<<< HEAD
-=======
     // Clickable stats
     mount.querySelectorAll(".clickable-stat").forEach((el) => {
       el.addEventListener("click", () => {
         const target = el.dataset.targetTab;
-        const tabBtn = mount.querySelector(`.tab-btn[data-tab="${target}"]`);
+        const tabBtn = mount.querySelector(`.profile-tab[data-tab="${target}"]`);
         if (tabBtn) tabBtn.click();
       });
     });
 
     // Sub-tab ulasan
-    const revBtns = mount.querySelectorAll(".rev-sub-btn");
+    const revBtns = mount.querySelectorAll(".profile-rev-sub");
     revBtns.forEach((btn) => {
       btn.addEventListener("click", () => {
         const which = btn.dataset.rev;
-        revBtns.forEach((b) => {
-          const active = b === btn;
-          b.classList.toggle("active", active);
-          b.style.background = active ? "#0a66c2" : "#fff";
-          b.style.color = active ? "#fff" : "#666";
-          b.style.borderColor = active ? "#0a66c2" : "#ccc";
-        });
+        revBtns.forEach((b) => b.classList.toggle("active", b === btn));
         const sEl = mount.querySelector("#rev-seller");
         const bEl = mount.querySelector("#rev-buyer");
-        if (sEl) sEl.style.display = which === "seller" ? "block" : "none";
-        if (bEl) bEl.style.display = which === "buyer" ? "block" : "none";
+        if (sEl) sEl.hidden = which !== "seller";
+        if (bEl) bEl.hidden = which !== "buyer";
       });
     });
 
@@ -643,7 +362,6 @@ export async function PublicProfilePage({ mount, params }) {
       });
     }
 
->>>>>>> ec26484 (implementasi demo)
     // Chat button
     document
       .getElementById("chat-user-btn")
@@ -673,46 +391,59 @@ export async function PublicProfilePage({ mount, params }) {
         toast("Laporan terkirim. Tim Tolongin akan meninjau.", "success");
       });
 
-    // Click job card to navigate
-    document.querySelectorAll(".job-card").forEach((card) => {
-      card.addEventListener("click", (e) => {
-        if (e.target.closest(".job-card")) {
-          const jobId = card.dataset.jobId;
-          router.navigate(`/jobs/${jobId}`);
-        }
-      });
-    });
-<<<<<<< HEAD
+    const profileUserId = u.id;
+    const patchReviewsUI = async () => {
+      try {
+        const [freshReviews, freshStats] = await Promise.all([
+          api.get(`/reviews/user/${profileUserId}`),
+          api.get(`/users/${profileUserId}/stats`),
+        ]);
+        const asSeller = Array.isArray(freshReviews?.asSeller) ? freshReviews.asSeller : [];
+        const asBuyer = Array.isArray(freshReviews?.asBuyer) ? freshReviews.asBuyer : [];
+        const avg = Number(freshStats?.averageRating) || 0;
+        const count = Number(freshStats?.reviewCount) || 0;
 
-    // Seller links in service cards
-    document.querySelectorAll(".seller-link").forEach((el) => {
-      el.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const uid = el.dataset.userId;
-        if (uid) router.navigate("/users/" + uid);
-      });
-    });
+        const metricVal = mount.querySelector(
+          '[data-target-tab="reviews"] .profile-metric-value--gold',
+        );
+        const metricLbl = mount.querySelector(
+          '[data-target-tab="reviews"] .profile-metric-label',
+        );
+        if (metricVal)
+          metricVal.innerHTML = `<i class="fa-solid fa-star"></i> ${avg.toFixed(1)}`;
+        if (metricLbl) metricLbl.textContent = `${count} ulasan`;
 
-    // Service card click (already handled by serviceCard component)
-    document.querySelectorAll(".service-card").forEach((card) => {
-      card.addEventListener("click", (e) => {
-        if (e.target.closest(".seller-link") || e.target.closest(".btn-fav"))
-          return;
-        const serviceId = card.getAttribute("href")?.split("/").pop();
-        if (serviceId) router.navigate(`/services/${serviceId}`);
-      });
-    });
-=======
->>>>>>> ec26484 (implementasi demo)
+        const revTabCount = mount.querySelector(
+          '.profile-tab[data-tab="reviews"] .profile-tab-count',
+        );
+        if (revTabCount)
+          revTabCount.textContent = String((freshReviews?.all || []).length);
+
+        const revSubs = mount.querySelectorAll(".profile-rev-sub span");
+        if (revSubs[0]) revSubs[0].textContent = String(asSeller.length);
+        if (revSubs[1]) revSubs[1].textContent = String(asBuyer.length);
+
+        const sEl = mount.querySelector("#rev-seller");
+        const bEl = mount.querySelector("#rev-buyer");
+        if (sEl)
+          sEl.innerHTML = renderReviewList(asSeller, "Belum ada ulasan dari klien", isOwn);
+        if (bEl)
+          bEl.innerHTML = renderReviewList(asBuyer, "Belum ada ulasan sebagai klien", isOwn);
+      } catch (err) {
+        if (import.meta.env.DEV) console.warn("[profile] review refresh failed", err);
+      }
+    };
+
+    const onReviewsUpdated = (e) => {
+      if (e.detail?.userId === profileUserId) void patchReviewsUI();
+    };
+    window.addEventListener("reviews-updated", onReviewsUpdated);
   } catch (err) {
     console.error("PublicProfilePage error:", err);
-    mount.innerHTML = `<div class="container page">
-      <div style="text-align:center; padding:60px 20px;">
-        <i class="fa-solid fa-user-slash" style="font-size:3rem; color:#ccc;"></i>
-        <h3>User tidak ditemukan</h3>
-        <p style="color:#999;">${escape(err.message)}</p>
-        <a href="#/marketplace" class="btn btn-primary" style="display:inline-block; margin-top:16px; padding:10px 20px; background:#0a66c2; color:#fff; text-decoration:none; border-radius:8px;">Kembali ke Marketplace</a>
+    mount.innerHTML = `<div class="container page public-profile-page">
+      ${empty("Profil tidak ditemukan", err.message, "fa-user-slash")}
+      <div style="text-align:center;margin-top:1rem">
+        <a href="#/marketplace" class="btn btn-primary">Kembali ke Marketplace</a>
       </div>
     </div>`;
   }

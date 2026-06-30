@@ -1,12 +1,8 @@
-<<<<<<< HEAD
-import { Injectable, NotFoundException } from '@nestjs/common';
-=======
 import {
   Injectable,
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
->>>>>>> ec26484 (implementasi demo)
 import { UsersRepository } from '../repositories/users.repository';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -19,11 +15,7 @@ export class UsersService {
     private readonly usersRepository: UsersRepository,
   ) {}
 
-<<<<<<< HEAD
-  async getPublicProfile(id: string) {
-=======
   async getPublicProfile(id: string, viewerId?: string) {
->>>>>>> ec26484 (implementasi demo)
     const u = await this.repo.findById(id);
     if (!u) throw new NotFoundException('User not found');
 
@@ -39,26 +31,14 @@ export class UsersService {
     }
 
     const { password, emailOtpHash, phoneOtpHash, ...rest } = u as any;
-<<<<<<< HEAD
-=======
     const isOwner = viewerId === id;
->>>>>>> ec26484 (implementasi demo)
 
     return {
       ...rest,
       skills: skillsArray,
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
       email: isOwner ? rest.email : undefined,
       phone: isOwner ? rest.phone : undefined,
       balance: isOwner ? rest.balance : undefined,
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
-      email: isOwner ? rest.email : undefined,
-      phone: isOwner ? rest.phone : undefined,
-      balance: isOwner ? rest.balance : undefined,
->>>>>>> ec26484 (implementasi demo)
     };
   }
   async update(userId: string, dto: UpdateUserDto) {
@@ -112,14 +92,11 @@ export class UsersService {
         return {
           ...r,
           images: imagesArray,
-<<<<<<< HEAD
-=======
           reviewer: {
             id: r.reviewer?.id,
             name: r.reviewer?.name,
             avatar: r.reviewer?.avatar,
           },
->>>>>>> ec26484 (implementasi demo)
         };
       }),
       rating: avgRating,
@@ -131,8 +108,6 @@ export class UsersService {
     return this.repo.findJobsByUserId(userId);
   }
 
-<<<<<<< HEAD
-=======
   async getWorkHistory(userId: string) {
     const orders = await this.prisma.order.findMany({
       where: { sellerId: userId },
@@ -222,7 +197,6 @@ export class UsersService {
     };
   }
 
->>>>>>> ec26484 (implementasi demo)
   async getCompleteProfile(id: string) {
     const userData = await this.repo.findUserWithAllData(id);
     if (!userData) throw new NotFoundException('User not found');

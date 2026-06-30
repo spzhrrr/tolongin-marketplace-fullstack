@@ -1,96 +1,65 @@
 import { api } from "../../../shared/utils/api.js";
 import { store } from "../../../app/store.js";
 import { router } from "../../../app/router.js";
-import { toast, isEmail } from "../../../shared/utils/helpers.js";
+import { toast, isEmail, bindPasswordToggles } from "../../../shared/utils/helpers.js";
+import { renderAuthPanel } from "../auth-panel.js";
 
 export function RegisterPage({ mount }) {
   mount.innerHTML = `
-    <div class="auth-wrap">
-      <aside class="auth-side">
-        <div>
-          <div class="brand" style="color:#fff;font-size:1.5rem">
-            <span class="brand-logo"><i class="fa-solid fa-handshake-angle"></i></span>
-            <span class="brand-name" style="color:#fff">tolong<span style="color:var(--primary-light)">in</span><span class="brand-dot" aria-hidden="true"></span></span>
-          </div>
-          <h2 style="margin-top:3rem">Satu akun untuk semua</h2>
-          <p>Satu akun bisa cari jasa, cari kerja, dan menjual layanan. Tidak perlu pilih peran.</p>
-        </div>
-        <div>
-          <ul style="list-style:none;padding:0;margin:0;color:#fff">
-            <li style="margin-bottom:.75rem"><i class="fa-solid fa-circle-check" style="margin-right:.5rem"></i> Daftar gratis selamanya</li>
-            <li style="margin-bottom:.75rem"><i class="fa-solid fa-circle-check" style="margin-right:.5rem"></i> Pembayaran aman dengan escrow</li>
-            <li style="margin-bottom:.75rem"><i class="fa-solid fa-circle-check" style="margin-right:.5rem"></i> Verifikasi bertahap — verifikasi saat butuh</li>
-            <li><i class="fa-solid fa-circle-check" style="margin-right:.5rem"></i> Komunitas freelancer terbesar</li>
-          </ul>
-        </div>
-      </aside>
+    <div class="auth-wrap auth-wrap--register">
+      ${renderAuthPanel("register")}
       <div class="auth-form-wrap">
-        <form class="auth-form" id="reg-form" data-testid="register-form">
+        <form class="auth-form auth-form--compact auth-form--register" id="reg-form" data-testid="register-form">
           <h1>Daftar Akun</h1>
           <p class="sub">Sudah punya akun? <a href="#/login" data-testid="goto-login">Masuk di sini</a></p>
-          <div class="form-group">
-            <label class="label">Nama Lengkap</label>
-            <div class="input-icon"><i class="fa-solid fa-user"></i><input class="input" id="name" placeholder="Nama Anda" data-testid="reg-name" required minlength="3"></div>
-          </div>
-          <div class="form-group">
-            <label class="label">Email</label>
-            <div class="input-icon"><i class="fa-solid fa-envelope"></i><input class="input" type="email" id="email" placeholder="email@anda.com" data-testid="reg-email" required></div>
-          </div>
-          <div class="form-group">
-            <label class="label">No. Telepon</label>
-            <div class="input-icon"><i class="fa-solid fa-phone"></i><input class="input" type="tel" id="phone" placeholder="0812xxxxxxxx" data-testid="reg-phone"></div>
-          </div>
-          <div class="form-group">
-            <label class="label">Password</label>
-            <div style="position: relative;">
-              <div class="input-icon"><i class="fa-solid fa-lock"></i><input class="input" type="password" id="password" placeholder="Min 8 karakter" data-testid="reg-password" required minlength="8" style="padding-right: 40px;"></div>
-              <button type="button" class="toggle-password" data-target="password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; z-index: 10; font-size: 1rem;">
-                👁️
-              </button>
+          <div class="auth-form-grid">
+            <div class="form-group auth-form-grid__full">
+              <label class="label">Nama Lengkap</label>
+              <div class="input-icon"><i class="fa-solid fa-user"></i><input class="input" id="name" placeholder="Nama Anda" data-testid="reg-name" required minlength="3"></div>
             </div>
-            <div class="text-xs text-muted" id="pw-hint" style="margin-top:.35rem">Min 8 karakter, 1 huruf besar, 1 huruf kecil, 1 angka &amp; 1 simbol</div>
-          </div>
-          <div class="form-group">
-            <label class="label">Konfirmasi Password</label>
-            <div style="position: relative;">
-              <div class="input-icon"><i class="fa-solid fa-lock"></i><input class="input" type="password" id="confirm" placeholder="Ketik ulang password" data-testid="reg-confirm" required minlength="8" style="padding-right: 40px;"></div>
-              <button type="button" class="toggle-password" data-target="confirm" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; z-index: 10; font-size: 1rem;">
-                👁️
-              </button>
+            <div class="form-group">
+              <label class="label">Email</label>
+              <div class="input-icon"><i class="fa-solid fa-envelope"></i><input class="input" type="email" id="email" placeholder="email@anda.com" data-testid="reg-email" required></div>
+            </div>
+            <div class="form-group">
+              <label class="label">No. Telepon</label>
+              <div class="input-icon"><i class="fa-solid fa-phone"></i><input class="input" type="tel" id="phone" placeholder="0812xxxxxxxx" data-testid="reg-phone"></div>
+            </div>
+            <div class="form-group">
+              <label class="label">Password</label>
+              <div class="auth-pw-wrap">
+                <div class="input-icon"><i class="fa-solid fa-lock"></i><input class="input" type="password" id="password" placeholder="Min 8 karakter" data-testid="reg-password" required minlength="8"></div>
+                <button type="button" class="toggle-password" data-target="password" aria-label="Tampilkan password">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="label">Konfirmasi Password</label>
+              <div class="auth-pw-wrap">
+                <div class="input-icon"><i class="fa-solid fa-lock"></i><input class="input" type="password" id="confirm" placeholder="Ulangi password" data-testid="reg-confirm" required minlength="8"></div>
+                <button type="button" class="toggle-password" data-target="confirm" aria-label="Tampilkan password">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </div>
             </div>
           </div>
-          <label class="checkbox mb-2"><input type="checkbox" required data-testid="register-tnc"> Saya setuju dengan <a href="#/">Syarat &amp; Ketentuan</a></label>
-          <button class="btn btn-primary btn-block btn-lg" type="submit" data-testid="register-submit-btn">Daftar Sekarang</button>
+          <p class="auth-pw-hint" id="pw-hint">Min 8 karakter · huruf besar &amp; kecil · angka · simbol</p>
+          <label class="auth-tnc"><input type="checkbox" required data-testid="register-tnc"> Saya setuju <a href="#/">Syarat &amp; Ketentuan</a></label>
+          <button class="btn btn-primary btn-block auth-submit" type="submit" data-testid="register-submit-btn">Daftar Sekarang</button>
         </form>
       </div>
     </div>`;
 
-  // Toggle password visibility
-  document.querySelectorAll(".toggle-password").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.getAttribute("data-target");
-      const input = document.getElementById(targetId);
-      if (input.type === "password") {
-        input.type = "text";
-        btn.textContent = "🙈";
-      } else {
-        input.type = "password";
-        btn.textContent = "👁️";
-      }
-    });
-  });
+  bindPasswordToggles(mount);
 
   document.getElementById("reg-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
-<<<<<<< HEAD
-    const phone = document.getElementById("phone").value.trim();
-=======
 
     const phone = document.getElementById("phone").value.trim();
 
->>>>>>> ec26484 (implementasi demo)
     const password = document.getElementById("password").value;
     const confirm = document.getElementById("confirm").value;
     if (name.length < 3) return toast("Nama minimal 3 karakter", "error");
@@ -112,13 +81,8 @@ export function RegisterPage({ mount }) {
       if (phone) body.phone = phone;
       const { token, user } = await api.post("/auth/register", body);
       store.setState({ token, user });
-<<<<<<< HEAD
       toast("Akun berhasil dibuat! Selamat datang 🎉", "success");
       router.navigate("/dashboard");
-=======
-      toast("📩 Selamat datang! Silakan verifikasi email Anda.", "success");
-      router.navigate("/verification");
->>>>>>> ec26484 (implementasi demo)
     } catch (err) {
       toast(err.message, "error");
       btn.disabled = false;
@@ -160,11 +124,7 @@ export function ForgotPasswordPage({ mount }) {
     <div class="container-sm" style="padding:4rem 1rem">
       <div class="card card-pad-lg">
         <h1>Lupa Password</h1>
-<<<<<<< HEAD
-        <p class="text-muted">Masukkan email Anda, kami akan kirim token reset (demo akan tampil langsung).</p>
-=======
-        <p class="text-muted">Masukkan email Anda, kami akan kirim link reset password.</p>
->>>>>>> ec26484 (implementasi demo)
+        <p class="text-muted">Masukkan email Anda, kami akan kirim tautan reset kata sandi.</p>
         <form id="forgot-form">
           <div class="form-group">
             <label class="label">Email</label>
@@ -209,8 +169,8 @@ export function ResetPasswordPage({ mount, query }) {
             <label class="label">Password Baru</label>
             <div style="position: relative;">
               <input class="input" type="password" id="password" placeholder="Min 8 karakter, 1 angka, 1 simbol" data-testid="reset-password" required minlength="8" style="padding-right: 40px;">
-              <button type="button" class="toggle-password" data-target="password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; z-index: 10; font-size: 1rem;">
-                👁️
+              <button type="button" class="toggle-password" data-target="password" aria-label="Tampilkan password">
+                <i class="fa-regular fa-eye"></i>
               </button>
             </div>
             <div class="text-xs text-muted">Minimal 8 karakter, mengandung 1 angka dan 1 simbol (!@#$%^&*)</div>
@@ -220,20 +180,7 @@ export function ResetPasswordPage({ mount, query }) {
       </div>
     </div>`;
 
-  // Toggle password visibility
-  document.querySelectorAll(".toggle-password").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.getAttribute("data-target");
-      const input = document.getElementById(targetId);
-      if (input.type === "password") {
-        input.type = "text";
-        btn.textContent = "🙈";
-      } else {
-        input.type = "password";
-        btn.textContent = "👁️";
-      }
-    });
-  });
+  bindPasswordToggles(mount);
 
   document
     .getElementById("reset-form")

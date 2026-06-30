@@ -117,8 +117,6 @@ export class UsersRepository {
     });
   }
 
-<<<<<<< HEAD
-=======
   // ---- PORTOFOLIO ----
   async findPortfolio(userId: string) {
     return this.prisma.portfolio.findMany({
@@ -161,7 +159,6 @@ export class UsersRepository {
     });
   }
 
->>>>>>> ec26484 (implementasi demo)
   async findUserWithAllData(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },

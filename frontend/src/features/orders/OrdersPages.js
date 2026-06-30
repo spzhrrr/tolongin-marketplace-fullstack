@@ -1,17 +1,7 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { api } from "../../shared/utils/api.js";
-=======
-=======
->>>>>>> ec26484 (implementasi demo)
 // frontend/src/features/orders/OrdersPages.js
 
 import { api, resolveAssetUrl } from "../../shared/utils/api.js";
 import { uploadFile } from "../../shared/utils/uploads.js";
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
 import {
   escape,
   fmtIDR,
@@ -19,15 +9,12 @@ import {
   toast,
   modal,
   confirmModal,
+  refreshUserReviewsSnapshot,
 } from "../../shared/utils/helpers.js";
-import { statusPill, avatar, empty } from "../../shared/ui/components.js";
+import { statusPill, avatar, empty, userChip, workProofBadge } from "../../shared/ui/components.js";
 import { store } from "../../app/store.js";
 import { router } from "../../app/router.js";
 
-<<<<<<< HEAD
-// Helper function untuk label tombol advance order
-=======
->>>>>>> ec26484 (implementasi demo)
 function getActionLabel(next) {
   const labels = {
     ACCEPTED: "✓ Terima Pesanan",
@@ -39,103 +26,391 @@ function getActionLabel(next) {
   return labels[next] || `Update ke ${String(next).replace("_", " ")}`;
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-// Lazy-load Midtrans Snap JS (only when needed)
-=======
-=======
->>>>>>> ec26484 (implementasi demo)
+function openDemoPaymentModal(order, onSuccess) {
+  const m = modal({
+    title: "Pilih Metode Pembayaran",
+    body: `
+      <div>
+        <div class="escrow-summary" style="display:flex;gap:12px;align-items:flex-start;border:1px solid rgba(10,102,194,.22);background:rgba(10,102,194,.06);border-radius:8px;padding:14px;margin-bottom:12px">
+          <i class="fa-solid fa-shield-halved" style="color:var(--primary);font-size:22px"></i>
+          <div><strong>Escrow Tolongin</strong><span style="display:block;color:var(--text-2);font-size:13px;margin-top:4px">Dana ditahan di escrow, bukan langsung ke penjual.</span></div>
+        </div>
+        <h3 style="margin:0 0 12px">Total: ${fmtIDR(order.totalAmount || order.amount)}</h3>
+        <div class="pay-method-tabs" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <button type="button" class="btn btn-sm btn-primary pay-tab active" data-tab="card"><i class="fa-solid fa-credit-card"></i> Kartu</button>
+          <button type="button" class="btn btn-sm btn-secondary pay-tab" data-tab="bank"><i class="fa-solid fa-building-columns"></i> Transfer</button>
+          <button type="button" class="btn btn-sm btn-secondary pay-tab" data-tab="ewallet"><i class="fa-solid fa-mobile-screen"></i> E-Wallet</button>
+        </div>
+        <div id="pay-panel-card" class="pay-panel">
+          <div class="form-group"><label class="label">Nomor Kartu</label><input class="input" placeholder="4111 1111 1111 1111" inputmode="numeric"></div>
+          <div class="form-group"><label class="label">Nama Pemilik</label><input class="input" placeholder="Nama di kartu"></div>
+          <div class="grid grid-2">
+            <div class="form-group"><label class="label">Expiry</label><input class="input" placeholder="MM/YY"></div>
+            <div class="form-group"><label class="label">CVV</label><input class="input" placeholder="123" inputmode="numeric"></div>
+          </div>
+        </div>
+        <div id="pay-panel-bank" class="pay-panel" style="display:none">
+          <div class="form-group"><label class="label">Pilih Bank</label>
+            <select class="select"><option>BCA</option><option>BNI</option><option>BRI</option><option>Mandiri</option></select>
+          </div>
+          <div class="form-group"><label class="label">Nomor Rekening</label><input class="input" placeholder="1234567890" inputmode="numeric"></div>
+        </div>
+        <div id="pay-panel-ewallet" class="pay-panel" style="display:none">
+          <div class="form-group"><label class="label">Pilih E-Wallet</label>
+            <select class="select"><option>OVO</option><option>GoPay</option><option>DANA</option><option>ShopeePay</option></select>
+          </div>
+          <div class="form-group"><label class="label">Nomor HP</label><input class="input" placeholder="08xxxxxxxxxx" inputmode="tel"></div>
+        </div>
+        <button class="btn btn-primary btn-block mt-2" id="pay-ok"><i class="fa-solid fa-lock"></i> Konfirmasi Pembayaran</button>
+      </div>`,
+  });
+
+  m.el.querySelectorAll(".pay-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      m.el.querySelectorAll(".pay-tab").forEach((t) => {
+        t.classList.remove("btn-primary", "active");
+        t.classList.add("btn-secondary");
+      });
+      tab.classList.add("btn-primary", "active");
+      tab.classList.remove("btn-secondary");
+      m.el.querySelectorAll(".pay-panel").forEach((p) => (p.style.display = "none"));
+      const panel = m.el.querySelector("#pay-panel-" + tab.dataset.tab);
+      if (panel) panel.style.display = "block";
+    });
+  });
+
+  m.el.querySelector("#pay-ok").addEventListener("click", async () => {
+    try {
+      await api.post(`/payments/demo/confirm/${order.id}`);
+      m.close();
+      toast("💳 Pembayaran berhasil! Dana masuk escrow.", "success");
+      onSuccess?.();
+    } catch (err) {
+      toast(err.message, "error");
+    }
+  });
+  return m;
+}
+
 function renderEscrowSteps(status) {
   const s = String(status || "").toUpperCase();
   const steps = [
-    ["WAITING_CONFIRMATION", "Menunggu pembayaran"],
-    ["PAID", "Dana di escrow"],
-    ["WAITING_REVIEW", "Review bukti"],
-    ["COMPLETED", "Dana dirilis"],
+    { key: "WAITING_CONFIRMATION", label: "Konfirmasi", desc: "Menunggu penjual", icon: "fa-hourglass-half" },
+    { key: "ACCEPTED", label: "Pembayaran", desc: "Siap dibayar", icon: "fa-credit-card" },
+    { key: "PAID", label: "Escrow", desc: "Dana aman", icon: "fa-vault" },
+    { key: "WAITING_REVIEW", label: "Review Bukti", desc: "Cek hasil kerja", icon: "fa-magnifying-glass-chart" },
+    { key: "COMPLETED", label: "Selesai", desc: "Dana dirilis", icon: "fa-circle-check" },
   ];
-  const displayStatus = s === "REJECTED" ? "WAITING_REVIEW" : s;
-  const activeIndex = Math.max(
-    0,
-    steps.findIndex(([key]) => key === displayStatus),
-  );
-  return `<div class="escrow-steps">${steps
-    .map(
-      ([key, label], i) =>
-        `<div class="escrow-step ${i <= activeIndex ? "done" : ""} ${key === displayStatus ? "current" : ""}">
-          <span>${i + 1}</span><small>${label}</small>
-        </div>`,
-    )
+  const statusRank = {
+    WAITING_CONFIRMATION: 0,
+    ACCEPTED: 1,
+    PAID: 2,
+    IN_PROGRESS: 2,
+    REJECTED: 3,
+    REVISION_REQUESTED: 3,
+    WAITING_REVIEW: 3,
+    IN_REVIEW: 3,
+    COMPLETED: 4,
+  };
+  const activeIndex = statusRank[s] ?? 0;
+  const isComplete = s === "COMPLETED";
+
+  return `<div class="escrow-track" role="list" aria-label="Progress escrow">${steps
+    .map(({ key, label, desc, icon }, i) => {
+      const done = isComplete || i < activeIndex;
+      const current = isComplete ? i === steps.length - 1 : i === activeIndex;
+      return `<div class="escrow-track-step ${done ? "done" : ""} ${current ? "current" : ""}" role="listitem">
+          <div class="escrow-track-node"><i class="fa-solid ${icon}"></i></div>
+          <div class="escrow-track-copy"><strong>${label}</strong><span>${desc}</span></div>
+        </div>`;
+    })
     .join("")}</div>`;
+}
+
+function renderWorkProofGallery(attachments) {
+  if (!attachments?.length) return "";
+  return `<div class="work-proof-gallery">${attachments
+    .map((a, i) => {
+      const url = resolveAssetUrl(a);
+      const isImg = /\.(jpe?g|png|webp|gif)(\?|$)/i.test(url) || url.includes("unsplash");
+      const isPdf = /\.pdf(\?|$)/i.test(url);
+      if (isImg) {
+        return `<a class="work-proof-thumb" href="${escape(url)}" target="_blank" rel="noopener">
+          <img src="${escape(url)}" alt="Bukti ${i + 1}" loading="lazy"/>
+        </a>`;
+      }
+      if (isPdf) {
+        return `<a class="work-proof-file" href="${escape(url)}" target="_blank" rel="noopener"><i class="fa-solid fa-file-pdf"></i> PDF ${i + 1}</a>`;
+      }
+      return `<a class="btn btn-secondary btn-sm" href="${escape(url)}" target="_blank" rel="noopener"><i class="fa-solid fa-paperclip"></i> Bukti ${i + 1}</a>`;
+    })
+    .join("")}</div>`;
+}
+
+function getWorkAttachments(o) {
+  const sub = o.workSubmission;
+  if (sub?.attachments?.length) return sub.attachments;
+  if (Array.isArray(o.workProof) && o.workProof.length) return o.workProof;
+  if (Array.isArray(o.workSubmissionFiles) && o.workSubmissionFiles.length)
+    return o.workSubmissionFiles;
+  return [];
+}
+
+function isSimulatedBuyerOrder(o) {
+  return (o.timeline || []).some((t) =>
+    String(t?.note || "").includes("Pesanan demo dibuat"),
+  );
+}
+
+function isJobOrder(o) {
+  return Boolean(o.jobId || o.applicationId);
+}
+
+function orderStepCallout({
+  variant = "info",
+  icon,
+  title,
+  description,
+  pulse = false,
+  compact = false,
+}) {
+  const iconClass =
+    pulse && icon === "fa-spinner" ? `${icon} fa-spin` : icon;
+  const cls = [
+    "order-step-callout",
+    `order-step-callout--${variant}`,
+    pulse ? "order-step-callout--pulse" : "",
+    compact ? "order-step-callout--compact" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return `<div class="${cls}">
+    <div class="order-step-callout-icon"><i class="fa-solid ${iconClass}"></i></div>
+    <div class="order-step-callout-body">
+      ${title ? `<strong>${title}</strong>` : ""}
+      ${description ? `<p>${description}</p>` : ""}
+    </div>
+  </div>`;
+}
+
+function renderOrderActionHint(o, ctx) {
+  const { isSeller, simBuyer, statusKey } = ctx;
+  if (isSeller && statusKey === "WAITING_CONFIRMATION" && simBuyer) {
+    return orderStepCallout({
+      variant: "action",
+      icon: "fa-hand-pointer",
+      title: "Pesanan demo masuk",
+      description:
+        "Klik <strong>Terima Pesanan</strong> di bawah. Pembeli akan bayar otomatis dalam ±3–5 detik (refresh halaman).",
+    });
+  }
+  if (isSeller && statusKey === "WAITING_CONFIRMATION" && !simBuyer) {
+    return orderStepCallout({
+      variant: "action",
+      icon: "fa-bell",
+      title: "Pesanan menunggu Anda",
+      description: "Terima pesanan agar pembeli dapat melanjutkan pembayaran escrow.",
+    });
+  }
+  return "";
+}
+
+function renderOrderSidebarHints(o, ctx) {
+  const { isBuyer, isSeller, simBuyer, isJob, statusKey } = ctx;
+  const hints = [];
+
+  if (statusKey === "WAITING_CONFIRMATION" && isBuyer && !isJob) {
+    hints.push(
+      orderStepCallout({
+        variant: "waiting",
+        icon: "fa-clock",
+        title: "Menunggu konfirmasi",
+        description:
+          "Penjual merespons ±3–5 detik (demo). Refresh halaman, lalu <strong>Bayar via Escrow</strong>.",
+        pulse: true,
+        compact: true,
+      }),
+    );
+  }
+  if (statusKey === "ACCEPTED" && isBuyer) {
+    hints.push(
+      orderStepCallout({
+        variant: "info",
+        icon: "fa-credit-card",
+        title: "Siap dibayar",
+        description: isJob
+          ? "Anda (pemilik lowongan) dapat membayar via escrow menggunakan tombol di bawah."
+          : "Lanjutkan pembayaran escrow menggunakan tombol di bawah.",
+        compact: true,
+      }),
+    );
+  }
+  if (statusKey === "ACCEPTED" && isSeller && (simBuyer || isJob)) {
+    hints.push(
+      orderStepCallout({
+        variant: "waiting",
+        icon: "fa-spinner",
+        title: "Menunggu pembayaran",
+        description: `${isJob ? "Pemilik lowongan" : "Pembeli demo"} bayar ±3–5 detik. Refresh halaman lalu upload bukti kerja di bagian <strong>Bukti Pengerjaan</strong>.`,
+        pulse: true,
+        compact: true,
+      }),
+    );
+  }
+  if (statusKey === "COMPLETED") {
+    hints.push(
+      orderStepCallout({
+        variant: "success",
+        icon: "fa-circle-check",
+        title: "Transaksi selesai",
+        description: "Dana telah dirilis ke penjual.",
+        compact: true,
+      }),
+    );
+  }
+  if (statusKey === "CANCELLED") {
+    hints.push(
+      orderStepCallout({
+        variant: "danger",
+        icon: "fa-ban",
+        title: "Pesanan dibatalkan",
+        description: o.cancellationReason
+          ? escape(o.cancellationReason)
+          : "Pesanan tidak dilanjutkan.",
+        compact: true,
+      }),
+    );
+  }
+  return hints.join("");
 }
 
 function renderWorkSubmission(o, isBuyer, isSeller) {
   const sub = o.workSubmission;
-  const attachments = sub?.attachments || [];
-  if (!sub && !isSeller) {
-    return `<div class="alert alert-info mt-3"><i class="fa-solid fa-shield-halved"></i> Menunggu pekerja mengirim bukti pengerjaan. Dana tetap ditahan di escrow sampai Anda approve.</div>`;
-  }
-  return `
-    <div class="card card-pad-lg mt-3">
-      <div class="flex-between" style="align-items:flex-start;gap:1rem;flex-wrap:wrap">
-        <div>
-          <h3 style="margin:0"><i class="fa-solid fa-file-circle-check"></i> Bukti Pengerjaan</h3>
-          <p class="text-muted text-sm" style="margin:.35rem 0 0">Upload catatan, link file, foto hasil kerja, atau bukti lapangan. Dana seller hanya cair setelah approve.</p>
+  const attachments = getWorkAttachments(o);
+  const st = String(o.status || "").toUpperCase();
+  const isJobOrder = Boolean(o.jobId || o.applicationId);
+  const workerLabel = isJobOrder ? "freelancer" : "penjual";
+  const hasSubmittedWork =
+    attachments.length > 0 ||
+    Boolean(sub || o.workSubmittedAt) ||
+    ["WAITING_REVIEW", "IN_REVIEW", "COMPLETED"].includes(st);
+  const canUpload =
+    isSeller &&
+    ((["PAID", "IN_PROGRESS"].includes(st) && !hasSubmittedWork) ||
+      ["REJECTED", "REVISION_REQUESTED"].includes(st));
+  const isDigital =
+    o.deliveryType !== "ONSITE" && o.deliveryType !== "PHYSICAL" && !o.jobId;
+  const simBuyer = isSimulatedBuyerOrder(o);
+
+  if (["WAITING_CONFIRMATION", "ACCEPTED", "CANCELLED"].includes(st)) return "";
+
+  if (isBuyer && !hasSubmittedWork && ["PAID", "IN_PROGRESS"].includes(st)) {
+    return `
+      <div class="card card-pad-lg work-proof-card">
+        <div class="work-proof-head">
+          <div>
+            <h3 class="order-section-title"><i class="fa-solid fa-file-circle-check"></i> Bukti Pengerjaan</h3>
+            <p class="work-proof-sub">Anda menunggu ${workerLabel} mengupload bukti hasil kerja. Dana aman di escrow.</p>
+          </div>
+          ${workProofBadge(o, "buyer")}
         </div>
-        ${(() => {
-          const st = String(o.status).toUpperCase();
-          if (st === "COMPLETED") return `<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Disetujui</span>`;
-          if (st === "CANCELLED") return `<span class="badge badge-danger"><i class="fa-solid fa-ban"></i> Dibatalkan</span>`;
-          if (o.workSubmittedAt) return `<span class="badge badge-warning">Menunggu approval</span>`;
-          return `<span class="badge">Belum dikirim</span>`;
-        })()}
+        ${orderStepCallout({
+          variant: "waiting",
+          icon: "fa-spinner",
+          title: `Menunggu ${workerLabel}`,
+          description: `Bukti pengerjaan akan muncul di sini. Simulasi demo: upload otomatis ±3–5 detik — refresh lalu klik <strong>Approve &amp; Rilis Dana</strong>.`,
+          pulse: true,
+        })}
+      </div>`;
+  }
+
+  if (!hasSubmittedWork && !canUpload && !isBuyer) return "";
+
+  const sellerUploadHint =
+    canUpload && (simBuyer || isJobOrder)
+      ? orderStepCallout({
+          variant: "action",
+          icon: "fa-upload",
+          title: "Langkah selanjutnya",
+          description:
+            "Lengkapi formulir di bawah lalu kirim bukti kerja. Pembeli/pemilik akan otomatis menyetujui dalam ±3–5 detik (demo).",
+        })
+      : canUpload
+        ? orderStepCallout({
+            variant: "action",
+            icon: "fa-upload",
+            title: "Kirim bukti kerja",
+            description:
+              "Upload foto atau PDF hasil pekerjaan. Dana cair setelah pembeli menyetujui bukti.",
+          })
+        : "";
+
+  const sellerReviewHint =
+    isSeller && st === "WAITING_REVIEW" && (simBuyer || isJobOrder)
+      ? orderStepCallout({
+          variant: "waiting",
+          icon: "fa-clock",
+          title: "Menunggu persetujuan",
+          description:
+            "Pembeli/pemilik akan approve otomatis ±3–5 detik. Refresh halaman untuk melihat status selesai.",
+          pulse: true,
+        })
+      : "";
+
+  return `
+    <div class="card card-pad-lg work-proof-card">
+      <div class="work-proof-head">
+        <div>
+          <h3 class="order-section-title"><i class="fa-solid fa-file-circle-check"></i> Bukti Pengerjaan</h3>
+          ${
+            isSeller && !canUpload && !hasSubmittedWork
+              ? `<p class="work-proof-sub">Upload foto/PDF hasil kerja. Dana cair setelah pembeli approve.</p>`
+              : hasSubmittedWork && st !== "WAITING_REVIEW"
+                ? `<p class="work-proof-sub">Review bukti di bawah, lalu setujui untuk melepas dana escrow.</p>`
+                : st === "WAITING_REVIEW" && isBuyer
+                  ? `<p class="work-proof-sub">Penjual telah mengirim bukti — silakan tinjau sebelum approve.</p>`
+                  : isSeller && canUpload
+                    ? `<p class="work-proof-sub">Lengkapi detail pekerjaan yang sudah selesai.</p>`
+                    : ""
+          }
+        </div>
+        ${workProofBadge(o, isSeller ? "seller" : isBuyer ? "buyer" : null)}
       </div>
+      ${sellerUploadHint}
       ${
-        sub
+        hasSubmittedWork
           ? `<div class="work-proof mt-2">
-              <p>${escape(sub.note || "")}</p>
-              ${
-                attachments.length
-                  ? `<div class="proof-links">${attachments.map((a, i) => `<a class="btn btn-secondary btn-sm" href="${escape(resolveAssetUrl(a))}" target="_blank" rel="noopener"><i class="fa-solid fa-paperclip"></i> Bukti ${i + 1}</a>`).join("")}</div>`
-                  : `<div class="text-sm text-muted">Tidak ada lampiran, hanya catatan.</div>`
-              }
+              ${sub?.note ? `<p>${escape(sub.note)}</p>` : ""}
+              ${renderWorkProofGallery(attachments)}
             </div>`
           : ""
       }
-      ${
-        isSeller &&
-<<<<<<< HEAD
-        ["PAID", "REJECTED"].includes(
-=======
-        ["PAID", "IN_PROGRESS", "REJECTED", "REVISION_REQUESTED"].includes(
->>>>>>> ec26484 (implementasi demo)
-          String(o.status).toUpperCase(),
-        )
-          ? `<form id="work-form" class="mt-3">
+      ${sellerReviewHint}
+      ${canUpload ? `<form id="work-form" class="work-proof-form">
               <div class="form-group">
                 <label class="label">Catatan hasil kerja *</label>
-                <textarea class="textarea" id="work-note" required minlength="10" placeholder="Jelaskan pekerjaan yang sudah selesai, lokasi file, atau bukti lapangan..."></textarea>
+                <textarea class="textarea" id="work-note" required minlength="10" placeholder="Jelaskan pekerjaan yang sudah selesai..."></textarea>
               </div>
               <div class="form-group">
                 <label class="label">Bukti kerja * (JPG, PNG, WebP, atau PDF)</label>
                 <input class="input" type="file" id="work-files" accept="image/jpeg,image/png,image/webp,application/pdf" multiple required>
-<<<<<<< HEAD
+                <div id="work-files-preview" class="flex gap-sm mt-2 flex-wrap"></div>
                 <div id="work-upload-progress" class="text-sm text-muted mt-1">Maksimal 10 file, masing-masing 10 MB.</div>
               </div>
               <button class="btn btn-primary" type="submit"><i class="fa-solid fa-upload"></i> Kirim Bukti untuk Approval</button>
-=======
-                <div id="work-files-preview" class="work-files-preview"></div>
-                <div id="work-upload-progress" class="text-sm text-muted mt-1">Maksimal 10 file, masing-masing 10 MB.</div>
-              </div>
-              <button class="btn btn-primary" type="submit"><i class="fa-solid fa-upload"></i> Kirim Bukti</button>
->>>>>>> ec26484 (implementasi demo)
-            </form>`
-          : ""
-      }
+            </form>` : ""}
       ${
-        isBuyer && String(o.status).toUpperCase() === "WAITING_REVIEW"
-          ? `<div class="flex gap-sm mt-3 flex-wrap">
+        isBuyer && st === "WAITING_REVIEW"
+          ? `<div class="order-work-callout">
+              <div class="order-work-callout-icon"><i class="fa-solid fa-file-circle-check"></i></div>
+              <div class="order-work-callout-body">
+                <strong>Bukti sudah diupload</strong>
+                <p>Review bukti di atas, lalu klik <strong>Approve &amp; Rilis Dana</strong> untuk melepas pembayaran escrow ke penjual.</p>
+              </div>
+            </div>
+            <div class="order-work-actions flex gap-sm mt-3 flex-wrap">
               <button class="btn btn-success" id="approve-work"><i class="fa-solid fa-circle-check"></i> Approve & Rilis Dana</button>
-              <button class="btn btn-secondary" id="reject-work"><i class="fa-solid fa-rotate-left"></i> Minta Revisi</button>
+              ${isDigital ? `<button class="btn btn-secondary" id="reject-work"><i class="fa-solid fa-rotate-left"></i> Minta Revisi</button>` : ""}
               <button class="btn btn-danger" id="dispute-work"><i class="fa-solid fa-scale-balanced"></i> Sengketa</button>
             </div>`
           : ""
@@ -143,10 +418,6 @@ function renderWorkSubmission(o, isBuyer, isSeller) {
     </div>`;
 }
 
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
 let _snapLoading = null;
 function loadSnapJs(clientKey, isProduction) {
   if (window.snap) return Promise.resolve();
@@ -170,20 +441,23 @@ function loadSnapJs(clientKey, isProduction) {
 export async function OrdersListPage({ mount }) {
   const u = store.getState().user;
   mount.innerHTML = `
-    <div class="container page">
-      <div class="page-header">
-        <div><h1 class="page-title">Pesanan Saya</h1><p class="page-subtitle">Kelola semua pesanan Anda</p></div>
-        <div class="chips" id="role-tabs">
+    <div class="container page orders-page">
+      <div class="orders-page-head">
+        <div>
+          <h1 class="page-title orders-page-title">Pesanan Saya</h1>
+          <p class="page-subtitle orders-page-sub">Kelola pesanan jasa & pekerjaan</p>
+        </div>
+        <div class="chips orders-role-tabs" id="role-tabs">
           <span class="chip active" data-role="all">Semua</span>
-          <span class="chip" data-role="BUYER">Sebagai Pembeli</span>
-          <span class="chip" data-role="SELLER">Sebagai Penjual</span>
+          <span class="chip" data-role="BUYER">Pembeli</span>
+          <span class="chip" data-role="SELLER">Penjual</span>
         </div>
       </div>
-      <div id="orders" class="flex-col"></div>
+      <div id="orders" class="orders-compact-grid"></div>
     </div>`;
   const load = async (role) => {
     const list = document.getElementById("orders");
-    list.innerHTML = '<div class="spinner"></div>';
+    list.innerHTML = '<div class="spinner orders-spinner"></div>';
     try {
       const items = await api.get(
         "/orders" + (role && role !== "all" ? `?role=${role}` : ""),
@@ -197,23 +471,38 @@ export async function OrdersListPage({ mount }) {
         return;
       }
       list.innerHTML = items
-        .map(
-          (o) => `
-        <a href="#/orders/${o.id}" class="card card-pad card-hover" data-testid="order-${o.id}">
-          <div class="flex-between" style="align-items:flex-start">
-            <div style="flex:1">
-              <div class="flex gap-sm mb-1">${statusPill(o.status)}<span class="text-xs text-muted">#${o.id.slice(0, 8)}</span></div>
-              <h3 style="margin:.25rem 0">${escape(o.title)}</h3>
-              <div class="flex gap-md text-sm text-muted">
-                <span>Pembeli: ${escape(o.buyer?.name)}</span>
-                <span>Penjual: ${escape(o.seller?.name)}</span>
-                <span><i class="fa-solid fa-clock"></i> ${fmtDate(o.createdAt)}</span>
-              </div>
+        .map((o) => {
+          const st = String(o.status || "").toUpperCase();
+          const isBuyer = u?.id === o.buyerId;
+          const isSeller = u?.id === o.sellerId;
+          const roleHint = isBuyer ? "buyer" : isSeller ? "seller" : null;
+          const counterparty = isBuyer ? o.seller : isSeller ? o.buyer : null;
+          const counterLabel = isBuyer ? "Penjual" : isSeller ? "Pembeli" : "Pihak";
+          const step = ["WAITING_CONFIRMATION", "PAID", "WAITING_REVIEW", "COMPLETED"].findIndex(
+            (k) => k === st || (st === "REJECTED" && k === "WAITING_REVIEW"),
+          );
+          const stepPct = step >= 0 ? Math.round(((step + 1) / 4) * 100) : 25;
+          return `
+        <a href="#/orders/${o.id}" class="order-row card card-hover" data-testid="order-${o.id}">
+          <div class="order-row-main">
+            <div class="order-row-top">
+              ${statusPill(o.status, { compact: true, role: roleHint })}
+              <span class="order-row-id">#${o.id.slice(0, 8)}</span>
+              <span class="order-row-date"><i class="fa-regular fa-clock"></i> ${fmtDate(o.createdAt)}</span>
             </div>
-            <div class="text-right"><div class="text-xs text-muted">Total</div><div style="font-family:var(--font-head);font-weight:700;color:var(--primary-dark);font-size:1.15rem">${fmtIDR(o.amount)}</div></div>
+            <h3 class="order-row-title">${escape(o.title)}</h3>
+            <div class="order-row-meta">
+              ${counterparty ? `<span><i class="fa-solid fa-user"></i> ${counterLabel}: ${escape(counterparty.name || "-")}</span>` : `<span>Pembeli: ${escape(o.buyer?.name || "-")}</span><span>Penjual: ${escape(o.seller?.name || "-")}</span>`}
+              ${o.applicationId ? '<span class="order-type-tag"><i class="fa-solid fa-briefcase"></i> Lowongan</span>' : o.serviceId ? '<span class="order-type-tag"><i class="fa-solid fa-store"></i> Jasa</span>' : ""}
+            </div>
+            <div class="order-row-progress" aria-hidden="true"><span style="width:${stepPct}%"></span></div>
           </div>
-        </a>`,
-        )
+          <div class="order-row-side">
+            <div class="order-row-amount">${fmtIDR(o.totalAmount || o.amount)}</div>
+            <i class="fa-solid fa-chevron-right order-row-chevron"></i>
+          </div>
+        </a>`;
+        })
         .join("");
     } catch (e) {
       list.innerHTML = empty(
@@ -235,11 +524,6 @@ export async function OrdersListPage({ mount }) {
   load("all");
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> ec26484 (implementasi demo)
 function renderRevisionBanner(o) {
   if (String(o.status).toUpperCase() !== "REJECTED") return "";
   const reason = o.workRejectionReason || o.revisionReason || "";
@@ -292,57 +576,42 @@ function renderOrderReviews(o, reviews) {
       ? "Penjual menilai Pembeli"
       : "Pembeli menilai Penjual";
   return `
-    <div class="card card-pad-lg mt-3">
-      <h3 style="margin:0 0 .75rem"><i class="fa-solid fa-star"></i> Ulasan (${reviews.length})</h3>
-      <div class="flex-col gap-md">
+    <div class="order-reviews-card card card-pad-lg">
+      <h3 class="order-section-title"><i class="fa-solid fa-star"></i> Ulasan (${reviews.length})</h3>
+      <div class="order-review-list">
         ${reviews
           .map(
-            (r) => `
-          <div class="review-item" style="border:1px solid var(--border);border-radius:12px;padding:1rem">
-            <div class="flex-between" style="align-items:flex-start;gap:.75rem;flex-wrap:wrap">
-              <div class="flex gap-sm" style="align-items:center">
-                ${avatar(r.isAnonymous ? { name: "Anonim" } : r.reviewer, "sm")}
-                <div>
-                  <strong>${escape(r.isAnonymous ? "Anonim" : r.reviewer?.name || "Pengguna")}</strong>
-                  <div class="text-xs text-muted">${dirLabel(r)}</div>
+            (r) => {
+              const reviewer = r.isAnonymous ? null : r.reviewer;
+              const rid = reviewer?.id || r.reviewerId;
+              const headClass = rid && !r.isAnonymous ? "order-review-head profile-link" : "order-review-head";
+              const headAttrs = rid && !r.isAnonymous ? ` data-user-id="${escape(String(rid))}" role="link" tabindex="0"` : "";
+              return `
+          <article class="order-review-item">
+            <div class="${headClass}"${headAttrs}>
+              ${avatar(r.isAnonymous ? { name: "Anonim" } : reviewer || { name: "Pengguna" })}
+              <div class="order-review-meta">
+                <div class="order-review-row">
+                  <strong>${escape(r.isAnonymous ? "Anonim" : reviewer?.name || "Pengguna")}</strong>
+                  <span class="order-review-stars">${[1, 2, 3, 4, 5].map((i) => `<i class="fa-${i <= r.rating ? "solid" : "regular"} fa-star"></i>`).join("")}</span>
                 </div>
-              </div>
-              <div style="color:var(--warning);white-space:nowrap">
-                ${[1, 2, 3, 4, 5].map((i) => `<i class="fa-${i <= r.rating ? "solid" : "regular"} fa-star"></i>`).join("")}
+                <span class="order-review-sub">${dirLabel(r)} · ${fmtDate(r.createdAt, true)}</span>
               </div>
             </div>
-            ${r.comment ? `<p style="margin:.6rem 0 0">${escape(r.comment)}</p>` : ""}
-            <div class="text-xs text-muted mt-1">${fmtDate(r.createdAt, true)}</div>
-          </div>`,
+            ${r.comment ? `<p class="order-review-comment">${escape(r.comment)}</p>` : ""}
+          </article>`;
+            },
           )
           .join("")}
       </div>
     </div>`;
 }
 
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
 export async function OrderDetailPage({ mount, params }) {
   const u = store.getState().user;
   mount.innerHTML = `<div class="container page"><div class="spinner"></div></div>`;
   try {
     const o = await api.get("/orders/" + params.id);
-<<<<<<< HEAD
-    const isBuyer = u.id === o.buyerId;
-    const isSeller = u.id === o.sellerId;
-<<<<<<< HEAD
-    const statusKey = String(o.status || "").toLowerCase();
-    const next = {
-      pending: isSeller ? "ACCEPTED" : null,
-      waiting_confirmation: isSeller ? "ACCEPTED" : null,
-      accepted: isSeller ? "IN_PROGRESS" : null,
-      in_progress: isSeller ? "IN_REVIEW" : null,
-      in_review: isBuyer ? "COMPLETED" : null,
-    }[statusKey];
-=======
-=======
 
     let reviews = [];
     try {
@@ -354,7 +623,6 @@ export async function OrderDetailPage({ mount, params }) {
 
     const isBuyer = u.id === o.buyerId;
     const isSeller = u.id === o.sellerId;
->>>>>>> ec26484 (implementasi demo)
     const myReview = reviews.find((r) => r.reviewerId === u.id);
     const canReview =
       (isBuyer || isSeller) &&
@@ -380,122 +648,147 @@ export async function OrderDetailPage({ mount, params }) {
       else if (isInProgress && isSeller) next = "WAITING_REVIEW";
     }
 
-    // showAdvanceBtn: hanya tampilkan jika next tidak null dan status belum di WAITING_REVIEW atau COMPLETED
+    // showAdvanceBtn: jangan duplikasi dengan seller-accept-btn saat menunggu konfirmasi
     const showAdvanceBtn =
-      next !== null && !isCompleted && !isCancelled && !isInReview;
+      next !== null &&
+      !isCompleted &&
+      !isCancelled &&
+      !isInReview &&
+      !(isWaiting && isSeller);
     // ========== END PERBAIKAN ==========
 
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
+    const isJob = isJobOrder(o);
+    const simBuyer = isSimulatedBuyerOrder(o);
+    const workAttachments = getWorkAttachments(o);
+    const hasWorkProof =
+      workAttachments.length > 0 ||
+      Boolean(o.workSubmission || o.workSubmittedAt) ||
+      isInReview ||
+      isCompleted;
+
+    const orderCtx = {
+      isBuyer,
+      isSeller,
+      simBuyer,
+      isJob,
+      statusKey,
+      hasWorkProof,
+    };
+
     mount.innerHTML = `
-      <div class="container page">
-        <a href="#/orders"><i class="fa-solid fa-arrow-left"></i> Kembali</a>
-        <div class="grid" style="grid-template-columns: 1fr 320px;gap:1.5rem;margin-top:1rem">
-          <div>
-            <div class="card card-pad-lg">
-              <div class="flex-between mb-2"><h1 style="margin:0">${escape(o.title)}</h1>${statusPill(o.status)}</div>
-              <div class="text-sm text-muted">Order #${o.id.slice(0, 12)} · ${fmtDate(o.createdAt, true)}</div>
-<<<<<<< HEAD
-=======
+      <div class="container page order-detail-page">
+        <a href="#/orders" class="order-back-link"><i class="fa-solid fa-arrow-left"></i> Kembali</a>
+        <div class="order-detail-layout">
+          <div class="order-detail-main">
+            <div class="order-detail-card card card-pad-lg">
+              <header class="order-detail-header">
+                <div class="order-detail-header-meta">
+                  ${statusPill(o.status, { role: isBuyer ? "buyer" : isSeller ? "seller" : null })}
+                  <span class="order-detail-id">Order #${o.id.slice(0, 12)} · ${fmtDate(o.createdAt, true)}</span>
+                </div>
+                <h1 class="order-detail-title">${escape(o.title)}</h1>
+              </header>
+
               ${renderEscrowSteps(o.status)}
->>>>>>> ec26484 (implementasi demo)
-              <div class="divider"></div>
-              <div class="grid grid-2">
-                <div>
-                  <div class="text-xs text-muted">Pembeli</div>
-                  <div class="flex gap-md" style="align-items:center;margin-top:.25rem">${avatar(o.buyer, "sm")}<strong>${escape(o.buyer?.name)}</strong></div>
+
+              <div class="order-parties">
+                <div class="order-party">
+                  <span class="order-party-label">Pembeli</span>
+                  ${userChip(o.buyer, "sm")}
                 </div>
-                <div>
-                  <div class="text-xs text-muted">Penjual</div>
-                  <div class="flex gap-md" style="align-items:center;margin-top:.25rem">${avatar(o.seller, "sm")}<strong>${escape(o.seller?.name)}</strong></div>
+                <div class="order-party">
+                  <span class="order-party-label">Penjual</span>
+                  ${userChip(o.seller, "sm")}
                 </div>
               </div>
-              ${o.note ? `<div class="mt-2"><div class="text-xs text-muted">Catatan</div><p>${escape(o.note)}</p></div>` : ""}
-<<<<<<< HEAD
-              <div class="flex gap-sm mt-3 flex-wrap">
-<<<<<<< HEAD
-                ${next ? `<button class="btn btn-primary" id="advance-btn" data-testid="advance-order-btn"><i class="fa-solid fa-arrow-right"></i> ${getActionLabel(next)}</button>` : ""}
-                ${(isBuyer || isSeller) && !["COMPLETED", "CANCELLED", "completed", "cancelled"].includes(o.status) ? `<button class="btn btn-danger" id="cancel-btn" data-testid="cancel-order-btn">Batalkan</button>` : ""}
-                ${isBuyer && (o.status === "COMPLETED" || o.status === "completed") ? `<button class="btn btn-success" id="review-btn" data-testid="review-order-btn"><i class="fa-solid fa-star"></i> Beri Review</button>` : ""}
-                <button class="btn btn-secondary" id="chat-btn" data-testid="chat-order-btn">
-=======
-=======
-              
-              <div class="flex gap-sm mt-3 flex-wrap">
->>>>>>> ec26484 (implementasi demo)
-                ${showAdvanceBtn ? `<button class="btn btn-primary" id="advance-btn"><i class="fa-solid fa-arrow-right"></i> ${getActionLabel(next)}</button>` : ""}
-                ${isBuyer && isWaiting ? `<button class="btn btn-danger" id="cancel-btn">Batalkan</button>` : ""}
-                ${canReview ? `<button class="btn btn-success" id="review-btn"><i class="fa-solid fa-star"></i> Beri Review ${isSeller ? "untuk Pembeli" : "untuk Penjual"}</button>` : ""}
-                ${myReview ? `<span class="badge badge-success" style="align-self:center"><i class="fa-solid fa-circle-check"></i> Anda sudah memberi ulasan</span>` : ""}
-<<<<<<< HEAD
-                
-                ${!isCompleted && !isCancelled ? `<button class="btn btn-success" id="demo-auto-btn"><i class="fa-solid fa-wand-magic-sparkles"></i> Demo Auto</button>` : ""}
-                <button class="btn btn-secondary" id="chat-btn">
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-                  <i class="fa-solid fa-comment"></i> Chat dengan ${isBuyer ? "Penjual" : "Pembeli"}
-                </button>
-                <button class="btn btn-secondary" id="dispute-btn" data-testid="dispute-btn"><i class="fa-solid fa-flag"></i> Laporkan</button>
+
+              ${o.note ? `<div class="order-note"><span class="order-party-label">Catatan pembeli</span><p>${escape(o.note)}</p></div>` : ""}
+
+              <div class="order-actions-bar">
+                ${renderOrderActionHint(o, orderCtx)}
+                ${myReview ? `<div class="order-actions-note"><i class="fa-solid fa-circle-check"></i> Anda sudah memberi ulasan</div>` : ""}
+                <div class="order-actions-buttons">
+                  ${isSeller && isWaiting ? `<button class="btn btn-primary" id="seller-accept-btn"><i class="fa-solid fa-check"></i> Terima Pesanan</button>` : ""}
+                  ${isSeller && isWaiting ? `<button class="btn btn-danger" id="seller-reject-btn"><i class="fa-solid fa-xmark"></i> Tolak</button>` : ""}
+                  ${showAdvanceBtn ? `<button class="btn btn-primary" id="advance-btn"><i class="fa-solid fa-arrow-right"></i> ${getActionLabel(next)}</button>` : ""}
+                  ${isBuyer && isWaiting ? `<button class="btn btn-secondary" id="cancel-btn">Batalkan</button>` : ""}
+                  ${canReview ? `<button class="btn btn-success" id="review-btn"><i class="fa-solid fa-star"></i> Beri Ulasan</button>` : ""}
+                  <button class="btn btn-secondary" id="chat-btn"><i class="fa-solid fa-comment"></i> Chat ${isBuyer ? "Penjual" : "Pembeli"}</button>
+                  <button class="btn btn-secondary" id="dispute-btn"><i class="fa-solid fa-flag"></i> Laporkan</button>
+                </div>
               </div>
             </div>
-=======
-                <button class="btn btn-secondary" id="chat-btn">
-                  <i class="fa-solid fa-comment"></i> Chat dengan ${isBuyer ? "Penjual" : "Pembeli"}
-                </button>
-                <button class="btn btn-secondary" id="dispute-btn"><i class="fa-solid fa-flag"></i> Laporkan</button>
-              </div>
-            </div>
-            
+
             ${renderRevisionBanner(o)}
             ${renderAutoCompleteCountdown(o)}
             ${renderWorkSubmission(o, isBuyer, isSeller)}
             ${renderOrderReviews(o, reviews)}
-            
->>>>>>> ec26484 (implementasi demo)
-            <div class="card card-pad-lg mt-3">
-              <h3>Timeline</h3>
+
+            <div class="order-timeline-card card card-pad-lg">
+              <h3 class="order-section-title"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Status</h3>
               <div class="timeline">
-                ${(o.timeline || []).map((t) => `<div class="tl-step done"><strong>${escape(t.status.replace("_", " "))}</strong><div class="tl-time">${fmtDate(t.at, true)}</div></div>`).join("")}
+                ${(o.timeline || []).map((t) => `<div class="tl-step done"><strong>${escape(t.status.replace(/_/g, " "))}</strong><div class="tl-time">${fmtDate(t.at, true)}</div></div>`).join("")}
               </div>
             </div>
           </div>
-          <aside class="card card-pad-lg" style="position:sticky;top:calc(var(--header-h) + 1rem);align-self:flex-start">
-            <div class="text-center">
-              <div class="text-xs text-muted">Total Pembayaran</div>
-              <div style="font-family:var(--font-head);font-size:2rem;font-weight:700;color:var(--primary-dark)">${fmtIDR(o.totalAmount || o.amount)}</div>
+
+          <aside class="order-detail-sidebar card card-pad-lg">
+            <div class="order-payment-head">
+              <span class="order-payment-label">Total Pembayaran</span>
+              <div class="order-payment-total">${fmtIDR(o.totalAmount || o.amount)}</div>
             </div>
-            <div class="divider"></div>
-            <div class="text-sm">
-              <div class="flex-between"><span class="text-muted">Subtotal</span><span>${fmtIDR(o.amount)}</span></div>
-              <div class="flex-between"><span class="text-muted">Platform fee</span><span>${fmtIDR(o.fee || 0)}</span></div>
-              <div class="divider"></div>
-              <div class="flex-between"><strong>Total</strong><strong>${fmtIDR(o.totalAmount || o.amount)}</strong></div>
+            <div class="order-payment-breakdown">
+              <div class="order-payment-row"><span>Subtotal</span><span>${fmtIDR(o.amount)}</span></div>
+              <div class="order-payment-row"><span>Biaya platform</span><span>${fmtIDR(o.fee || 0)}</span></div>
             </div>
-<<<<<<< HEAD
-<<<<<<< HEAD
-            <button class="btn btn-primary btn-block mt-2" id="pay-btn" data-testid="pay-now-btn"${o.status === "WAITING_CONFIRMATION" || o.status === "pending" ? "" : " disabled"}><i class="fa-solid fa-credit-card"></i> Bayar Sekarang</button>
-=======
-            ${o.status === "WAITING_CONFIRMATION" && isBuyer ? `<button class="btn btn-primary btn-block mt-2" id="pay-btn"><i class="fa-solid fa-credit-card"></i> Bayar Sekarang</button>` : ""}
-            ${o.status === "COMPLETED" ? `<div class="alert alert-success mt-2" style="margin:0"><i class="fa-solid fa-circle-check"></i> Pembayaran selesai, dana telah dirilis.</div>` : ""}
-            ${o.status === "CANCELLED" ? `<div class="alert alert-danger mt-2" style="margin:0"><i class="fa-solid fa-ban"></i> Pesanan dibatalkan${o.cancellationReason ? ": " + escape(o.cancellationReason) : "."}</div>` : ""}
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
-            ${o.status === "WAITING_CONFIRMATION" && isBuyer ? `<button class="btn btn-primary btn-block mt-2" id="pay-btn"><i class="fa-solid fa-credit-card"></i> Bayar Sekarang</button>` : ""}
-            ${o.status === "COMPLETED" ? `<div class="alert alert-success mt-2" style="margin:0"><i class="fa-solid fa-circle-check"></i> Pembayaran selesai, dana telah dirilis.</div>` : ""}
-            ${o.status === "CANCELLED" ? `<div class="alert alert-danger mt-2" style="margin:0"><i class="fa-solid fa-ban"></i> Pesanan dibatalkan${o.cancellationReason ? ": " + escape(o.cancellationReason) : "."}</div>` : ""}
->>>>>>> ec26484 (implementasi demo)
-            <div class="text-xs text-muted text-center mt-1"><i class="fa-solid fa-shield-halved"></i> Pembayaran aman dengan escrow</div>
+            ${o.status === "ACCEPTED" && isBuyer ? `<button class="btn btn-primary btn-block mt-2" id="pay-btn"><i class="fa-solid fa-credit-card"></i> Bayar via Escrow</button>` : ""}
+            <div class="order-sidebar-hints">${renderOrderSidebarHints(o, orderCtx)}</div>
+            <p class="order-escrow-trust"><i class="fa-solid fa-shield-halved"></i> Pembayaran aman dengan escrow</p>
           </aside>
         </div>
       </div>`;
-<<<<<<< HEAD
-    const adv = document.getElementById("advance-btn");
-    if (adv)
-      adv.addEventListener("click", async () => {
-=======
 
     startAutoCompleteCountdown(o);
+
+    document.getElementById("seller-accept-btn")?.addEventListener("click", async () => {
+      try {
+        await api.post(`/orders/${o.id}/seller-accept`, {});
+        toast("✅ Pesanan diterima! Buyer akan melakukan pembayaran.", "success");
+        router.render();
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    });
+
+    document.getElementById("seller-reject-btn")?.addEventListener("click", () => {
+      const formHtml = `
+        <form id="reject-form">
+          <p class="text-sm text-muted" style="margin-top:0">Berikan alasan penolakan agar pembeli memahami keputusan Anda.</p>
+          <div class="form-group">
+            <label class="label">Alasan Penolakan *</label>
+            <textarea id="reject-reason" class="textarea" rows="4" required minlength="5" placeholder="Contoh: Kapasitas penuh / di luar keahlian saya"></textarea>
+            <div class="text-xs text-muted">Minimal 5 karakter</div>
+          </div>
+          <button class="btn btn-danger btn-block" type="submit"><i class="fa-solid fa-xmark"></i> Tolak Pesanan</button>
+        </form>`;
+      const m = modal({ title: "Tolak Pesanan", body: formHtml });
+      m.el.querySelector("#reject-form")?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const reason = m.el.querySelector("#reject-reason")?.value.trim() || "";
+        if (reason.length < 5) {
+          toast("Alasan penolakan minimal 5 karakter", "error");
+          return;
+        }
+        try {
+          await api.post(`/orders/${o.id}/cancel`, { reason });
+          m.close();
+          toast("Pesanan ditolak", "success");
+          router.render();
+        } catch (err) {
+          toast(err.message, "error");
+        }
+      });
+    });
 
     // Event listener untuk advance button dengan validasi tambahan
     const advanceBtn = document.getElementById("advance-btn");
@@ -522,7 +815,6 @@ export async function OrderDetailPage({ mount, params }) {
           toast("Pesanan tidak dalam status menunggu konfirmasi", "error");
           return;
         }
->>>>>>> ec26484 (implementasi demo)
         try {
           await api.post(`/orders/${o.id}/status`, { status: next });
           toast("Status diperbarui", "success");
@@ -531,17 +823,11 @@ export async function OrderDetailPage({ mount, params }) {
           toast(err.message, "error");
         }
       });
-<<<<<<< HEAD
-    const can = document.getElementById("cancel-btn");
-    if (can)
-      can.addEventListener("click", () =>
-=======
     }
 
     const cancelBtn = document.getElementById("cancel-btn");
     if (cancelBtn) {
       cancelBtn.addEventListener("click", () =>
->>>>>>> ec26484 (implementasi demo)
         confirmModal("Yakin batalkan pesanan?", async () => {
           try {
             await api.post(`/orders/${o.id}/status`, { status: "CANCELLED" });
@@ -552,32 +838,19 @@ export async function OrderDetailPage({ mount, params }) {
           }
         }),
       );
-<<<<<<< HEAD
-    const rev = document.getElementById("review-btn");
-    if (rev)
-      rev.addEventListener("click", () => {
-=======
     }
 
     const reviewBtn = document.getElementById("review-btn");
     if (reviewBtn) {
       reviewBtn.addEventListener("click", () => {
->>>>>>> ec26484 (implementasi demo)
         let rating = 5;
         const formHtml = `
         <form id="rev-form">
           <div class="form-group"><label class="label">Rating</label>
-<<<<<<< HEAD
-            <div id="stars-pick" style="font-size:2rem;cursor:pointer;color:var(--warning)" data-testid="review-stars">${[1, 2, 3, 4, 5].map((i) => `<i class="fa-solid fa-star" data-r="${i}"></i>`).join(" ")}</div>
-          </div>
-          <div class="form-group"><label class="label">Komentar</label><textarea id="rev-cm" class="textarea" required data-testid="review-comment"></textarea></div>
-          <button class="btn btn-primary btn-block" type="submit" data-testid="review-submit-btn">Kirim Review</button>
-=======
             <div id="stars-pick" style="font-size:2rem;cursor:pointer;color:var(--warning)">${[1, 2, 3, 4, 5].map((i) => `<i class="fa-solid fa-star" data-r="${i}"></i>`).join(" ")}</div>
           </div>
           <div class="form-group"><label class="label">Komentar</label><textarea id="rev-cm" class="textarea" required></textarea></div>
           <button class="btn btn-primary btn-block" type="submit">Kirim Review</button>
->>>>>>> ec26484 (implementasi demo)
         </form>`;
         const m = modal({ title: "Beri Ulasan", body: formHtml });
         m.el.querySelectorAll("[data-r]").forEach((s) =>
@@ -593,55 +866,59 @@ export async function OrderDetailPage({ mount, params }) {
           .addEventListener("submit", async (e) => {
             e.preventDefault();
             try {
-<<<<<<< HEAD
-              await api.post(`/orders/${o.id}/review`, {
-=======
               await api.post("/reviews", {
                 orderId: o.id,
->>>>>>> ec26484 (implementasi demo)
                 rating,
                 comment: m.el.querySelector("#rev-cm").value,
               });
               m.close();
-              toast("Review terkirim", "success");
+              await refreshUserReviewsSnapshot();
+              toast(
+                "Ulasan terkirim! Anda akan mendapat notifikasi saat lawan transaksi juga memberi ulasan.",
+                "success",
+              );
               router.render();
             } catch (err) {
               toast(err.message, "error");
             }
           });
       });
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const disp = document.getElementById("dispute-btn");
-    if (disp)
-      disp.addEventListener("click", () => {
-=======
-=======
     }
 
     const workFilesInput = document.getElementById("work-files");
-    const workFilesPreview = document.getElementById("work-files-preview");
-    if (workFilesInput && workFilesPreview) {
+    if (workFilesInput) {
       workFilesInput.addEventListener("change", () => {
-        workFilesPreview.innerHTML = "";
-        Array.from(workFilesInput.files || []).forEach((file, index) => {
+        const preview = document.getElementById("work-files-preview");
+        if (!preview) return;
+        preview.querySelectorAll("img[data-object-url]").forEach((img) => {
+          URL.revokeObjectURL(img.dataset.objectUrl);
+        });
+        preview.innerHTML = "";
+        Array.from(workFilesInput.files || []).forEach((file) => {
           const item = document.createElement("div");
-          item.className = "work-preview-item";
+          item.style.cssText =
+            "border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;max-width:140px";
           if (file.type.startsWith("image/")) {
+            const url = URL.createObjectURL(file);
             const img = document.createElement("img");
-            img.src = URL.createObjectURL(file);
+            img.src = url;
             img.alt = file.name;
+            img.dataset.objectUrl = url;
+            img.style.cssText =
+              "max-width:120px;max-height:120px;object-fit:cover;border-radius:4px;display:block;margin:0 auto 4px";
             item.appendChild(img);
+            const label = document.createElement("div");
+            label.className = "text-xs text-muted";
+            label.textContent = file.name;
+            item.appendChild(label);
+          } else if (file.type === "application/pdf") {
+            item.innerHTML = `<i class="fa-solid fa-file-pdf" style="font-size:2rem;color:var(--danger)"></i><div class="text-xs text-muted mt-1">${escape(file.name)}</div>`;
           } else {
-            item.innerHTML = `<i class="fa-solid fa-file-pdf"></i><span>${escape(file.name)}</span>`;
+            item.innerHTML = `<i class="fa-solid fa-file"></i><div class="text-xs text-muted mt-1">${escape(file.name)}</div>`;
           }
-          const label = document.createElement("small");
-          label.textContent = `File ${index + 1}`;
-          item.appendChild(label);
-          workFilesPreview.appendChild(item);
+          preview.appendChild(item);
         });
       });
->>>>>>> ec26484 (implementasi demo)
     }
 
     const workForm = document.getElementById("work-form");
@@ -655,7 +932,8 @@ export async function OrderDetailPage({ mount, params }) {
         if (!files.length)
           return toast("Upload minimal satu bukti kerja", "error");
         if (files.length > 10)
-          return toast("Maksimal 10 lampiran", "error");        if (note.length < 10)
+          return toast("Maksimal 10 lampiran", "error");
+        if (note.length < 10)
           return toast("Catatan bukti minimal 10 karakter", "error");
         try {
           const attachments = [];
@@ -739,31 +1017,16 @@ export async function OrderDetailPage({ mount, params }) {
     const disputeBtn = document.getElementById("dispute-btn");
     if (disputeBtn) {
       disputeBtn.addEventListener("click", () => {
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
         const m = modal({
           title: "Laporkan Masalah",
           body: `
         <form id="d-form">
-<<<<<<< HEAD
-          <div class="form-group"><label class="label">Alasan</label><textarea class="textarea" id="d-reason" required data-testid="dispute-reason"></textarea></div>
-          <button class="btn btn-danger btn-block" type="submit" data-testid="dispute-submit-btn">Kirim Laporan</button>
-=======
           <div class="form-group"><label class="label">Alasan</label><textarea class="textarea" id="d-reason" required minlength="20"></textarea></div>
           <button class="btn btn-danger btn-block" type="submit">Kirim Laporan</button>
->>>>>>> ec26484 (implementasi demo)
         </form>`,
         });
         m.el.querySelector("#d-form").addEventListener("submit", async (e) => {
           e.preventDefault();
-<<<<<<< HEAD
-          try {
-            await api.post("/disputes", {
-              orderId: o.id,
-              reason: m.el.querySelector("#d-reason").value,
-=======
           const description = m.el.querySelector("#d-reason").value.trim();
           if (description.length < 20) {
             toast("Jelaskan masalah minimal 20 karakter", "error");
@@ -774,7 +1037,6 @@ export async function OrderDetailPage({ mount, params }) {
               orderId: o.id,
               reason: description.slice(0, 120),
               description,
->>>>>>> ec26484 (implementasi demo)
             });
             m.close();
             toast("Laporan terkirim ke admin", "success");
@@ -783,58 +1045,15 @@ export async function OrderDetailPage({ mount, params }) {
           }
         });
       });
-<<<<<<< HEAD
-    const pay = document.getElementById("pay-btn");
-    if (pay)
-      pay.addEventListener("click", async () => {
-=======
     }
 
     const payBtn = document.getElementById("pay-btn");
     if (payBtn) {
       payBtn.addEventListener("click", async () => {
->>>>>>> ec26484 (implementasi demo)
         try {
           const cfg = await api.get("/payments/midtrans/config");
           if (!cfg.configured) {
-            const m = modal({
-<<<<<<< HEAD
-              title: "Pembayaran (Demo)",
-              body: `
-            <div class="text-center">
-              <i class="fa-solid fa-credit-card" style="font-size:3rem;color:var(--primary)"></i>
-              <h3 class="mt-2">Total: ${fmtIDR(o.amount)}</h3>
-              <p class="text-muted">Midtrans belum dikonfigurasi. Mode demo aktif.</p>
-              <button class="btn btn-primary btn-block" id="pay-ok" data-testid="confirm-pay-btn">Konfirmasi Pembayaran (Demo)</button>
-=======
-              title: "Konfirmasi Pembayaran",
-              body: `
-            <div class="pay-checkout">
-              <div class="escrow-summary">
-                <i class="fa-solid fa-shield-halved"></i>
-                <div><strong>Escrow Tolongin</strong><span>Dana ditahan sampai bukti kerja Anda setujui.</span></div>
-              </div>
-              <h3 class="mt-2">Total: ${fmtIDR(o.totalAmount || o.amount)}</h3>
-              <div class="pay-methods">
-                ${["Virtual Account BCA", "QRIS", "GoPay", "OVO", "DANA", "Kartu Kredit"].map((x, i) => `<label class="pay-method ${i === 0 ? "active" : ""}"><input type="radio" name="pay-method" ${i === 0 ? "checked" : ""}><span><i class="fa-solid ${i === 1 ? "fa-qrcode" : i === 5 ? "fa-credit-card" : "fa-building-columns"}"></i>${x}</span><small>Konfirmasi instan</small></label>`).join("")}
-              </div>
-              <div class="alert alert-info mt-2"><i class="fa-solid fa-circle-info"></i> Dana akan ditahan di escrow hingga Anda menyetujui bukti pengerjaan.</div>
-              <button class="btn btn-primary btn-block" id="pay-ok">Bayar & Aktifkan Escrow</button>
->>>>>>> ec26484 (implementasi demo)
-            </div>`,
-            });
-            m.el
-              .querySelector("#pay-ok")
-              .addEventListener("click", async () => {
-                try {
-                  await api.post(`/payments/demo/confirm/${o.id}`);
-                  m.close();
-                  toast("Pembayaran berhasil!", "success");
-                  router.render();
-                } catch (err) {
-                  toast(err.message, "error");
-                }
-              });
+            openDemoPaymentModal(o, () => router.render());
             return;
           }
           toast("Membuka Midtrans...", "info");
@@ -843,19 +1062,11 @@ export async function OrderDetailPage({ mount, params }) {
           );
           await loadSnapJs(tokenRes.clientKey, tokenRes.isProduction);
           window.snap.pay(tokenRes.token, {
-<<<<<<< HEAD
-            onSuccess: (r) => {
-              toast("Pembayaran berhasil!", "success");
-              setTimeout(() => router.render(), 1200);
-            },
-            onPending: (r) =>
-=======
             onSuccess: () => {
               toast("Pembayaran berhasil!", "success");
               setTimeout(() => router.render(), 1200);
             },
             onPending: () =>
->>>>>>> ec26484 (implementasi demo)
               toast("Pembayaran pending - selesaikan di Midtrans", "warning"),
             onError: (r) =>
               toast("Pembayaran gagal: " + (r?.status_message || ""), "error"),
@@ -865,34 +1076,8 @@ export async function OrderDetailPage({ mount, params }) {
           toast(err.message, "error");
         }
       });
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-    // Chat button handler
-=======
-    const demoAutoBtn = document.getElementById("demo-auto-btn");
-    if (demoAutoBtn) {
-      demoAutoBtn.addEventListener("click", async () => {
-        demoAutoBtn.disabled = true;
-        demoAutoBtn.innerHTML =
-          '<i class="fa-solid fa-spinner fa-spin"></i> Menjalankan flow...';
-        try {
-          await api.post("/orders/" + o.id + "/demo-auto", {});
-          toast("Demo selesai: bayar, kirim bukti, approve, dana cair.", "success");
-          router.render();
-        } catch (err) {
-          demoAutoBtn.disabled = false;
-          demoAutoBtn.innerHTML =
-            '<i class="fa-solid fa-wand-magic-sparkles"></i> Demo Auto';
-          toast(err.message, "error");
-        }
-      });
-    }
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
     }
 
->>>>>>> ec26484 (implementasi demo)
     const chatBtn = document.getElementById("chat-btn");
     if (chatBtn) {
       chatBtn.addEventListener("click", async () => {
@@ -910,10 +1095,7 @@ export async function OrderDetailPage({ mount, params }) {
       });
     }
   } catch (err) {
-<<<<<<< HEAD
-=======
     console.error("OrderDetailPage error:", err);
->>>>>>> ec26484 (implementasi demo)
     mount.innerHTML = empty("Tidak ditemukan", err.message);
   }
 }

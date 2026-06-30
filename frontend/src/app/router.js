@@ -1,35 +1,3 @@
-<<<<<<< HEAD
-// Hash-based router with route params, guards & lazy loading
-import { store } from "./store.js";
-import { escape } from "../shared/utils/helpers.js";
-
-// Gunakan lazy loading untuk menghindari error jika file belum ada
-let ServiceDetailPage = null;
-
-// Fungsi untuk load module secara dinamis
-async function loadServiceDetailPage() {
-  if (!ServiceDetailPage) {
-    try {
-      const module = await import("../features/services/ServiceDetailPage.js");
-      ServiceDetailPage = module.ServiceDetailPage;
-    } catch (err) {
-      console.error("Failed to load ServiceDetailPage:", err);
-      // Fallback: buat fungsi dummy
-      ServiceDetailPage = async ({ mount }) => {
-        mount.innerHTML = `<div class="container page">
-          <div class="empty">
-            <i class="fa-solid fa-circle-exclamation"></i>
-            <h3>Halaman tidak tersedia</h3>
-            <p>Service detail page sedang dalam pengembangan</p>
-            <a href="#/marketplace" class="btn btn-primary mt-2">Kembali ke Marketplace</a>
-          </div>
-        </div>`;
-      };
-    }
-  }
-  return ServiceDetailPage;
-}
-=======
 // frontend/src/app/router.js
 
 import { store } from "./store.js";
@@ -60,7 +28,7 @@ import {
   SellerEarnings,
 } from "../features/dashboard/DashboardPages.js";
 import { PublicProfilePage } from "../features/profile/PublicProfilePage.js";
-import { ProfilePage, SettingsPage } from "../features/profile/ProfilePages.js";
+import { ProfileRedirectPage, SettingsPage } from "../features/profile/ProfilePages.js";
 import { VerificationPage } from "../features/verification/VerificationPage.js";
 import { NotificationsPage } from "../features/notifications/NotificationsPage.js";
 import { LoginPage } from "../features/auth/pages/LoginPage.js";
@@ -83,65 +51,12 @@ import {
   ManageKyc,
 } from "../features/admin/AdminPages.js";
 import { NotFoundPage } from "../app/App.js";
->>>>>>> ec26484 (implementasi demo)
 
 const routes = [];
 let notFound = null;
 let mountEl = null;
 let currentCleanup = null;
 
-<<<<<<< HEAD
-export const router = {
-  add(path, handler, opts = {}) {
-    routes.push({
-      path,
-      handler,
-      opts,
-      regex: pathToRegex(path),
-      keys: extractKeys(path),
-    });
-    return this;
-  },
-  setNotFound(fn) {
-    notFound = fn;
-    return this;
-  },
-  mount(el) {
-    mountEl = el;
-    window.addEventListener("hashchange", () => this.render());
-    this.render();
-  },
-  navigate(to) {
-    if (location.hash === `#${to}`) {
-      this.render();
-      return;
-    }
-    location.hash = `#${to}`;
-  },
-  current() {
-    return location.hash.replace(/^#/, "") || "/";
-  },
-  async render() {
-    const path = this.current();
-    const [pathname, qstr = ""] = path.split("?");
-    const query = Object.fromEntries(new URLSearchParams(qstr));
-    const match = findMatch(pathname);
-    runCleanup();
-    if (!match) return renderNotFound();
-    if (!checkGuards(match.r)) return;
-
-    // Untuk route service detail, load module secara dinamis
-    let handler = match.r.handler;
-    if (match.r.path === "/service/:id") {
-      handler = await loadServiceDetailPage();
-    }
-
-    await runHandler(match.r, handler, match.params, query, pathname);
-  },
-};
-
-// ---- helpers ----
-=======
 // ============ HELPER FUNCTIONS (harus didefinisikan SEBELUM digunakan) ============
 
 function pathToRegex(path) {
@@ -158,7 +73,6 @@ function paramsFrom(match, keys) {
   return o;
 }
 
->>>>>>> ec26484 (implementasi demo)
 function findMatch(pathname) {
   for (const r of routes) {
     const m = pathname.match(r.regex);
@@ -178,6 +92,7 @@ function runCleanup() {
 }
 
 function renderNotFound() {
+  syncPageClass("");
   mountEl.innerHTML = "";
   if (notFound) notFound(mountEl);
   window.scrollTo(0, 0);
@@ -199,10 +114,11 @@ function checkGuards(r, pathname) {
     currentUser &&
     currentUser.role !== "ADMIN" &&
     !currentUser.avatar &&
-    pathname !== "/settings"
+    pathname !== "/settings" &&
+    !pathname.startsWith("/settings/")
   ) {
     emitToast("warning", "Upload foto profil untuk melanjutkan");
-    router.navigate("/settings");
+    router.navigate("/settings/profile");
     return false;
   }
   if (r.opts.role) {
@@ -217,7 +133,14 @@ function checkGuards(r, pathname) {
   return true;
 }
 
+const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"];
+
+function syncPageClass(pathname) {
+  document.body.classList.toggle("page--auth", AUTH_ROUTES.includes(pathname));
+}
+
 async function runHandler(r, handler, params, query, pathname) {
+  syncPageClass(pathname);
   mountEl.innerHTML =
     '<div class="container app-fade-in"><div class="spinner"></div></div>';
   try {
@@ -233,20 +156,8 @@ async function runHandler(r, handler, params, query, pathname) {
   );
 }
 
-<<<<<<< HEAD
-function pathToRegex(path) {
-  return new RegExp("^" + path.replace(/:[^/]+/g, "([^/]+)") + "$");
-}
-
-<<<<<<< HEAD
-function extractKeys(path) {
-  return [...path.matchAll(/:([^/]+)/g)].map((m) => m[1]);
-}
-=======
-=======
 // ============ ROUTER OBJECT ============
 
->>>>>>> ec26484 (implementasi demo)
 export const router = {
   add(path, handler, opts = {}) {
     routes.push({
@@ -293,15 +204,6 @@ export const router = {
     runCleanup();
     if (!match) return renderNotFound();
     if (!checkGuards(match.r, pathname)) return;
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-
-function paramsFrom(match, keys) {
-  const o = {};
-  keys.forEach((k, i) => (o[k] = decodeURIComponent(match[i + 1])));
-  return o;
-}
-=======
 
     await runHandler(match.r, match.r.handler, match.params, query, pathname);
   },
@@ -343,7 +245,9 @@ router.add("/dashboard/manage-jobs/edit/:id", DashboardOverview, { auth: true })
 router.add("/dashboard/my-applications", DashboardOverview, { auth: true });
 router.add("/dashboard/favorites", DashboardOverview, { auth: true });
 router.add("/dashboard/earnings", DashboardOverview, { auth: true });
-router.add("/dashboard/account", DashboardOverview, { auth: true });
+
+// Legacy account URL → settings
+router.add("/dashboard/account", () => { location.hash = "#/settings"; }, { auth: true });
 
 // Legacy public job/service posting URLs — redirect ke dashboard
 router.add("/post-job", () => { location.hash = "#/dashboard/manage-jobs/new"; }, { auth: true });
@@ -357,10 +261,11 @@ router.add("/dashboard/seller/services", DashboardOverview, { auth: true });
 router.add("/dashboard/seller/orders", DashboardOverview, { auth: true });
 router.add("/dashboard/seller/earnings", DashboardOverview, { auth: true });
 
-// Profile routes
-router.add("/profile", ProfilePage, { auth: true });
+// Profile — own profile langsung ke tampilan publik
+router.add("/profile", ProfileRedirectPage, { auth: true });
 router.add("/profile/:id", PublicProfilePage);
 router.add("/settings", SettingsPage, { auth: true });
+router.add("/settings/:section", SettingsPage, { auth: true });
 router.add("/verification", VerificationPage, { auth: true });
 router.add("/kyc", KycPage, { auth: true });
 router.add("/notifications", NotificationsPage, { auth: true });
@@ -379,4 +284,3 @@ router.add("/admin/activity", ActivityLog, { auth: true, role: "ADMIN" });
 
 // 404 handler
 router.setNotFound(NotFoundPage);
->>>>>>> ec26484 (implementasi demo)

@@ -28,10 +28,7 @@ export class OrdersRepository {
     return this.prisma.order.findMany({
       where: { buyerId },
       include: {
-<<<<<<< HEAD
-=======
         buyer: { select: { id: true, name: true, avatar: true } },
->>>>>>> ec26484 (implementasi demo)
         seller: { select: { id: true, name: true, avatar: true } },
         service: true,
       },
@@ -44,10 +41,7 @@ export class OrdersRepository {
       where: { sellerId },
       include: {
         buyer: { select: { id: true, name: true, avatar: true } },
-<<<<<<< HEAD
-=======
         seller: { select: { id: true, name: true, avatar: true } },
->>>>>>> ec26484 (implementasi demo)
         service: true,
       },
       orderBy: { createdAt: 'desc' },

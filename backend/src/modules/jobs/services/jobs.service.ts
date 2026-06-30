@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { JobsRepository } from '../repositories/jobs.repository';
 import { CreateJobDto, UpdateJobDto, JobQueryDto } from '../dto/job.dto';
@@ -14,20 +16,17 @@ import {
 import { Prisma } from '@prisma/client';
 import { ROLE, JOB_STATUS } from '../../../common/constants/enums';
 import { JobFactory } from '../factories/job.factory';
-<<<<<<< HEAD
-=======
 import { NotificationsService } from '../../notifications/services/notifications.service';
->>>>>>> ec26484 (implementasi demo)
+import { DemoFlowService } from '../../simulation/demo-flow.service';
 
 @Injectable()
 export class JobsService {
   constructor(
     private readonly repo: JobsRepository,
     private readonly factory: JobFactory,
-<<<<<<< HEAD
-=======
     private readonly notifications: NotificationsService,
->>>>>>> ec26484 (implementasi demo)
+    @Inject(forwardRef(() => DemoFlowService))
+    private readonly demoFlow: DemoFlowService,
   ) {}
 
   private toDto(j: any) {
@@ -40,14 +39,6 @@ export class JobsService {
     const { skip, take } = paginate(page, limit);
 
     const where: Prisma.JobWhereInput = {};
-<<<<<<< HEAD
-    if (query.q) where.title = { contains: query.q };
-    if (query.categoryId) where.categoryId = query.categoryId;
-    if (query.buyerId) where.buyerId = query.buyerId;
-    if (query.status) where.status = (query.status as string).toUpperCase();
-
-    const { items, total } = await this.repo.findMany(where, skip, take);
-=======
     if (query.q) {
       where.OR = [
         { title: { contains: query.q } },
@@ -55,10 +46,17 @@ export class JobsService {
       ];
     }
     if (query.categoryId) where.categoryId = query.categoryId;
+    else if (query.serviceType) {
+      where.category = { serviceType: query.serviceType };
+      if (query.serviceType === 'DIGITAL') where.isOnline = true;
+    }
     if (query.buyerId) where.buyerId = query.buyerId;
     if (query.status) where.status = (query.status as string).toUpperCase();
+    else if (!query.buyerId) where.status = JOB_STATUS.OPEN;
     if (query.urgency) where.urgency = query.urgency.toUpperCase();
-    if (query.location) where.location = { contains: query.location };
+    if (query.location && query.serviceType !== 'DIGITAL') {
+      where.location = { contains: query.location };
+    }
     // Filter rentang budget
     if (query.minBudget !== undefined || query.maxBudget !== undefined) {
       where.budget = {};
@@ -75,7 +73,6 @@ export class JobsService {
       take,
       orderBy,
     );
->>>>>>> ec26484 (implementasi demo)
 
     return {
       data: items.map((i) => this.toDto(i)),
@@ -83,8 +80,6 @@ export class JobsService {
     };
   }
 
-<<<<<<< HEAD
-=======
   // Konversi parameter sortBy (termasuk alias) menjadi orderBy Prisma
   private resolveSort(
     sortBy?: string,
@@ -105,7 +100,6 @@ export class JobsService {
     }
   }
 
->>>>>>> ec26484 (implementasi demo)
   async findById(id: string) {
     const j = await this.repo.findById(id);
     if (!j) throw new NotFoundException('Job not found');
@@ -113,37 +107,20 @@ export class JobsService {
   }
 
   async create(buyerId: string, dto: CreateJobDto) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const created = await this.repo.create({
-      buyer: { connect: { id: buyerId } },
-      category: { connect: { id: dto.categoryId } },
-      title: dto.title,
-      description: dto.description,
-      budget: dto.budget,
-      budgetType: dto.budgetType || 'FIXED',
-      deadline: dto.deadline ? new Date(dto.deadline) : undefined,
-      location: dto.location,
-      isOnline: dto.isOnline ?? false,
-      skills: stringifyJsonField(dto.skills || []),
-      status: JOB_STATUS.OPEN,
-    });
-=======
     const created = await this.repo.create(this.factory.create(buyerId, dto));
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
-    const created = await this.repo.create(this.factory.create(buyerId, dto));
+
     await this.notifications
       .notify(
         buyerId,
         'SYSTEM',
-        '📢 Pekerjaan Anda telah dipublikasikan!',
-        `"${created.title}" sudah live dan siap menerima lamaran.`,
+        '📢 Pekerjaan Dipublikasikan!',
+        `Pekerjaan Anda berhasil dipublikasikan! "${created.title}" sudah live.`,
         { jobId: created.id },
         `/jobs/${created.id}`,
       )
       .catch(() => undefined);
->>>>>>> ec26484 (implementasi demo)
+
+    this.demoFlow.onJobCreated(created.id);
     return this.toDto(created);
   }
 
@@ -160,14 +137,11 @@ export class JobsService {
       data.skills = stringifyJsonField(dto.skills);
     }
 
-<<<<<<< HEAD
-=======
     // Normalisasi urgency ke uppercase
     if (dto.urgency) {
       data.urgency = dto.urgency.toUpperCase();
     }
 
->>>>>>> ec26484 (implementasi demo)
     // Handle deadline separately
     if (dto.deadline) {
       data.deadline = new Date(dto.deadline);

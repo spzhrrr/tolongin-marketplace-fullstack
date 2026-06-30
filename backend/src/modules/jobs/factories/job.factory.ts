@@ -19,6 +19,7 @@ export class JobFactory {
       isOnline: dto.isOnline ?? false,
       skills: stringifyJsonField(dto.skills || []),
       urgency: dto.urgency ? dto.urgency.toUpperCase() : 'NORMAL',
+      coverImage: dto.coverImage || undefined,
       status: JOB_STATUS.OPEN,
     };
   }

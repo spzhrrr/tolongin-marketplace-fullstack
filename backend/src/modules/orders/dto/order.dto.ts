@@ -1,10 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
-=======
-=======
->>>>>>> ec26484 (implementasi demo)
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -15,10 +9,6 @@ import {
   MinLength,
   Matches,
 } from 'class-validator';
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
 import { DELIVERY_TYPE_VALUES } from '../../../common/constants/enums';
 import type { DeliveryType } from '../../../common/constants/enums';
 
@@ -52,11 +42,6 @@ export class RevisionRequestDto {
   @MinLength(5)
   reason!: string;
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> ec26484 (implementasi demo)
 
 export class SubmitWorkDto {
   @ApiProperty({ minLength: 10 })
@@ -95,7 +80,3 @@ export class OpenDisputeDto {
   @IsString({ each: true })
   evidence?: string[];
 }
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)

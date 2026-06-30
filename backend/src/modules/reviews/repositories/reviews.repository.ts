@@ -13,9 +13,6 @@ export class ReviewsRepository {
     return this.prisma.review.findUnique({ where: { id } });
   }
   findByOrder(orderId: string) {
-<<<<<<< HEAD
-    return this.prisma.review.findMany({ where: { orderId } });
-=======
     return this.prisma.review.findMany({
       where: { orderId },
       include: {
@@ -36,7 +33,6 @@ export class ReviewsRepository {
       include: { reviewer: { select: { id: true, name: true, avatar: true } } },
       orderBy: { createdAt: 'desc' },
     });
->>>>>>> ec26484 (implementasi demo)
   }
   findBySeller(sellerId: string) {
     return this.prisma.review.findMany({
@@ -59,10 +55,6 @@ export class ReviewsRepository {
     return this.prisma.review.delete({ where: { id } });
   }
   aggregateSellerRating(sellerId: string) {
-<<<<<<< HEAD
-    return this.prisma.review.aggregate({
-      where: { revieweeId: sellerId },
-=======
     // Penting: rating yang ditampilkan untuk seorang penjual hanya dihitung
     // dari ulasan pembeli→penjual (BUYER_TO_SELLER). Sebaliknya untuk pembeli
     // dihitung dari SELLER_TO_BUYER. Pakai helper umum di bawah.
@@ -76,7 +68,15 @@ export class ReviewsRepository {
   aggregateBuyerRating(buyerId: string) {
     return this.prisma.review.aggregate({
       where: { revieweeId: buyerId, reviewType: 'SELLER_TO_BUYER' },
->>>>>>> ec26484 (implementasi demo)
+      _avg: { rating: true },
+      _count: true,
+    });
+  }
+
+  /** Semua ulasan yang diterima user (penjual + pembeli) — untuk rating profil */
+  aggregateAllRating(revieweeId: string) {
+    return this.prisma.review.aggregate({
+      where: { revieweeId },
       _avg: { rating: true },
       _count: true,
     });

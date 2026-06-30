@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { Controller, Get, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { UsersService } from '../services/users.service';
-import { Public } from '../../../common/decorators/public.decorator';
-=======
-=======
->>>>>>> ec26484 (implementasi demo)
 import {
   Body,
   Controller,
@@ -24,10 +15,6 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { CreatePortfolioDto } from '../dto/portfolio.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { UpdateUserDto } from '../dto/update-user.dto';
-<<<<<<< HEAD
->>>>>>> 961a4cc (Update: Menyinkronkan perubahan lokal dengan repositori remote)
-=======
->>>>>>> ec26484 (implementasi demo)
 
 @ApiTags('Users')
 @Controller('users')
@@ -74,8 +61,6 @@ export class UsersController {
   }
 
   @Public()
-<<<<<<< HEAD
-=======
   @Get(':id/work-history')
   @ApiOperation({ summary: 'Get completed and active work history as seller' })
   async getWorkHistory(@Param('id') id: string) {
@@ -119,7 +104,6 @@ export class UsersController {
   }
 
   @Public()
->>>>>>> ec26484 (implementasi demo)
   @Get(':id/complete')
   @ApiOperation({
     summary: 'Get complete user profile with services, jobs, reviews',

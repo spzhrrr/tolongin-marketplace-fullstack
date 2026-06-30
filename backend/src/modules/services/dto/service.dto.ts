@@ -13,9 +13,9 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { PRICE_TYPE_VALUES } from '../../../common/constants/enums';
+import { PRICE_TYPE_VALUES, SERVICE_TYPE_VALUES } from '../../../common/constants/enums';
 // ✅ Gunakan import type untuk PriceType
-import type { PriceType } from '../../../common/constants/enums';
+import type { PriceType, ServiceType } from '../../../common/constants/enums';
 
 export class CreateServiceDto {
   @ApiProperty({
@@ -70,6 +70,11 @@ export class CreateServiceDto {
   @ArrayMaxSize(5)
   @IsString({ each: true })
   images?: string[];
+
+  @ApiProperty({ required: false, description: 'Kota/lokasi untuk jasa fisik' })
+  @IsOptional()
+  @IsString()
+  location?: string;
 }
 
 export class UpdateServiceDto {
@@ -128,6 +133,11 @@ export class UpdateServiceDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  location?: string;
 }
 
 export class ServiceQueryDto {
@@ -158,8 +168,6 @@ export class ServiceQueryDto {
   @IsNumber()
   maxPrice?: number;
 
-<<<<<<< HEAD
-=======
   @ApiProperty({ required: false, description: 'Rating minimum (0-5)' })
   @IsOptional()
   @Type(() => Number)
@@ -175,7 +183,6 @@ export class ServiceQueryDto {
   @IsInt()
   maxDeliveryDays?: number;
 
->>>>>>> ec26484 (implementasi demo)
   @ApiProperty({ required: false, default: 1 })
   @IsOptional()
   @Type(() => Number)
@@ -188,15 +195,11 @@ export class ServiceQueryDto {
   @IsInt()
   limit?: number;
 
-<<<<<<< HEAD
-  @ApiProperty({ required: false, enum: ['createdAt', 'price', 'rating'] })
-=======
   @ApiProperty({
     required: false,
     description:
       'Pengurutan: createdAt|price|rating ATAU alias newest|price_asc|price_desc|rating_desc',
   })
->>>>>>> ec26484 (implementasi demo)
   @IsOptional()
   @IsString()
   sortBy?: string;
@@ -205,4 +208,14 @@ export class ServiceQueryDto {
   @IsOptional()
   @IsString()
   sortOrder?: 'asc' | 'desc';
+
+  @ApiProperty({ required: false, enum: SERVICE_TYPE_VALUES })
+  @IsOptional()
+  @IsEnum(SERVICE_TYPE_VALUES)
+  serviceType?: ServiceType;
+
+  @ApiProperty({ required: false, description: 'Filter lokasi (jasa fisik)' })
+  @IsOptional()
+  @IsString()
+  location?: string;
 }
